@@ -1,0 +1,10 @@
+torch
+torchvision
+torch-geometric
+transformers
+huggingface_hub
+datasets
+numpy
+scikit-learn
+tqdm
+pillow
