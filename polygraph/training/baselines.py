@@ -1,27 +1,28 @@
-"""Trained non-graph baselines, so the detector's edge cannot be 'it was trained'.
+"""Trained non-graph baselines — the proposal's controls for isolating graph structure.
 
-The proposal requires comparing against output signals and hidden representations given
-the same training budget. Untrained MSP/margin live in evaluate.py; here are the trained
-counterparts, fit with the same splits and seeds as the detector:
+    output_lr  logistic on [logit(msp), margin]: what training adds over raw output stats
+    cls_mlp    MLP on the final class-token embedding (what the softmax head reads)
+    cls_seq    GRU over the class-token embeddings of ALL layers: the proposal's
+               sequence baseline — layer evolution without token-to-token structure
+    attn_mlp   MLP on the same attention values the GNN sees (per-head vectors of the
+               top-100 strongest edges per layer, flattened, strength-ordered): same
+               data, no graph — the direct test of whether connectivity carries signal
 
-    output_lr  logistic on [logit(msp), margin] — training on output statistics alone
-               cannot beat MSP's ranking by much, and showing that isolates what
-               training contributes from what attention contributes
-    cls_mlp    MLP on the final-layer class-token embedding — the representation-side
-               baseline; the softmax head reads exactly this vector
+All are fit with the detector's protocol: same splits, same seed, class-weighted BCE,
+early stopping on val AUROC, best state restored.
 """
 
 from __future__ import annotations
 
 import random
-from typing import Dict, Optional
+from typing import Callable, Dict
 
 import numpy as np
 import torch
 from torch import nn
 
 
-def collect_features(dataset, device=None) -> Dict[str, np.ndarray]:
+def collect_features(dataset) -> Dict[str, np.ndarray]:
     """Meta + CLS features straight from the store; no model involved."""
     from torch_geometric.loader import DataLoader
 
@@ -32,11 +33,25 @@ def collect_features(dataset, device=None) -> Dict[str, np.ndarray]:
         for f in fields:
             out[f] += getattr(batch, f).view(-1).tolist()
         if hasattr(batch, "cls_layers"):
-            cls.append(batch.cls_layers[:, -1, :])  # final ViT layer's CLS token
+            cls.append(batch.cls_layers)
     result = {f: np.asarray(v) for f, v in out.items()}
     if cls:
-        result["cls"] = torch.cat(cls).numpy()
+        stacked = torch.cat(cls).numpy()  # [N, L, D]
+        result["cls_all"] = stacked
+        result["cls"] = stacked[:, -1, :]
     return result
+
+
+def collect_flat_attention(dataset) -> np.ndarray:
+    """[N, layers*K*heads]: the GNN's edge features without the edge structure. Pass a
+    top-K view so every record has a fixed shape; edges arrive strength-sorted, which is
+    the canonical order a set model is allowed to see."""
+    from torch_geometric.loader import DataLoader
+
+    rows = []
+    for batch in DataLoader(dataset, batch_size=256, shuffle=False):
+        rows.append(batch.edge_attr.reshape(batch.num_graphs, -1))
+    return torch.cat(rows).numpy()
 
 
 def output_scores(train: Dict[str, np.ndarray], test: Dict[str, np.ndarray], seed: int) -> np.ndarray:
@@ -54,42 +69,34 @@ def output_scores(train: Dict[str, np.ndarray], test: Dict[str, np.ndarray], see
     return model.predict_proba(features(test))[:, 1]
 
 
-def cls_mlp_scores(train: Dict[str, np.ndarray], val: Dict[str, np.ndarray],
-                   test: Dict[str, np.ndarray], seed: int, device,
-                   hidden: int = 128, epochs: int = 60, patience: int = 8) -> np.ndarray:
-    """MLP on the final CLS embedding, trained with the detector's protocol
-    (class-weighted BCE, early stopping on val AUROC, best state restored)."""
+def _fit_tabular(build: Callable[[], nn.Module],
+                 x_train: torch.Tensor, y_train: np.ndarray,
+                 x_val: torch.Tensor, y_val: np.ndarray,
+                 x_test: torch.Tensor, seed: int, device,
+                 epochs: int = 60, patience: int = 8, batch: int = 256) -> np.ndarray:
+    """The detector's training protocol, for tensor-input baselines."""
     from sklearn.metrics import roc_auc_score
 
     random.seed(seed), np.random.seed(seed), torch.manual_seed(seed)
-    mean, std = train["cls"].mean(0, keepdims=True), train["cls"].std(0, keepdims=True) + 1e-6
-
-    def tensors(pred):
-        return (torch.tensor((pred["cls"] - mean) / std, dtype=torch.float32),
-                torch.tensor(pred["y"], dtype=torch.float32))
-
-    x_train, y_train = tensors(train)
-    x_val, y_val = tensors(val)
-    x_test, _ = tensors(test)
-    model = nn.Sequential(nn.Linear(x_train.shape[1], hidden), nn.ReLU(), nn.Dropout(0.15),
-                          nn.Linear(hidden, 1)).to(device)
-    positives = float(y_train.sum())
-    pos_weight = torch.tensor([(len(y_train) - positives) / max(positives, 1.0)], device=device)
+    model = build().to(device)
+    y_tr = torch.tensor(y_train, dtype=torch.float32)
+    positives = float(y_tr.sum())
+    pos_weight = torch.tensor([(len(y_tr) - positives) / max(positives, 1.0)], device=device)
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     optimizer = torch.optim.AdamW(model.parameters(), lr=2e-3, weight_decay=1e-4)
 
     best_state, best_val, stale = None, -np.inf, 0
     for _ in range(epochs):
         model.train()
-        for start in range(0, len(y_train), 256):
-            batch = slice(start, start + 256)
+        for start in range(0, len(y_tr), batch):
+            window = slice(start, start + batch)
             optimizer.zero_grad(set_to_none=True)
-            loss = criterion(model(x_train[batch].to(device)).view(-1), y_train[batch].to(device))
+            loss = criterion(model(x_train[window].to(device)).view(-1), y_tr[window].to(device))
             loss.backward()
             optimizer.step()
         model.eval()
         with torch.no_grad():
-            val_auroc = roc_auc_score(val["y"], model(x_val.to(device)).view(-1).cpu().numpy())
+            val_auroc = roc_auc_score(y_val, model(x_val.to(device)).view(-1).cpu().numpy())
         if val_auroc > best_val + 0.002:
             best_val, stale = val_auroc, 0
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
@@ -102,3 +109,48 @@ def cls_mlp_scores(train: Dict[str, np.ndarray], val: Dict[str, np.ndarray],
     model.eval()
     with torch.no_grad():
         return model(x_test.to(device)).view(-1).cpu().numpy()
+
+
+def _standardize(train: np.ndarray, *rest: np.ndarray):
+    flat = train.reshape(len(train), -1)
+    mean, std = flat.mean(0), flat.std(0) + 1e-6
+
+    def prep(x):
+        normalised = (x.reshape(len(x), -1) - mean) / std
+        return torch.tensor(normalised.reshape(x.shape), dtype=torch.float32)
+
+    return [prep(x) for x in (train, *rest)]
+
+
+def cls_mlp_scores(train, val, test, seed: int, device, hidden: int = 128) -> np.ndarray:
+    x_tr, x_va, x_te = _standardize(train["cls"], val["cls"], test["cls"])
+    build = lambda: nn.Sequential(nn.Linear(x_tr.shape[1], hidden), nn.ReLU(),
+                                  nn.Dropout(0.15), nn.Linear(hidden, 1))
+    return _fit_tabular(build, x_tr, train["y"], x_va, val["y"], x_te, seed, device)
+
+
+class _GRUHead(nn.Module):
+    def __init__(self, dim: int, hidden: int):
+        super().__init__()
+        self.gru = nn.GRU(dim, hidden, batch_first=True)
+        self.head = nn.Sequential(nn.Dropout(0.15), nn.Linear(hidden, 1))
+
+    def forward(self, x):
+        _, state = self.gru(x)
+        return self.head(state[-1]).view(-1)
+
+
+def cls_seq_scores(train, val, test, seed: int, device, hidden: int = 128) -> np.ndarray:
+    """The proposal's sequence baseline: layer-wise CLS evolution, no attention graph."""
+    x_tr, x_va, x_te = _standardize(train["cls_all"], val["cls_all"], test["cls_all"])
+    build = lambda: _GRUHead(x_tr.shape[-1], hidden)
+    return _fit_tabular(build, x_tr, train["y"], x_va, val["y"], x_te, seed, device)
+
+
+def attn_mlp_scores(train_x, train_y, val_x, val_y, test_x, seed: int, device,
+                    hidden: int = 128) -> np.ndarray:
+    """The proposal's flat-attention baseline: same values as the GNN, no structure."""
+    x_tr, x_va, x_te = _standardize(train_x, val_x, test_x)
+    build = lambda: nn.Sequential(nn.Linear(x_tr.shape[1], hidden), nn.ReLU(),
+                                  nn.Dropout(0.15), nn.Linear(hidden, 1))
+    return _fit_tabular(build, x_tr, train_y, x_va, val_y, x_te, seed, device)

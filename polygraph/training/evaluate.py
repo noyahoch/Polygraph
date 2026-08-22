@@ -78,7 +78,8 @@ def evaluate_predictions(test_pred, train_pred, seen_sources) -> Dict[str, objec
 
 
 def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
-                 seeds: Optional[Sequence[int]] = None) -> Dict[str, object]:
+                 seeds: Optional[Sequence[int]] = None,
+                 include_baselines: bool = True) -> Dict[str, object]:
     """Evaluate every checkpoint in run_dir against a plan; aggregate across seeds.
 
     The graph view (layers/tau/top_k) comes from each checkpoint, so evaluation always
@@ -108,16 +109,32 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
 
         # Trained non-graph baselines, same protocol and seed as this checkpoint, so the
         # detector's advantage cannot be "it was trained" (features read once, reused).
-        from .baselines import cls_mlp_scores, collect_features, output_scores
-        if baseline_features is None:
+        from .baselines import (attn_mlp_scores, cls_mlp_scores, cls_seq_scores,
+                                collect_features, collect_flat_attention, output_scores)
+        if not include_baselines:
+            trained_baselines = {}
+        elif baseline_features is None:
             baseline_features = {n: collect_features(datasets[n]) for n in ("train", "val", "test")}
-        seed = int(path.stem.replace("model_seed", ""))
-        trained_baselines = {"output_lr": output_scores(baseline_features["train"],
-                                                        baseline_features["test"], seed)}
-        if "cls" in baseline_features["train"]:
-            trained_baselines["cls_mlp"] = cls_mlp_scores(
-                baseline_features["train"], baseline_features["val"], baseline_features["test"],
-                seed, device)
+            # Flat-attention control: the SAME layers the GNN sees, top-100 edges each
+            # for a fixed shape (the strongest signal, strength-ordered).
+            attention_features = {
+                n: collect_flat_attention(AttentionGraphDataset(
+                    store, config.layers, plan.splits[n], top_k=100))
+                for n in ("train", "val", "test")
+            }
+        if include_baselines:
+            seed = int(path.stem.replace("model_seed", ""))
+            base = baseline_features
+            trained_baselines = {"output_lr": output_scores(base["train"], base["test"], seed),
+                             "attn_mlp": attn_mlp_scores(
+                                 attention_features["train"], base["train"]["y"],
+                                 attention_features["val"], base["val"]["y"],
+                                 attention_features["test"], seed, device)}
+            if "cls" in base["train"]:
+                trained_baselines["cls_mlp"] = cls_mlp_scores(
+                    base["train"], base["val"], base["test"], seed, device)
+                trained_baselines["cls_seq"] = cls_seq_scores(
+                    base["train"], base["val"], base["test"], seed, device)
         for name, scores in trained_baselines.items():
             for slice_name, mask in slice_masks(test_pred, seen_sources).items():
                 if slice_name in report and mask.any():

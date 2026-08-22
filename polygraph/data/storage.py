@@ -236,7 +236,30 @@ class AttentionGraphDataset(Dataset):
         if tau is not None and tau < self.store.tau:
             raise ValueError(f"tau={tau} is below the extraction threshold {self.store.tau}")
         self.tau, self.top_k, self.layers = tau, top_k, list(layers)
-        self.indices = list(range(self.store.total)) if keys is None else self.store.indices_for(keys)
+        raw = list(range(self.store.total)) if keys is None else self.store.indices_for(keys)
+        # Sorted by store position: shards are ~5 GB, so access order must follow disk
+        # order or every sample pays a multi-gigabyte load. Nothing may depend on item
+        # order — identity travels inside each sample (image_id, source_id, severity).
+        self.indices = sorted(raw)
+
+    def labels(self) -> "np.ndarray":
+        """y_err per item without materialising graphs (meta-only, shard-sequential)."""
+        import numpy as np
+
+        out = np.empty(len(self.indices), dtype=np.float32)
+        for position, store_index in enumerate(self.indices):
+            shard, offset = self.store.locate(store_index)
+            out[position] = float(shard.meta["y_err"][offset])
+        return out
+
+    def shard_blocks(self):
+        """Item positions grouped by shard, for shard-aware shuffling."""
+        from bisect import bisect_right
+
+        blocks: dict = {}
+        for position, store_index in enumerate(self.indices):
+            blocks.setdefault(bisect_right(self.store._bounds, store_index) - 1, []).append(position)
+        return list(blocks.values())
 
     def __len__(self) -> int:
         return len(self.indices)

@@ -19,6 +19,29 @@ from torch import nn
 from .models import ReadoutModel, SequenceConcatModel
 
 
+class ShardShuffleSampler(torch.utils.data.Sampler):
+    """Shuffles shard blocks, then items within each block. Full random shuffling over
+    ~5 GB shards with a 2-shard cache degenerates to one multi-gigabyte load per sample;
+    block shuffling keeps disk access sequential while store order is already random
+    (plans shuffle their keys), so SGD still sees a fresh permutation every epoch."""
+
+    def __init__(self, dataset, seed: int):
+        self.blocks, self.seed, self.epoch = dataset.shard_blocks(), seed, 0
+
+    def __iter__(self):
+        rng = random.Random(self.seed + self.epoch)
+        self.epoch += 1
+        order = list(self.blocks)
+        rng.shuffle(order)
+        for block in order:
+            block = list(block)
+            rng.shuffle(block)
+            yield from block
+
+    def __len__(self):
+        return sum(len(b) for b in self.blocks)
+
+
 @dataclass
 class TrainConfig:
     layers: List[int] = field(default_factory=lambda: [11])
@@ -35,6 +58,29 @@ class TrainConfig:
     patience: int = 8
     min_delta: float = 0.002
     seed: int = 7
+    shuffle_labels: bool = False  # negative control: must score ~0.5 on test
+
+
+class _ShuffledLabels(torch.utils.data.Dataset):
+    """Permutes training labels (labels only; graphs untouched). A pipeline with any
+    leak lets a model score above chance here; a clean one cannot."""
+
+    def __init__(self, dataset, seed: int):
+        self.dataset = dataset
+        permutation = np.random.default_rng(seed).permutation(len(dataset))
+        self._labels = dataset.labels()[permutation]
+        self.shard_blocks = dataset.shard_blocks
+
+    def labels(self) -> np.ndarray:
+        return self._labels
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, index):
+        sample = self.dataset[index]
+        sample.y = torch.tensor([self._labels[index]], dtype=torch.float32)
+        return sample
 
 
 def build_model(config: TrainConfig, in_dim: int, edge_dim: int) -> nn.Module:
@@ -59,6 +105,8 @@ def collect(model: nn.Module, dataset, device, batch_size: int = 64) -> Dict[str
         out["logit"] += logits.cpu().tolist()
         for f in fields[1:]:
             out[f] += getattr(batch, f).view(-1).cpu().tolist()
+    if device.type == "mps":
+        torch.mps.empty_cache()
     return {f: np.asarray(v) for f, v in out.items()}
 
 
@@ -69,8 +117,13 @@ def train_detector(config: TrainConfig, train_ds, val_ds, device) -> Tuple[nn.Mo
     random.seed(config.seed), np.random.seed(config.seed), torch.manual_seed(config.seed)
     sample = train_ds[0]
     model = build_model(config, int(sample.x.shape[1]), int(sample.edge_attr.shape[1])).to(device)
-    loader = DataLoader(train_ds, batch_size=config.batch_size, shuffle=True)
-    positives = sum(int(train_ds[i].y.item() > 0.5) for i in range(len(train_ds)))
+    if hasattr(train_ds, "shard_blocks"):
+        loader = DataLoader(train_ds, batch_size=config.batch_size,
+                            sampler=ShardShuffleSampler(train_ds, config.seed))
+        positives = float(train_ds.labels().sum())
+    else:  # in-memory test datasets
+        loader = DataLoader(train_ds, batch_size=config.batch_size, shuffle=True)
+        positives = sum(int(train_ds[i].y.item() > 0.5) for i in range(len(train_ds)))
     pos_weight = torch.tensor([max(len(train_ds) - positives, 1) / max(positives, 1)], device=device)
     criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     optimizer = torch.optim.AdamW(model.parameters(), lr=config.lr, weight_decay=config.weight_decay)
@@ -89,6 +142,10 @@ def train_detector(config: TrainConfig, train_ds, val_ds, device) -> Tuple[nn.Mo
             total += loss.item() * batch.y.numel()
             seen += batch.y.numel()
         val = collect(model, val_ds, device, config.batch_size)
+        # Threshold graphs give nearly every batch a unique shape; the MPS allocator
+        # caches blocks per shape and ballooned until the kernel OOM-killed the run.
+        if device.type == "mps":
+            torch.mps.empty_cache()
         val_auroc = float(roc_auc_score(val["y"], val["logit"])) if len(np.unique(val["y"])) > 1 else 0.5
         history.append(dict(epoch=epoch, train_loss=total / max(seen, 1), val_auroc=val_auroc))
         if val_auroc > best_val + config.min_delta:
@@ -116,6 +173,8 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
     store = GraphStore(store_dir)
     datasets = {n: AttentionGraphDataset(store, config.layers, plan.splits[n],
                                          tau=config.tau, top_k=config.top_k) for n in ("train", "val")}
+    if config.shuffle_labels:
+        datasets["train"] = _ShuffledLabels(datasets["train"], seed=999)
     sample = datasets["train"][0]
     out_dir.mkdir(parents=True, exist_ok=True)
     for seed in seeds:

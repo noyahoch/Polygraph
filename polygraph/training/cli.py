@@ -25,12 +25,21 @@ def build_parser() -> argparse.ArgumentParser:
                        choices=["mean", "cls", "cls_mean", "cls_mean_max", "cls_gated"])
     train.add_argument("--tau", type=float, default=None, help="load-time re-threshold ablation")
     train.add_argument("--top-k", type=int, default=None, help="load-time fixed-edge-count ablation")
-    train.add_argument("--seeds", type=int, nargs="+", default=[7, 1, 2])
+    train.add_argument("--batch-size", type=int, default=64,
+                       help="reduce for multi-layer runs (12 graphs per sample)")
+    train.add_argument("--shuffle-labels", action="store_true",
+                       help="negative control: permuted train labels, expect ~0.5 test AUROC")
+    train.add_argument("--seeds", type=int, nargs="+", default=[7],
+                       help="POC default: one seed; use 3+ for any claimed result "
+                            "(single-seed noise measured at ~±0.02 AUROC)")
 
     evaluate = sub.add_parser("evaluate", help="evaluate saved checkpoints")
     evaluate.add_argument("--run-dir", default="runs/detector")
     evaluate.add_argument("--plan", default=None,
                           help="any plan whose records are in the store")
+    evaluate.add_argument("--no-baselines", action="store_true",
+                          help="skip retraining the non-graph baselines (ablation runs: "
+                               "baselines depend on the plan, not the graph config)")
     return parser
 
 
@@ -50,14 +59,16 @@ def main(argv: Sequence[str] | None = None) -> None:
 
         named = {"last": [11], "all": list(range(12)), "final4": [8, 9, 10, 11]}
         layers = named.get(args.layers) or [int(x) for x in args.layers.split(",")]
-        config = TrainConfig(layers=layers, readout=args.readout, tau=args.tau, top_k=args.top_k)
+        config = TrainConfig(layers=layers, readout=args.readout, tau=args.tau, top_k=args.top_k,
+                             batch_size=args.batch_size, shuffle_labels=args.shuffle_labels)
         print(f"device: {device} | layers: {layers} | readout: {args.readout}", flush=True)
         train_run(root / STORE_DIR, plan_path, root / args.out_dir, config, args.seeds, device)
 
     elif args.command == "evaluate":
         from .evaluate import evaluate_run
 
-        summary = evaluate_run(root / args.run_dir, root / STORE_DIR, plan_path, device)
+        summary = evaluate_run(root / args.run_dir, root / STORE_DIR, plan_path, device,
+                               include_baselines=not args.no_baselines)
         print(json.dumps(summary["slices"], indent=2))
 
 
