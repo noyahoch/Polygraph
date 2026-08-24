@@ -38,6 +38,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     extract = sub.add_parser("extract", help="graphs for every record in the plan (resumable)")
     extract.add_argument("--plan", default=None)
+
+    hidden = sub.add_parser("hidden", help="capture per-token hidden states of one ViT layer "
+                                           "for every stored record (variant-2 node features)")
+    hidden.add_argument("--layer", type=int, default=12, help="ViT block output, 12 = final")
     return parser
 
 
@@ -75,6 +79,15 @@ def main(argv: Sequence[str] | None = None) -> None:
                           held_out=resolve_sources(args.held_out))
         plan.save(plan_path)
         print(json.dumps(plan.stats, indent=2))
+
+    elif args.command == "hidden":
+        from .pipeline import FrozenClassifier, capture_hidden
+
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        n = capture_hidden(classifier, data_root, root / STORE_DIR,
+                           root / f"data/graph_dataset/hidden{args.layer}", layer=args.layer)
+        print(f"hidden states captured for {n} records")
 
     elif args.command == "extract":
         from .graphs import ThresholdGraphBuilder

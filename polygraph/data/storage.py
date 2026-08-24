@@ -225,17 +225,96 @@ class GraphStore:
         return [self.key_to_index[k.as_tuple()] for k in keys]
 
 
+class CharmDataset(Dataset):
+    """CHARM-style view (Frasca et al. 2026): ONE graph per image. Edges are the union of
+    the per-layer threshold edge sets; each edge carries all layers' per-head attention
+    concatenated (L*H dims), zero-filled where a layer's value fell below the extraction
+    tau (those values were never stored — a documented approximation). Node features are
+    the per-head attention diagonals of ALL layers (L*H) plus patch coordinates. This is
+    CHARM-lite: token activations are not in the store, so the activation half is absent."""
+
+    def __init__(self, store, keys: Optional[Sequence[RecordKey]] = None,
+                 tau: Optional[float] = None):
+        self.store = store if isinstance(store, GraphStore) else GraphStore(store)
+        if tau is not None and tau < self.store.tau:
+            raise ValueError(f"tau={tau} is below the extraction threshold {self.store.tau}")
+        self.tau = tau
+        raw = list(range(self.store.total)) if keys is None else self.store.indices_for(keys)
+        self.indices = sorted(raw)
+
+    def labels(self):
+        import numpy as np
+
+        out = np.empty(len(self.indices), dtype=np.float32)
+        for position, store_index in enumerate(self.indices):
+            shard, offset = self.store.locate(store_index)
+            out[position] = float(shard.meta["y_err"][offset])
+        return out
+
+    def shard_blocks(self):
+        from bisect import bisect_right
+
+        blocks: dict = {}
+        for position, store_index in enumerate(self.indices):
+            blocks.setdefault(bisect_right(self.store._bounds, store_index) - 1, []).append(position)
+        return list(blocks.values())
+
+    def __len__(self) -> int:
+        return len(self.indices)
+
+    def __getitem__(self, position: int) -> Data:
+        shard, offset = self.store.locate(self.indices[position])
+        tokens, layer_count = self.store.num_tokens, shard.layer_count
+        heads = shard.diagonals.shape[-1]
+
+        # Union of per-layer edge sets, with per-layer features scattered into L*H columns.
+        pair_ids, per_layer = [], []
+        for layer in range(layer_count):
+            graph = shard.layer_graph(offset, layer, tau=self.tau)
+            edge_index = graph.edge_index.long()
+            pair_ids.append(edge_index[0] * tokens + edge_index[1])
+            per_layer.append((layer, pair_ids[-1], graph.edge_attr.float()))
+        union, inverse = torch.unique(torch.cat(pair_ids), return_inverse=True)
+        edge_attr = torch.zeros(len(union), layer_count * heads)
+        cursor = 0
+        for layer, ids, attr in per_layer:
+            edge_attr[inverse[cursor:cursor + len(ids)], layer * heads:(layer + 1) * heads] = attr
+            cursor += len(ids)
+        edge_index = torch.stack([union // tokens, union % tokens])
+
+        coords = node_coordinates(tokens, 0, 1)  # layer column meaningless for a union graph
+        diagonals = shard.diagonals[offset].float().permute(1, 0, 2).reshape(tokens, -1)
+        meta = shard.meta
+        return Data(x=torch.cat([coords, diagonals], 1), edge_index=edge_index,
+                    edge_attr=edge_attr, layer_id=torch.zeros(tokens, dtype=torch.long),
+                    y=meta["y_err"][offset].view(1),
+                    image_id=meta["base_index"][offset].long().view(1),
+                    vit_correct=(1.0 - meta["y_err"][offset]).view(1),
+                    confidence=meta["confidence"][offset].view(1),
+                    margin=meta["margin"][offset].view(1),
+                    source_id=meta["source_id"][offset].long().view(1),
+                    severity=meta["severity"][offset].long().view(1),
+                    **({"cls_layers": shard.cls_embeddings[offset].float().unsqueeze(0)}
+                       if shard.cls_embeddings is not None else {}))
+
+
 class AttentionGraphDataset(Dataset):
     """PyG dataset over a GraphStore restricted to a split's keys (None = whole store).
     tau (>= extraction tau) or top_k derive stricter edge views at load time."""
 
     def __init__(self, store, layers: Sequence[int], keys: Optional[Sequence[RecordKey]] = None,
-                 tau: Optional[float] = None, top_k: Optional[int] = None):
+                 tau: Optional[float] = None, top_k: Optional[int] = None,
+                 hidden_dir: Optional[Path] = None):
         self.store = store if isinstance(store, GraphStore) else GraphStore(store)
         assert tau is None or top_k is None, "tau and top_k are competing rules; pass one"
         if tau is not None and tau < self.store.tau:
             raise ValueError(f"tau={tau} is below the extraction threshold {self.store.tau}")
         self.tau, self.top_k, self.layers = tau, top_k, list(layers)
+        # Variant 2: per-token hidden states appended to node features. The hidden shards
+        # are written in store order with the store's shard sizes, so alignment is by
+        # (shard_index, offset) — asserted per shard on first access.
+        self.hidden_dir = Path(hidden_dir) if hidden_dir else None
+        self._hidden_cache: "OrderedDict[int, Tensor]" = OrderedDict()
         raw = list(range(self.store.total)) if keys is None else self.store.indices_for(keys)
         # Sorted by store position: shards are ~5 GB, so access order must follow disk
         # order or every sample pays a multi-gigabyte load. Nothing may depend on item
@@ -264,6 +343,16 @@ class AttentionGraphDataset(Dataset):
     def __len__(self) -> int:
         return len(self.indices)
 
+    def _hidden(self, shard_index: int) -> Tensor:
+        if shard_index not in self._hidden_cache:
+            payload = torch.load(self.hidden_dir / f"hidden_{shard_index:05d}.pt", map_location="cpu")
+            expected = self.store._bounds[shard_index + 1] - self.store._bounds[shard_index]
+            assert payload["records"] == expected, "hidden shard misaligned with graph store"
+            self._hidden_cache[shard_index] = payload["hidden"]
+            while len(self._hidden_cache) > 2:
+                self._hidden_cache.popitem(last=False)
+        return self._hidden_cache[shard_index]
+
     def __getitem__(self, position: int) -> Data:
         shard, offset = self.store.locate(self.indices[position])
         tokens = self.store.num_tokens
@@ -273,7 +362,12 @@ class AttentionGraphDataset(Dataset):
             if len(self.layers) > 1:
                 coords = coords.clone()
                 coords[:, 3] = slot / (len(self.layers) - 1)
-            xs.append(torch.cat([coords, shard.diagonals[offset, layer].float()], 1))
+            parts = [coords, shard.diagonals[offset, layer].float()]
+            if self.hidden_dir is not None:
+                from bisect import bisect_right
+                shard_index = bisect_right(self.store._bounds, self.indices[position]) - 1
+                parts.append(self._hidden(shard_index)[offset].float())
+            xs.append(torch.cat(parts, 1))
             graph = shard.layer_graph(offset, layer, tau=self.tau, top_k=self.top_k)
             edge_indices.append(graph.edge_index.long() + slot * tokens)
             edge_attrs.append(graph.edge_attr.float())

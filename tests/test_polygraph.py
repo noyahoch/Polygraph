@@ -604,8 +604,9 @@ def test_multilayer_model_trains() -> None:
         store = GraphStore(Path(tmp))
         train_ds = AttentionGraphDataset(store, [0, 1], plan.splits["train"])
         val_ds = AttentionGraphDataset(store, [0, 1], plan.splits["val"])
-        model, history = train_detector(TrainConfig(layers=[0, 1], epochs=5, batch_size=8,
-                                                    hidden_dim=16), train_ds, val_ds, CPU)
+        model, history, finished = train_detector(TrainConfig(layers=[0, 1], epochs=5, batch_size=8,
+                                                              hidden_dim=16), train_ds, val_ds, CPU)
+        check(finished, "short run should finish in one segment")
         check(type(model).__name__ == "SequenceConcatModel", "multi-layer must use the sequence model")
         check(len(history) >= 1, "no training history")
 
@@ -700,7 +701,8 @@ def test_evaluate_run_end_to_end() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         _learnable_store(Path(tmp))
         config = TrainConfig(layers=[1], epochs=10, batch_size=8, hidden_dim=16)
-        train_run(Path(tmp), Path(tmp) / "plan.json", Path(tmp) / "run", config, [7, 8], CPU)
+        for _ in range(2):  # contract: one seed per invocation; the caller loops
+            train_run(Path(tmp), Path(tmp) / "plan.json", Path(tmp) / "run", config, [7, 8], CPU)
         summary = evaluate_run(Path(tmp) / "run", Path(tmp), Path(tmp) / "plan.json", CPU)
         check(len(summary["checkpoints"]) == 2, "should evaluate every checkpoint")
         check("all" in summary["slices"] and "graph" in summary["slices"]["all"], "summary shape wrong")
@@ -750,9 +752,85 @@ def test_training_cli_end_to_end() -> None:
         _learnable_store(store_dir)
         (store_dir / "plan.json").rename(root / "data" / "graph_dataset" / "split_plan.json")
         with _chdir(root):
-            training_main(["train", "--layers", "1", "--seeds", "7", "--out-dir", "run"])
+            training_main(["train", "--layers", "1", "--seeds", "7", "--out-dir", "run",
+                           "--epochs-per-process", "0"])
             training_main(["evaluate", "--run-dir", "run"])
         check((root / "run" / "summary.json").exists(), "CLI train+evaluate left no summary")
+
+
+def test_segmented_training_resumes() -> None:
+    """Regression: Metal's kernel cache leaks across epochs, so long runs must be able
+    to exit mid-training and resume in a fresh process with nothing lost."""
+    from polygraph.training.train import TrainConfig, train_run
+
+    with tempfile.TemporaryDirectory() as tmp:
+        _learnable_store(Path(tmp))
+        config = TrainConfig(layers=[1], epochs=6, batch_size=8, hidden_dim=16,
+                             patience=99, epochs_per_process=2)
+        for invocation in range(1, 5):
+            train_run(Path(tmp), Path(tmp) / "plan.json", Path(tmp) / "run", config, [7], CPU)
+            done = (Path(tmp) / "run" / "model_seed7.pt").exists()
+            state = (Path(tmp) / "run" / "state_seed7.pt").exists()
+            if invocation < 3:
+                check(state and not done, f"invocation {invocation}: expected mid-training state")
+        check(done and not state, "training should finish by the 3rd segment and clean its state")
+        history = torch.load(Path(tmp) / "run" / "model_seed7.pt", map_location="cpu")["history"]
+        check([h["epoch"] for h in history] == [1, 2, 3, 4, 5, 6],
+              f"resumed history must be continuous, got {[h['epoch'] for h in history]}")
+
+
+def test_charm_union_view() -> None:
+    """CHARM-lite: the union graph must contain exactly the union of per-layer edge sets,
+    with each layer's features in its own columns and zeros where a layer lacked the edge."""
+    from polygraph.data.storage import CharmDataset
+
+    with tempfile.TemporaryDirectory() as tmp:
+        _, reference = _write_store(Path(tmp), _keys(3), layer_count=2, tokens=20, heads=4)
+        store = GraphStore(Path(tmp))
+        dataset = CharmDataset(store)
+        sample = dataset[0]
+        key0 = sorted(reference)[0]
+        layers = reference[key0][0]
+
+        expected_union = {(int(j), int(i)) for g in layers for j, i in zip(*g.edge_index.tolist())}
+        got = {(int(j), int(i)) for j, i in zip(*sample.edge_index.tolist())}
+        check(got == expected_union, "union edge set wrong")
+        check(sample.edge_attr.shape[1] == 2 * 4, "edge features must be layers*heads wide")
+        check(sample.x.shape == (20, 4 + 2 * 4), "node features must be coords + all-layer diagonals")
+
+        lookup = {(int(j), int(i)): e for e, (j, i) in enumerate(zip(*sample.edge_index.tolist()))}
+        for layer, graph in enumerate(layers):
+            for e in range(graph.num_edges):
+                pair = (int(graph.edge_index[0, e]), int(graph.edge_index[1, e]))
+                row = sample.edge_attr[lookup[pair], layer * 4:(layer + 1) * 4]
+                check(torch.allclose(row, graph.edge_attr[e].float(), atol=1e-3),
+                      f"layer {layer} features misplaced in union edge")
+        only_l0 = expected_union - {(int(j), int(i)) for j, i in zip(*layers[1].edge_index.tolist())}
+        if only_l0:
+            pair = next(iter(only_l0))
+            check(float(sample.edge_attr[lookup[pair], 4:8].abs().sum()) == 0.0,
+                  "missing layer must be zero-filled")
+
+
+def test_hidden_node_features_align() -> None:
+    """Variant 2: hidden-state shards must align with the graph store by (shard, offset),
+    and the vectors must land on the right records' nodes."""
+    with tempfile.TemporaryDirectory() as tmp:
+        _write_store(Path(tmp), _keys(5), layer_count=1, tokens=20, heads=4, shard_size=2)
+        store = GraphStore(Path(tmp))
+        hidden_dir = Path(tmp) / "hidden12"
+        hidden_dir.mkdir()
+        counts = [store._bounds[i + 1] - store._bounds[i] for i in range(len(store.shard_names))]
+        for shard_index, count in enumerate(counts):
+            base = store._bounds[shard_index]
+            tensor = torch.stack([torch.full((20, 8), float(base + i)) for i in range(count)])
+            torch.save({"hidden": tensor.half(), "layer": 12, "records": count},
+                       hidden_dir / f"hidden_{shard_index:05d}.pt")
+        dataset = AttentionGraphDataset(store, [0], hidden_dir=hidden_dir)
+        for i in range(5):
+            sample = dataset[i]
+            check(sample.x.shape == (20, 4 + 4 + 8), "hidden dims not appended")
+            check(float(sample.x[0, -1]) == float(i), f"hidden vector misaligned at record {i}")
 
 
 def main() -> None:

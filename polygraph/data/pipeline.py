@@ -85,6 +85,45 @@ def scan(classifier: FrozenClassifier, data_root: Path, scan_path: Path,
               f"(errors {len(todo) - correct}, mean confidence {confidence_sum / len(todo):.4f})", flush=True)
 
 
+def capture_hidden(classifier: FrozenClassifier, data_root: Path, store_dir: Path,
+                   out_dir: Path, layer: int = 12, batch_size: int = 64) -> int:
+    """Per-token hidden states of one ViT block for every record in the graph store,
+    sharded in the SAME order and sizes as the store so readers align by (shard, offset).
+    layer=12 means the final block's output (hidden_states[12]); resumable per shard."""
+    import json
+
+    keys = [RecordKey(*k) for k in json.loads((store_dir / "store_keys.json").read_text())]
+    manifest = json.loads((store_dir / "manifest.json").read_text())
+    counts = manifest["shard_records"]
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    position = 0
+    for shard_index, count in enumerate(counts):
+        shard_keys = keys[position:position + count]
+        position += count
+        out_path = out_dir / f"hidden_{shard_index:05d}.pt"
+        if out_path.exists():
+            continue
+        buffers = []
+        for start in tqdm(range(0, count, batch_size), desc=f"hidden shard {shard_index}"):
+            chunk = shard_keys[start:start + batch_size]
+            images = [pool_for(k, data_root).image(k.base_index) for k in chunk]
+            pixels = classifier.processor(images=images, return_tensors="pt")["pixel_values"]
+            with torch.no_grad():
+                out = classifier.model(pixels.to(classifier.device), output_hidden_states=True)
+            buffers.append(out.hidden_states[layer].to("cpu", torch.float16))
+            if classifier.device.type == "mps":
+                torch.mps.empty_cache()
+        tensor = torch.cat(buffers)
+        tmp = out_path.with_suffix(".tmp")
+        torch.save({"hidden": tensor, "layer": layer, "records": count}, tmp)
+        tmp.rename(out_path)
+    (out_dir / "manifest.json").write_text(json.dumps(
+        {"layer": layer, "records": position, "shard_records": counts,
+         "model_id": classifier.model_id}))
+    return position
+
+
 def extract(classifier: FrozenClassifier, data_root: Path, builder: ThresholdGraphBuilder,
             keys: Sequence[RecordKey], scan_lookup: Dict[Tuple[str, int, int], ScanRecord],
             writer, batch_size: int = 32, want_cls: bool = True) -> Dict[str, int]:

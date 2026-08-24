@@ -25,8 +25,16 @@ def build_parser() -> argparse.ArgumentParser:
                        choices=["mean", "cls", "cls_mean", "cls_mean_max", "cls_gated"])
     train.add_argument("--tau", type=float, default=None, help="load-time re-threshold ablation")
     train.add_argument("--top-k", type=int, default=None, help="load-time fixed-edge-count ablation")
+    train.add_argument("--epochs-per-process", type=int, default=8,
+                       help="exit and resume every N epochs (resets Metal's leaky kernel "
+                            "cache); the caller loops until the checkpoint exists")
     train.add_argument("--batch-size", type=int, default=64,
                        help="reduce for multi-layer runs (12 graphs per sample)")
+    train.add_argument("--hidden", action="store_true",
+                       help="variant 2: append per-token hidden states to node features "
+                            "(requires 'polygraph.data hidden' capture first)")
+    train.add_argument("--charm", action="store_true",
+                       help="CHARM-lite: one union graph per image, all-layer edge features")
     train.add_argument("--shuffle-labels", action="store_true",
                        help="negative control: permuted train labels, expect ~0.5 test AUROC")
     train.add_argument("--seeds", type=int, nargs="+", default=[7],
@@ -60,7 +68,9 @@ def main(argv: Sequence[str] | None = None) -> None:
         named = {"last": [11], "all": list(range(12)), "final4": [8, 9, 10, 11]}
         layers = named.get(args.layers) or [int(x) for x in args.layers.split(",")]
         config = TrainConfig(layers=layers, readout=args.readout, tau=args.tau, top_k=args.top_k,
-                             batch_size=args.batch_size, shuffle_labels=args.shuffle_labels)
+                             batch_size=args.batch_size, shuffle_labels=args.shuffle_labels,
+                             charm=args.charm, hidden=args.hidden,
+                             epochs_per_process=args.epochs_per_process or None)
         print(f"device: {device} | layers: {layers} | readout: {args.readout}", flush=True)
         train_run(root / STORE_DIR, plan_path, root / args.out_dir, config, args.seeds, device)
 

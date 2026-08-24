@@ -69,6 +69,22 @@ def output_scores(train: Dict[str, np.ndarray], test: Dict[str, np.ndarray], see
     return model.predict_proba(features(test))[:, 1]
 
 
+def output_mlp_scores(train, val, test, seed: int, device, hidden: int = 32) -> np.ndarray:
+    """Nonlinear model on the same two output statistics as output_lr. Exists because the
+    margin residual at fixed confidence FLIPS SIGN around conf~0.8 (anti-textbook below,
+    textbook above) — structure a linear model cancels out and a small MLP can harvest.
+    output_lr vs output_mlp therefore isolates 'value of nonlinearity' on outputs."""
+
+    def features(pred):
+        conf = np.clip(pred["confidence"], 1e-6, 1 - 1e-6)
+        return np.stack([np.log((1 - conf) / conf), pred["margin"]], axis=1)
+
+    x_tr, x_va, x_te = _standardize(features(train), features(val), features(test))
+    build = lambda: nn.Sequential(nn.Linear(2, hidden), nn.ReLU(), nn.Linear(hidden, hidden),
+                                  nn.ReLU(), nn.Dropout(0.15), nn.Linear(hidden, 1))
+    return _fit_tabular(build, x_tr, train["y"], x_va, val["y"], x_te, seed, device)
+
+
 def _fit_tabular(build: Callable[[], nn.Module],
                  x_train: torch.Tensor, y_train: np.ndarray,
                  x_val: torch.Tensor, y_val: np.ndarray,

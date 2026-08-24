@@ -100,12 +100,25 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
     baseline_features = None
     for path in checkpoints:
         model, config = load_checkpoint(path, device)
-        datasets = {n: AttentionGraphDataset(store, config.layers, plan.splits[n],
-                                             tau=config.tau, top_k=config.top_k)
-                    for n in ("train", "val", "test")}
+        if getattr(config, "charm", False):
+            from ..data.storage import CharmDataset
+
+            datasets = {n: CharmDataset(store, plan.splits[n], tau=config.tau)
+                        for n in ("train", "val", "test")}
+        else:
+            hidden_dir = store_dir.parent / "hidden12" if getattr(config, "hidden", False) else None
+            datasets = {n: AttentionGraphDataset(store, config.layers, plan.splits[n],
+                                                 tau=config.tau, top_k=config.top_k,
+                                                 hidden_dir=hidden_dir)
+                        for n in ("train", "val", "test")}
+        print(f"collecting graph predictions ({path.name})...", flush=True)
         train_pred = collect(model, datasets["train"], device, config.batch_size)
+        # The combiner is fitted on VALIDATION predictions: the graph's train logits are
+        # overfit-inflated, which overweighted the graph and pushed the combiner BELOW
+        # its best single input (measured: 0.8649 vs MSP 0.8695 on the main run).
+        val_pred = collect(model, datasets["val"], device, config.batch_size)
         test_pred = collect(model, datasets["test"], device, config.batch_size)
-        report = evaluate_predictions(test_pred, train_pred, seen_sources)
+        report = evaluate_predictions(test_pred, val_pred, seen_sources)
 
         # Trained non-graph baselines, same protocol and seed as this checkpoint, so the
         # detector's advantage cannot be "it was trained" (features read once, reused).
@@ -114,6 +127,7 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
         if not include_baselines:
             trained_baselines = {}
         elif baseline_features is None:
+            print("collecting baseline features (CLS embeddings + flat attention)...", flush=True)
             baseline_features = {n: collect_features(datasets[n]) for n in ("train", "val", "test")}
             # Flat-attention control: the SAME layers the GNN sees, top-100 edges each
             # for a fixed shape (the strongest signal, strength-ordered).
@@ -125,16 +139,28 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
         if include_baselines:
             seed = int(path.stem.replace("model_seed", ""))
             base = baseline_features
-            trained_baselines = {"output_lr": output_scores(base["train"], base["test"], seed),
-                             "attn_mlp": attn_mlp_scores(
-                                 attention_features["train"], base["train"]["y"],
-                                 attention_features["val"], base["val"]["y"],
-                                 attention_features["test"], seed, device)}
+            trained_baselines = {}
+            print("training baseline output_lr (logistic on output statistics)...", flush=True)
+            trained_baselines["output_lr"] = output_scores(base["train"], base["test"], seed)
+            print("training baseline output_mlp (nonlinear on the same 2 output stats)...", flush=True)
+            from .baselines import output_mlp_scores
+            trained_baselines["output_mlp"] = output_mlp_scores(
+                base["train"], base["val"], base["test"], seed, device)
+            print("training baseline attn_mlp (same attention values, no graph)...", flush=True)
+            trained_baselines["attn_mlp"] = attn_mlp_scores(
+                attention_features["train"], base["train"]["y"],
+                attention_features["val"], base["val"]["y"],
+                attention_features["test"], seed, device)
             if "cls" in base["train"]:
+                print("training baseline cls_mlp (final class-token embedding)...", flush=True)
                 trained_baselines["cls_mlp"] = cls_mlp_scores(
                     base["train"], base["val"], base["test"], seed, device)
+                print("training baseline cls_seq (GRU over all-layer class tokens)...", flush=True)
                 trained_baselines["cls_seq"] = cls_seq_scores(
                     base["train"], base["val"], base["test"], seed, device)
+        from sklearn.metrics import roc_auc_score
+        for name, scores in trained_baselines.items():
+            print(f"baseline {name}: test AUROC {roc_auc_score(test_pred['y'], scores):.4f}", flush=True)
         for name, scores in trained_baselines.items():
             for slice_name, mask in slice_masks(test_pred, seen_sources).items():
                 if slice_name in report and mask.any():
