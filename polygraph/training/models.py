@@ -1,9 +1,12 @@
-"""Detector architectures, verbatim from the POC (legacy/lightweight_attention_experiments.py).
+"""Detector architectures.
 
-Copied rather than imported so the package is self-contained; the legacy file is frozen in
-git (commit 8036fd9), so the reference cannot drift. ReadoutModel is the single-layer
-detector (Stage 3 winner: readout="cls_gated"); SequenceConcatModel encodes several layer
-graphs with one shared GNN and concatenates the per-layer embeddings.
+GNNEncoder, ReadoutModel, and SequenceConcatModel are verbatim from the POC
+(legacy/lightweight_attention_experiments.py) — copied rather than imported so the package
+is self-contained; the legacy file is frozen in git (commit 8036fd9), so the reference
+cannot drift. ReadoutModel is the single-layer detector (Stage 3 winner:
+readout="cls_gated"); SequenceConcatModel encodes several layer graphs with one shared GNN
+and concatenates the per-layer embeddings. EdgeSetModel is a later addition (not POC): the
+structure-blind Deep-Sets control, selected with readout="edge_set".
 """
 
 from __future__ import annotations
@@ -91,3 +94,27 @@ class SequenceConcatModel(nn.Module):
         layer_embeddings = global_mean_pool(x, layer_graph_id, size=graph_count * self.layer_count)
         ordered = layer_embeddings.view(graph_count, self.layer_count, -1).reshape(graph_count, -1)
         return self.decoder(ordered).view(-1), ordered
+
+
+class EdgeSetModel(nn.Module):
+    """Deep-Sets control (NOT from the POC): the GNN's full edge-feature set with no
+    structure. Each edge contributes only its per-head attention vector; per-graph
+    mean+max pooling ignores which tokens an edge connects, so the model is invariant
+    to rewiring by construction — the airtight version of the flat-attention baseline
+    (attn_mlp sees only the top-100 edges; this sees everything the GNN sees)."""
+
+    def __init__(self, in_dim: int, edge_dim: int, hidden_dim: int, dropout: float):
+        super().__init__()
+        self.phi = nn.Sequential(nn.Linear(edge_dim, hidden_dim), nn.ReLU(),
+                                 nn.Linear(hidden_dim, hidden_dim))
+        self.rho = nn.Sequential(nn.Linear(2 * hidden_dim, hidden_dim), nn.ReLU(),
+                                 nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
+
+    def forward(self, data: Data) -> Tuple[Tensor, None]:
+        from torch_geometric.utils import scatter
+
+        graph_of_edge = data.batch[data.edge_index[0]]
+        h = self.phi(data.edge_attr)
+        pooled = torch.cat([scatter(h, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="mean"),
+                            scatter(h, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="max")], dim=-1)
+        return self.rho(pooled).view(-1), None

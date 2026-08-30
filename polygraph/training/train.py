@@ -91,6 +91,10 @@ class _ShuffledLabels(torch.utils.data.Dataset):
 
 
 def build_model(config: TrainConfig, in_dim: int, edge_dim: int) -> nn.Module:
+    if config.readout == "edge_set":
+        from .models import EdgeSetModel
+
+        return EdgeSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
     if len(config.layers) == 1:
         return ReadoutModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
                             config.dropout, config.readout)

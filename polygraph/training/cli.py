@@ -22,7 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--out-dir", default="runs/detector")
     train.add_argument("--layers", default="last", help="last | all | final4 | comma-separated ints")
     train.add_argument("--readout", default="cls_gated",
-                       choices=["mean", "cls", "cls_mean", "cls_mean_max", "cls_gated"])
+                       choices=["mean", "cls", "cls_mean", "cls_mean_max", "cls_gated", "edge_set"])
     train.add_argument("--tau", type=float, default=None, help="load-time re-threshold ablation")
     train.add_argument("--top-k", type=int, default=None, help="load-time fixed-edge-count ablation")
     train.add_argument("--epochs-per-process", type=int, default=8,
@@ -30,6 +30,10 @@ def build_parser() -> argparse.ArgumentParser:
                             "cache); the caller loops until the checkpoint exists")
     train.add_argument("--batch-size", type=int, default=64,
                        help="reduce for multi-layer runs (12 graphs per sample)")
+    train.add_argument("--hidden-dim", type=int, default=32,
+                       help="GNN width; raise for the capacity-matched comparisons")
+    train.add_argument("--gnn-layers", type=int, default=2,
+                       help="message-passing depth; raise for the capacity-matched comparisons")
     train.add_argument("--hidden", action="store_true",
                        help="variant 2: append per-token hidden states to node features "
                             "(requires 'polygraph.data hidden' capture first)")
@@ -68,10 +72,12 @@ def main(argv: Sequence[str] | None = None) -> None:
         named = {"last": [11], "all": list(range(12)), "final4": [8, 9, 10, 11]}
         layers = named.get(args.layers) or [int(x) for x in args.layers.split(",")]
         config = TrainConfig(layers=layers, readout=args.readout, tau=args.tau, top_k=args.top_k,
+                             hidden_dim=args.hidden_dim, gnn_layers=args.gnn_layers,
                              batch_size=args.batch_size, shuffle_labels=args.shuffle_labels,
                              charm=args.charm, hidden=args.hidden,
                              epochs_per_process=args.epochs_per_process or None)
-        print(f"device: {device} | layers: {layers} | readout: {args.readout}", flush=True)
+        print(f"device: {device} | layers: {layers} | readout: {args.readout} "
+              f"| hidden_dim: {args.hidden_dim} | gnn_layers: {args.gnn_layers}", flush=True)
         train_run(root / STORE_DIR, plan_path, root / args.out_dir, config, args.seeds, device)
 
     elif args.command == "evaluate":
