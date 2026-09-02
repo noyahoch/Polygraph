@@ -47,6 +47,12 @@ def build_parser() -> argparse.ArgumentParser:
     logits.add_argument("--benchmark-batches", type=int, default=5)
     logits.add_argument("--overwrite-corrupt-only", action="store_true")
 
+    message = sub.add_parser("message-stats", help="capture compact per-token/head value statistics")
+    message.add_argument("--layer", type=int, default=11)
+    message.add_argument("--out-dir", default="data/graph_dataset/sidecars/message_stats_l11")
+    message.add_argument("--batch-size", type=int, default=64)
+    message.add_argument("--benchmark-batches", type=int, default=5)
+
     hidden = sub.add_parser("hidden", help="capture per-token hidden states of one ViT layer "
                                            "for every stored record (variant-2 node features)")
     hidden.add_argument("--layer", type=int, default=12, help="ViT block output, 12 = final")
@@ -98,6 +104,15 @@ def main(argv: Sequence[str] | None = None) -> None:
                            batch_size=args.batch_size,
                            overwrite_corrupt_only=args.overwrite_corrupt_only)
         print(f"full logits captured for {n} records")
+
+    elif args.command == "message-stats":
+        from .pipeline import FrozenClassifier, capture_message_stats
+
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        n = capture_message_stats(classifier, data_root, root / STORE_DIR, root / args.out_dir,
+                                  layer=args.layer, batch_size=args.batch_size)
+        print(f"message statistics captured for {n} records")
 
     elif args.command == "hidden":
         from .pipeline import FrozenClassifier, capture_hidden

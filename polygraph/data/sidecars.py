@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Sequence, Tuple
 
 import torch
+from torch import Tensor
 
 
 def store_key_sha256(store_dir: Path) -> str:
@@ -119,3 +120,39 @@ class AlignedSidecar:
             raise IndexError(store_index)
         shard_index = bisect_right(self.bounds, store_index) - 1
         return self.shard(shard_index), store_index - self.bounds[shard_index]
+
+
+def value_message_statistics(value: Tensor, output_weight: Tensor,
+                             class_direction: Tensor, heads: int) -> Tuple[Tensor, Tensor, Tensor]:
+    """Raw norm, ||W_h V|| via Gram matrices, and projection onto a class direction."""
+    batch, tokens, width = value.shape
+    if width % heads:
+        raise ValueError(f"width {width} is not divisible by {heads} heads")
+    head_width = width // heads
+    values = value.float().reshape(batch, tokens, heads, head_width)
+    blocks = output_weight.float().reshape(output_weight.shape[0], heads, head_width).permute(1, 0, 2)
+    gram = torch.einsum("hod,hoe->hde", blocks, blocks)
+    projected_sq = torch.einsum("bthd,hde,bthe->bth", values, gram, values)
+    direction = class_direction.float()
+    direction = direction / direction.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+    projected_direction = torch.einsum("hod,bo->bhd", blocks, direction)
+    support = torch.einsum("bthd,bhd->bth", values, projected_direction)
+    return values.norm(dim=-1), projected_sq.clamp_min(0).sqrt(), support
+
+
+def derive_attention_edge_features(edge_attr: Tensor, edge_index: Tensor,
+                                   projected_value_norm: Tensor,
+                                   decision_support_proxy: Tensor, mode: str) -> Tensor:
+    """Derive message features using row 0 (key/source j) of edge j -> i."""
+    if mode == "attention":
+        return edge_attr
+    source = edge_index[0].long()
+    message = torch.log1p((edge_attr * projected_value_norm[source]).clamp_min(0))
+    decision = torch.asinh(edge_attr * decision_support_proxy[source])
+    if mode == "attention_message":
+        return torch.cat([edge_attr, message], dim=-1)
+    if mode == "attention_decision":
+        return torch.cat([edge_attr, decision], dim=-1)
+    if mode == "evidence_flow":
+        return torch.cat([edge_attr, message, decision], dim=-1)
+    raise ValueError(f"unknown edge feature mode: {mode}")

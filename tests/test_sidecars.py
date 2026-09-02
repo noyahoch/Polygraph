@@ -10,7 +10,8 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from polygraph.data.sidecars import (AlignedSidecar, atomic_torch_save, build_manifest,
-                                     store_key_sha256, validate_manifest)
+                                     derive_attention_edge_features, store_key_sha256,
+                                     validate_manifest, value_message_statistics)
 
 
 def fixture(root: Path):
@@ -66,6 +67,31 @@ def test_wrong_layer_and_atomic_resume():
         target = side / "atomic.pt"
         atomic_torch_save({"records": 1}, target)
         assert target.exists() and not target.with_suffix(".pt.tmp").exists()
+
+
+def test_message_norm_algebra():
+    torch.manual_seed(4)
+    value = torch.randn(3, 7, 12)
+    weight = torch.randn(12, 12)
+    direction = torch.randn(3, 12)
+    raw, projected, support = value_message_statistics(value, weight, direction, heads=3)
+    explicit = []
+    for h in range(3):
+        block = weight[:, h * 4:(h + 1) * 4]
+        explicit.append((value.reshape(3, 7, 3, 4)[:, :, h] @ block.T).norm(dim=-1))
+    assert torch.allclose(projected, torch.stack(explicit, -1), atol=2e-5, rtol=2e-5)
+    assert raw.shape == support.shape == (3, 7, 3)
+
+
+def test_edge_features_use_source_not_target():
+    edge_index = torch.tensor([[2], [1]])  # 2 -> 1
+    attention = torch.tensor([[0.5, 0.25]])
+    projected = torch.tensor([[1., 1.], [10., 10.], [2., 4.]])
+    support = torch.tensor([[0., 0.], [9., 9.], [-2., 3.]])
+    features = derive_attention_edge_features(attention, edge_index, projected, support,
+                                              "evidence_flow")
+    assert torch.allclose(features[0, 2:4], torch.log1p(torch.tensor([1., 1.])))
+    assert torch.allclose(features[0, 4:6], torch.asinh(torch.tensor([-1., .75])))
 
 
 if __name__ == "__main__":

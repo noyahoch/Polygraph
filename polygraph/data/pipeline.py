@@ -129,6 +129,82 @@ def capture_logits(classifier: FrozenClassifier, data_root: Path, store_dir: Pat
     return position
 
 
+def capture_message_stats(classifier: FrozenClassifier, data_root: Path, store_dir: Path,
+                          out_dir: Path, layer: int = 11, batch_size: int = 64) -> int:
+    """Capture compact final-block value statistics; never materializes per-edge messages."""
+    import json
+    import sys
+
+    from .sidecars import (atomic_json_save, atomic_torch_save, build_manifest,
+                           value_message_statistics)
+    from .storage import GraphShard
+
+    keys = [RecordKey(*k) for k in json.loads((store_dir / "store_keys.json").read_text())]
+    store_manifest = json.loads((store_dir / "manifest.json").read_text())
+    counts = list(map(int, store_manifest["shard_records"]))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    block = classifier.model.vit.encoder.layer[layer]
+    value_layer = block.attention.attention.value
+    output_weight = block.attention.output.dense.weight.detach()
+    classifier_weight = classifier.model.classifier.weight.detach()
+    heads = int(block.attention.attention.num_attention_heads)
+    captured: List[torch.Tensor] = []
+
+    def hook(_module, _inputs, output):
+        captured.append(output.detach())
+
+    handle = value_layer.register_forward_hook(hook)
+    position = disagreements = 0
+    try:
+        for shard_index, count in enumerate(counts):
+            shard_keys = keys[position:position + count]
+            position += count
+            out_path = out_dir / f"message_stats_{shard_index:05d}.pt"
+            if out_path.exists():
+                payload = torch.load(out_path, map_location="cpu")
+                if (int(payload.get("records", -1)) == count and payload.get("model_id") == classifier.model_id
+                        and int(payload.get("layer", -1)) == layer):
+                    continue
+                raise RuntimeError(f"incompatible completed message-stat shard: {out_path}")
+            graph_shard = GraphShard.load(store_dir / store_manifest["shards"][shard_index])
+            raw_all, projected_all, support_all, predicted_all, runner_all = [], [], [], [], []
+            for start in tqdm(range(0, count, batch_size), desc=f"message stats shard {shard_index}"):
+                chunk = shard_keys[start:start + batch_size]
+                images = [pool_for(k, data_root).image(k.base_index) for k in chunk]
+                captured.clear()
+                logits = classifier.logits(images).to(classifier.device)
+                if len(captured) != 1:
+                    raise RuntimeError(f"value hook fired {len(captured)} times")
+                top2 = logits.topk(2, -1).indices
+                expected = graph_shard.meta["pred"][start:start + len(chunk)].to(top2.device).long()
+                disagreements += int((top2[:, 0] != expected).sum())
+                direction = classifier_weight[top2[:, 0]] - classifier_weight[top2[:, 1]]
+                raw, projected, support = value_message_statistics(
+                    captured[0], output_weight, direction, heads)
+                raw_all.append(raw.cpu().half()); projected_all.append(projected.cpu().half())
+                support_all.append(support.cpu().half()); predicted_all.append(top2[:, 0].cpu().short())
+                runner_all.append(top2[:, 1].cpu().short())
+            if disagreements > MAX_DRIFT_FRACTION * max(position, 1) + 1:
+                raise RuntimeError(f"systematic message-stat prediction drift: {disagreements}/{position}")
+            atomic_torch_save({"value_norm": torch.cat(raw_all),
+                               "projected_value_norm": torch.cat(projected_all),
+                               "decision_support_proxy": torch.cat(support_all),
+                               "predicted_class": torch.cat(predicted_all),
+                               "runner_up_class": torch.cat(runner_all), "records": count,
+                               "model_id": classifier.model_id, "layer": layer}, out_path)
+    finally:
+        handle.remove()
+    manifest = build_manifest(store_dir, classifier.model_id,
+                              {"value_norm": ["N", 197, heads],
+                               "projected_value_norm": ["N", 197, heads],
+                               "decision_support_proxy": ["N", 197, heads],
+                               "predicted_class": ["N"], "runner_up_class": ["N"]},
+                              "float16/int16", sys.argv, layer=layer)
+    manifest["prediction_disagreements"] = disagreements
+    atomic_json_save(manifest, out_dir / "manifest.json")
+    return position
+
+
 def scan(classifier: FrozenClassifier, data_root: Path, scan_path: Path,
          pairs: Sequence[Tuple[str, int]], batch_size: int = 64, limit_per_pool: int = 0) -> None:
     """Record the classifier's verdict over image pools. Resumable, edge-rule agnostic."""
