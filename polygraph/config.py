@@ -33,6 +33,7 @@ FAMILY_OF = {name: family for family, names in CORRUPTION_FAMILIES.items() for n
 FAMILY_OF.update({CLEAN_TEST: "clean", CLEAN_TRAIN: "clean"})
 
 DEFAULT_MODEL_ID = "edumunozsala/vit_base-224-in21k-ft-cifar100"
+CIFAR100_REPO = "uoft-cs/cifar100"
 CIFAR100C_REPO = "WNJXYK/TTA-CIFAR-100-C"
 CLEAN_SEVERITY = 0
 # Extraction threshold. Edge sets are nested in tau, so any stricter tau is recoverable

@@ -10,12 +10,47 @@ from typing import Iterable, List, Optional, Tuple
 import numpy as np
 from PIL import Image
 
-from ..config import CIFAR100C_REPO, CLEAN_SEVERITY, CLEAN_TEST, CLEAN_TRAIN, is_corruption
+from ..config import (CIFAR100_REPO, CIFAR100C_REPO, CLEAN_SEVERITY, CLEAN_TEST,
+                      CLEAN_TRAIN, is_corruption)
 from ..records import RecordKey
 
 
 def corruption_path(data_root: Path, corruption: str, severity: int) -> Path:
     return data_root / "cifar100c" / corruption / f"severity_{severity}.parquet"
+
+
+def clean_path(data_root: Path, source: str) -> Path:
+    split = "test" if source == CLEAN_TEST else "train"
+    return data_root / "hf_cifar100" / "cifar100" / f"{split}-00000-of-00001.parquet"
+
+
+def _copy_download_atomic(cached: Path, out: Path) -> None:
+    """Copy a Hub cache object without exposing a partially written parquet to readers."""
+    import os
+    import shutil
+
+    out.parent.mkdir(parents=True, exist_ok=True)
+    tmp = out.with_suffix(out.suffix + ".tmp")
+    with Path(cached).open("rb") as source, tmp.open("wb") as target:
+        shutil.copyfileobj(source, target, length=8 * 1024 * 1024)
+        target.flush()
+        os.fsync(target.fileno())
+    os.replace(tmp, out)
+
+
+def fetch_clean(data_root: Path, source: str) -> Path:
+    """Download the canonical CIFAR-100 train/test parquet if missing."""
+    assert source in (CLEAN_TEST, CLEAN_TRAIN), source
+    out = clean_path(data_root, source)
+    if not out.exists():
+        split = "test" if source == CLEAN_TEST else "train"
+        from huggingface_hub import hf_hub_download
+
+        cached = hf_hub_download(CIFAR100_REPO,
+                                 f"cifar100/{split}-00000-of-00001.parquet",
+                                 repo_type="dataset")
+        _copy_download_atomic(Path(cached), out)
+    return out
 
 
 def fetch_corruption(data_root: Path, corruption: str, severity: int) -> Path:
@@ -27,14 +62,16 @@ def fetch_corruption(data_root: Path, corruption: str, severity: int) -> Path:
 
         cached = hf_hub_download(CIFAR100C_REPO, f"data/{corruption}/severity_{severity}/data-00000.parquet",
                                  repo_type="dataset")
-        out.parent.mkdir(parents=True, exist_ok=True)
-        out.write_bytes(Path(cached).read_bytes())
+        _copy_download_atomic(Path(cached), out)
     return out
 
 
 def ensure_downloaded(pairs: Iterable[Tuple[str, int]], data_root: Path) -> None:
     for source, severity in sorted(set(pairs)):
-        if is_corruption(source) and not corruption_path(data_root, source, severity).exists():
+        if source in (CLEAN_TEST, CLEAN_TRAIN) and not clean_path(data_root, source).exists():
+            print(f"fetching {source}", flush=True)
+            fetch_clean(data_root, source)
+        elif is_corruption(source) and not corruption_path(data_root, source, severity).exists():
             print(f"fetching {source} severity {severity}", flush=True)
             fetch_corruption(data_root, source, severity)
 
@@ -45,8 +82,7 @@ class ImagePool:
     def __init__(self, source: str, severity: int, data_root: Path):
         self.name, self.severity = source, severity
         if source in (CLEAN_TEST, CLEAN_TRAIN):
-            split = "test" if source == CLEAN_TEST else "train"
-            self.path = data_root / "hf_cifar100" / "cifar100" / f"{split}-00000-of-00001.parquet"
+            self.path = clean_path(data_root, source)
             self._cols = ("img", "fine_label")
         else:
             self.path = corruption_path(data_root, source, severity)

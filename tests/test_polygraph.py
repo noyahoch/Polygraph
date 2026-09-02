@@ -165,6 +165,16 @@ def test_pool_cache_normalizes_clean_severity() -> None:
         check(get_pool("clean_test", 3, Path(tmp)) is a, "clean severities got separate pools")
 
 
+def test_clean_pool_paths_match_hub_layout() -> None:
+    from polygraph.data.sources import clean_path
+
+    root = Path("data")
+    check(clean_path(root, "clean_test") ==
+          root / "hf_cifar100/cifar100/test-00000-of-00001.parquet", "clean test path changed")
+    check(clean_path(root, "clean_train") ==
+          root / "hf_cifar100/cifar100/train-00000-of-00001.parquet", "clean train path changed")
+
+
 def test_image_pool_reads_parquet() -> None:
     import io
 
