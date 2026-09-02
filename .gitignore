@@ -7,3 +7,8 @@
 __pycache__/
 *.pyc
 .DS_Store
+
+# never commit model weights
+*.safetensors
+*.bin
+pilots/**/model/
