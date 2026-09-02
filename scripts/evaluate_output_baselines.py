@@ -35,7 +35,10 @@ def collect(plan: SplitPlan, store: GraphStore, logits_dir: Path):
         rows[index] = (logit_shard["logits"][logit_offset].float().numpy(),
                        float(shard.meta["y_err"][offset]), float(shard.meta["confidence"][offset]),
                        float(shard.meta["margin"][offset]), int(shard.meta["base_index"][offset]),
-                       int(shard.meta["source_id"][offset]), int(shard.meta["severity"][offset]))
+                       int(shard.meta["source_id"][offset]), int(shard.meta["severity"][offset]),
+                       int(shard.meta["label"][offset]),
+                       (None if shard.cls_embeddings is None else
+                        shard.cls_embeddings[offset, -1].float().numpy()))
     result = {}
     for name, indices in split_indices.items():
         values = [rows[i] for i in indices]
@@ -46,6 +49,9 @@ def collect(plan: SplitPlan, store: GraphStore, logits_dir: Path):
                         "image_id": np.asarray([x[4] for x in values], np.int32),
                         "source_id": np.asarray([x[5] for x in values], np.int16),
                         "severity": np.asarray([x[6] for x in values], np.int8),
+                        "label": np.asarray([x[7] for x in values], np.int16),
+                        **({"cls": np.stack([x[8] for x in values])}
+                           if values and values[0][8] is not None else {}),
                         "store_index": np.asarray(indices, np.int64)}
     return result
 
