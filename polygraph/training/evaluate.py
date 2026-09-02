@@ -106,10 +106,14 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
             datasets = {n: CharmDataset(store, plan.splits[n], tau=config.tau)
                         for n in ("train", "val", "test")}
         else:
-            hidden_dir = store_dir.parent / "hidden12" if getattr(config, "hidden", False) else None
+            node_features = getattr(config, "node_features", "base")
+            if getattr(config, "hidden", False) and node_features == "base":
+                node_features = "hidden"
+            hidden_dir = store_dir.parent / "hidden12" if node_features == "hidden" else None
             datasets = {n: AttentionGraphDataset(store, config.layers, plan.splits[n],
                                                  tau=config.tau, top_k=config.top_k,
-                                                 hidden_dir=hidden_dir)
+                                                 hidden_dir=hidden_dir,
+                                                 rewire_mode=getattr(config, "rewire_mode", "none"))
                         for n in ("train", "val", "test")}
         print(f"collecting graph predictions ({path.name})...", flush=True)
         train_pred = collect(model, datasets["train"], device, config.batch_size)

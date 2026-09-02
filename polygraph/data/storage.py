@@ -29,6 +29,22 @@ META_FIELDS = (("base_index", torch.int32), ("severity", torch.int8), ("source_i
                ("confidence", torch.float32), ("margin", torch.float32))
 
 
+def rewire_graph(edge_index: Tensor, edge_attr: Tensor, mode: str, store_index: int,
+                 seed: int = 20260830) -> Tuple[Tensor, Tensor]:
+    """Deterministic, label-independent within-graph controls."""
+    if mode == "none":
+        return edge_index, edge_attr
+    if mode not in {"target_permute", "shuffle_attr"}:
+        raise ValueError(f"unknown rewire mode: {mode}")
+    generator = torch.Generator().manual_seed(int(seed) + 1_000_003 * int(store_index))
+    permutation = torch.randperm(edge_attr.shape[0], generator=generator)
+    if mode == "target_permute":
+        changed = edge_index.clone()
+        changed[1] = changed[1, permutation]
+        return changed, edge_attr
+    return edge_index, edge_attr[permutation]
+
+
 @dataclass
 class GraphShard:
     """A contiguous block of records; edges ragged via a cumulative offset table."""
@@ -294,6 +310,7 @@ class CharmDataset(Dataset):
                     margin=meta["margin"][offset].view(1),
                     source_id=meta["source_id"][offset].long().view(1),
                     severity=meta["severity"][offset].long().view(1),
+                    store_index=torch.tensor([self.indices[position]], dtype=torch.long),
                     **({"cls_layers": shard.cls_embeddings[offset].float().unsqueeze(0)}
                        if shard.cls_embeddings is not None else {}))
 
@@ -304,12 +321,14 @@ class AttentionGraphDataset(Dataset):
 
     def __init__(self, store, layers: Sequence[int], keys: Optional[Sequence[RecordKey]] = None,
                  tau: Optional[float] = None, top_k: Optional[int] = None,
-                 hidden_dir: Optional[Path] = None):
+                 hidden_dir: Optional[Path] = None, rewire_mode: str = "none",
+                 rewire_seed: int = 20260830):
         self.store = store if isinstance(store, GraphStore) else GraphStore(store)
         assert tau is None or top_k is None, "tau and top_k are competing rules; pass one"
         if tau is not None and tau < self.store.tau:
             raise ValueError(f"tau={tau} is below the extraction threshold {self.store.tau}")
         self.tau, self.top_k, self.layers = tau, top_k, list(layers)
+        self.rewire_mode, self.rewire_seed = rewire_mode, int(rewire_seed)
         # Variant 2: per-token hidden states appended to node features. The hidden shards
         # are written in store order with the store's shard sizes, so alignment is by
         # (shard_index, offset) — asserted per shard on first access.
@@ -369,8 +388,11 @@ class AttentionGraphDataset(Dataset):
                 parts.append(self._hidden(shard_index)[offset].float())
             xs.append(torch.cat(parts, 1))
             graph = shard.layer_graph(offset, layer, tau=self.tau, top_k=self.top_k)
-            edge_indices.append(graph.edge_index.long() + slot * tokens)
-            edge_attrs.append(graph.edge_attr.float())
+            edge_index, edge_attr = rewire_graph(
+                graph.edge_index.long(), graph.edge_attr.float(), self.rewire_mode,
+                self.indices[position], self.rewire_seed)
+            edge_indices.append(edge_index + slot * tokens)
+            edge_attrs.append(edge_attr)
             layer_ids.append(torch.full((tokens,), slot, dtype=torch.long))
         meta = shard.meta
         extras = {}
@@ -385,4 +407,5 @@ class AttentionGraphDataset(Dataset):
                     confidence=meta["confidence"][offset].view(1),
                     margin=meta["margin"][offset].view(1),
                     source_id=meta["source_id"][offset].long().view(1),
-                    severity=meta["severity"][offset].long().view(1), **extras)
+                    severity=meta["severity"][offset].long().view(1),
+                    store_index=torch.tensor([self.indices[position]], dtype=torch.long), **extras)

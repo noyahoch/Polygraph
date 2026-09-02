@@ -118,3 +118,94 @@ class EdgeSetModel(nn.Module):
         pooled = torch.cat([scatter(h, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="mean"),
                             scatter(h, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="max")], dim=-1)
         return self.rho(pooled).view(-1), None
+
+
+class NodeEdgeSetModel(nn.Module):
+    """Matched multiset control: all node/edge values, but no edge endpoints."""
+
+    def __init__(self, in_dim: int, edge_dim: int, hidden_dim: int, dropout: float):
+        super().__init__()
+        self.node_phi = nn.Sequential(nn.Linear(in_dim, hidden_dim), nn.ReLU(),
+                                      nn.Linear(hidden_dim, hidden_dim))
+        self.edge_phi = nn.Sequential(nn.Linear(edge_dim, hidden_dim), nn.ReLU(),
+                                      nn.Linear(hidden_dim, hidden_dim))
+        self.rho = nn.Sequential(nn.Linear(4 * hidden_dim, hidden_dim), nn.ReLU(),
+                                 nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
+
+    def forward(self, data: Data) -> Tuple[Tensor, None]:
+        from torch_geometric.utils import scatter
+
+        nodes = self.node_phi(data.x)
+        edges = self.edge_phi(data.edge_attr)
+        graph_of_edge = data.batch[data.edge_index[0]]
+        pooled = torch.cat([
+            scatter(nodes, data.batch, dim=0, dim_size=data.num_graphs, reduce="mean"),
+            scatter(nodes, data.batch, dim=0, dim_size=data.num_graphs, reduce="max"),
+            scatter(edges, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="mean"),
+            scatter(edges, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="max"),
+        ], dim=-1)
+        return self.rho(pooled).view(-1), None
+
+
+class EndpointSetModel(nn.Module):
+    """Non-message-passing set of [source node, target node, edge] records."""
+
+    def __init__(self, in_dim: int, edge_dim: int, hidden_dim: int, dropout: float):
+        super().__init__()
+        self.phi = nn.Sequential(nn.Linear(2 * in_dim + edge_dim, hidden_dim), nn.ReLU(),
+                                 nn.Linear(hidden_dim, hidden_dim))
+        self.rho = nn.Sequential(nn.Linear(2 * hidden_dim, hidden_dim), nn.ReLU(),
+                                 nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
+
+    def forward(self, data: Data) -> Tuple[Tensor, None]:
+        from torch_geometric.utils import scatter
+
+        source, target = data.edge_index
+        records = self.phi(torch.cat([data.x[source], data.x[target], data.edge_attr], dim=-1))
+        graph_of_edge = data.batch[source]
+        pooled = torch.cat([
+            scatter(records, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="mean"),
+            scatter(records, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="max"),
+        ], dim=-1)
+        return self.rho(pooled).view(-1), None
+
+
+class SimpleMPNN(nn.Module):
+    """Two-layer explicit mean-message MPNN with no learned attention coefficient."""
+
+    def __init__(self, in_dim: int, edge_dim: int, hidden_dim: int, layers: int,
+                 dropout: float, readout: str = "cls_gated"):
+        super().__init__()
+        if readout != "cls_gated":
+            raise ValueError("SimpleMPNN currently supports cls_gated readout only")
+        self.input = nn.Linear(in_dim, hidden_dim)
+        self.messages = nn.ModuleList([
+            nn.Sequential(nn.Linear(2 * hidden_dim + edge_dim, hidden_dim), nn.ReLU(),
+                          nn.Linear(hidden_dim, hidden_dim)) for _ in range(layers)])
+        self.updates = nn.ModuleList([
+            nn.Sequential(nn.Linear(2 * hidden_dim + 1, hidden_dim), nn.ReLU(),
+                          nn.Linear(hidden_dim, hidden_dim)) for _ in range(layers)])
+        self.norms = nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in range(layers)])
+        self.dropout = nn.Dropout(dropout)
+        self.gate = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, 1))
+        self.decoder = nn.Sequential(nn.Dropout(dropout), nn.Linear(2 * hidden_dim, hidden_dim),
+                                     nn.ReLU(), nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        from torch_geometric.utils import scatter
+
+        raw_x, x = data.x, self.input(data.x)
+        source, target = data.edge_index
+        for message, update, norm in zip(self.messages, self.updates, self.norms):
+            m = message(torch.cat([x[source], x[target], data.edge_attr], dim=-1))
+            mean = scatter(m, target, dim=0, dim_size=x.shape[0], reduce="mean")
+            degree = scatter(torch.ones_like(target, dtype=x.dtype), target, dim=0,
+                             dim_size=x.shape[0], reduce="sum").log1p().unsqueeze(1)
+            x = self.dropout(torch.relu(norm(x + update(torch.cat([x, mean, degree], dim=-1)))))
+        graph_count = data.num_graphs
+        cls = x[raw_x[:, 2] > 0.5]
+        if cls.shape[0] != graph_count:
+            raise RuntimeError(f"Expected one CLS node per graph, got {cls.shape[0]}")
+        weights = softmax(self.gate(x).view(-1), data.batch)
+        embedding = torch.cat([cls, global_add_pool(x * weights.unsqueeze(1), data.batch)], dim=1)
+        return self.decoder(embedding).view(-1), embedding

@@ -44,6 +44,25 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--seeds", type=int, nargs="+", default=[7],
                        help="POC default: one seed; use 3+ for any claimed result "
                             "(single-seed noise measured at ~±0.02 AUROC)")
+    train.add_argument("--architecture", default="transformerconv",
+                       choices=["transformerconv", "simple_mpnn", "edge_set", "node_edge_set",
+                                "endpoint_set", "temporal_mpnn"])
+    train.add_argument("--node-features", default=None,
+                       choices=["base", "compact_evidence", "hidden"])
+    train.add_argument("--edge-features", default="attention",
+                       choices=["attention", "attention_message", "attention_decision", "evidence_flow"])
+    train.add_argument("--logits-dir")
+    train.add_argument("--message-stats-dir")
+    train.add_argument("--compact-evidence-dir")
+    train.add_argument("--rewire-mode", default="none",
+                       choices=["none", "target_permute", "shuffle_attr"])
+    train.add_argument("--temporal-edges", action="store_true")
+    train.add_argument("--tcp-multitask", action="store_true")
+    train.add_argument("--epochs", type=int, default=60)
+    train.add_argument("--patience", type=int, default=8)
+    train.add_argument("--min-delta", type=float, default=0.002)
+    train.add_argument("--lr", type=float, default=2e-3)
+    train.add_argument("--weight-decay", type=float, default=1e-4)
 
     evaluate = sub.add_parser("evaluate", help="evaluate saved checkpoints")
     evaluate.add_argument("--run-dir", default="runs/detector")
@@ -71,11 +90,20 @@ def main(argv: Sequence[str] | None = None) -> None:
 
         named = {"last": [11], "all": list(range(12)), "final4": [8, 9, 10, 11]}
         layers = named.get(args.layers) or [int(x) for x in args.layers.split(",")]
+        node_features = args.node_features or ("hidden" if args.hidden else "base")
         config = TrainConfig(layers=layers, readout=args.readout, tau=args.tau, top_k=args.top_k,
                              hidden_dim=args.hidden_dim, gnn_layers=args.gnn_layers,
                              batch_size=args.batch_size, shuffle_labels=args.shuffle_labels,
                              charm=args.charm, hidden=args.hidden,
-                             epochs_per_process=args.epochs_per_process or None)
+                             epochs_per_process=args.epochs_per_process or None,
+                             architecture=args.architecture, node_features=node_features,
+                             edge_features=args.edge_features, logits_dir=args.logits_dir,
+                             message_stats_dir=args.message_stats_dir,
+                             compact_evidence_dir=args.compact_evidence_dir,
+                             rewire_mode=args.rewire_mode, temporal_edges=args.temporal_edges,
+                             tcp_multitask=args.tcp_multitask, epochs=args.epochs,
+                             patience=args.patience, min_delta=args.min_delta, lr=args.lr,
+                             weight_decay=args.weight_decay)
         print(f"device: {device} | layers: {layers} | readout: {args.readout} "
               f"| hidden_dim: {args.hidden_dim} | gnn_layers: {args.gnn_layers}", flush=True)
         train_run(root / STORE_DIR, plan_path, root / args.out_dir, config, args.seeds, device)

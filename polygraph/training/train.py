@@ -43,6 +43,15 @@ class TrainConfig:
     charm: bool = False  # CHARM-lite: one union graph per image, L*H-dim edge features
     hidden: bool = False  # variant 2: per-token hidden states appended to node features
     epochs_per_process: Optional[int] = None  # segment length; None disables
+    architecture: str = "transformerconv"
+    node_features: str = "base"
+    edge_features: str = "attention"
+    logits_dir: Optional[str] = None
+    message_stats_dir: Optional[str] = None
+    compact_evidence_dir: Optional[str] = None
+    rewire_mode: str = "none"
+    temporal_edges: bool = False
+    tcp_multitask: bool = False
 
 
 class ShardShuffleSampler(torch.utils.data.Sampler):
@@ -91,10 +100,26 @@ class _ShuffledLabels(torch.utils.data.Dataset):
 
 
 def build_model(config: TrainConfig, in_dim: int, edge_dim: int) -> nn.Module:
-    if config.readout == "edge_set":
+    architecture = getattr(config, "architecture", "transformerconv")
+    if architecture == "edge_set" or config.readout == "edge_set":
         from .models import EdgeSetModel
 
         return EdgeSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
+    if architecture == "node_edge_set":
+        from .models import NodeEdgeSetModel
+
+        return NodeEdgeSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
+    if architecture == "endpoint_set":
+        from .models import EndpointSetModel
+
+        return EndpointSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
+    if architecture == "simple_mpnn":
+        from .models import SimpleMPNN
+
+        return SimpleMPNN(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
+                          config.dropout, config.readout)
+    if architecture not in {"transformerconv", "temporal_mpnn"}:
+        raise ValueError(f"unknown architecture: {architecture}")
     if len(config.layers) == 1:
         return ReadoutModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
                             config.dropout, config.readout)
@@ -132,6 +157,7 @@ def train_detector(config: TrainConfig, train_ds, val_ds, device,
     random.seed(config.seed), np.random.seed(config.seed), torch.manual_seed(config.seed)
     sample = train_ds[0]
     model = build_model(config, int(sample.x.shape[1]), int(sample.edge_attr.shape[1])).to(device)
+    print(f"  parameters: {sum(p.numel() for p in model.parameters()):,}", flush=True)
     if hasattr(train_ds, "shard_blocks"):
         sampler = ShardShuffleSampler(train_ds, config.seed)
         loader = DataLoader(train_ds, batch_size=config.batch_size, sampler=sampler)
@@ -220,10 +246,19 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
         datasets = {n: CharmDataset(store, plan.splits[n], tau=config.tau)
                     for n in ("train", "val")}
     else:
-        hidden_dir = store_dir.parent / "hidden12" if config.hidden else None
+        node_features = getattr(config, "node_features", "base")
+        if config.hidden and node_features == "base":  # legacy --hidden behavior
+            node_features = "hidden"
+        hidden_dir = store_dir.parent / "hidden12" if node_features == "hidden" else None
+        if node_features not in {"base", "hidden"}:
+            raise ValueError(f"node feature mode not available yet: {node_features}")
+        if getattr(config, "edge_features", "attention") != "attention":
+            raise ValueError("message-stat sidecar required for non-attention edge features")
         datasets = {n: AttentionGraphDataset(store, config.layers, plan.splits[n],
                                              tau=config.tau, top_k=config.top_k,
-                                             hidden_dir=hidden_dir) for n in ("train", "val")}
+                                             hidden_dir=hidden_dir,
+                                             rewire_mode=getattr(config, "rewire_mode", "none"))
+                    for n in ("train", "val")}
     if config.shuffle_labels:
         datasets["train"] = _ShuffledLabels(datasets["train"], seed=999)
     sample = datasets["train"][0]
