@@ -71,6 +71,7 @@ def main() -> int:
     report["scan_records"] = len(scan_labels)
 
     plans = []
+    store_key_set = {key_tuple(value) for value in store_keys}
     for path in sorted((root / "data").glob("**/*plan*.json")) if (root / "data").exists() else []:
         plan = load_json(path)
         splits = plan_splits(plan)
@@ -92,7 +93,7 @@ def main() -> int:
             "base_image_overlap": overlap,
             "class_balance": balance,
             "missing_scan_records": missing_scan,
-            "store_key_coverage": (sum(k in {key_tuple(x) for x in store_keys}
+            "store_key_coverage": (sum(k in store_key_set
                                        for values in split_keys.values() for k in values)
                                    if store_keys else None),
         })
