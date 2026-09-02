@@ -32,6 +32,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     split = sub.add_parser("split", help="group-disjoint stratified split plan")
     split.add_argument("--plan", default=None)
+    split.add_argument("--restrict-to-plan", default=None,
+                       help="re-split only keys in an existing plan (for alternate holdouts over "
+                            "the immutable graph-store universe)")
     split.add_argument("--held-out", nargs="*", default=["extra"],
                        help="sources or families excluded from train+val, kept in test")
     for name in ("train", "val", "test"):
@@ -91,11 +94,15 @@ def main(argv: Sequence[str] | None = None) -> None:
         scan(classifier, data_root, scan_path, pairs, batch_size=args.batch_size)
 
     elif args.command == "split":
-        from .splits import build_plan
+        from .splits import SplitPlan, build_plan
 
         # clean_train is excluded: the ViT was fine-tuned on it (measured 99.45% accuracy,
         # confidence inflated by memorization), so its records are not comparable.
         records = [r for r in read_scan_records(scan_path) if r.key.source != CLEAN_TRAIN]
+        if args.restrict_to_plan:
+            universe = SplitPlan.load(root / args.restrict_to_plan)
+            allowed = {key.as_tuple() for values in universe.splits.values() for key in values}
+            records = [record for record in records if record.key.as_tuple() in allowed]
         plan = build_plan(records, caps={n: getattr(args, f"{n}_cap") for n in ("train", "val", "test")},
                           held_out=resolve_sources(args.held_out))
         plan.save(plan_path)
