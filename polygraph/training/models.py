@@ -191,10 +191,10 @@ class SimpleMPNN(nn.Module):
         self.decoder = nn.Sequential(nn.Dropout(dropout), nn.Linear(2 * hidden_dim, hidden_dim),
                                      nn.ReLU(), nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
 
-    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+    def encode(self, data: Data) -> Tensor:
         from torch_geometric.utils import scatter
 
-        raw_x, x = data.x, self.input(data.x)
+        x = self.input(data.x)
         source, target = data.edge_index
         for message, update, norm in zip(self.messages, self.updates, self.norms):
             m = message(torch.cat([x[source], x[target], data.edge_attr], dim=-1))
@@ -202,10 +202,28 @@ class SimpleMPNN(nn.Module):
             degree = scatter(torch.ones_like(target, dtype=x.dtype), target, dim=0,
                              dim_size=x.shape[0], reduce="sum").log1p().unsqueeze(1)
             x = self.dropout(torch.relu(norm(x + update(torch.cat([x, mean, degree], dim=-1)))))
+        return x
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        raw_x, x = data.x, self.encode(data)
         graph_count = data.num_graphs
         cls = x[raw_x[:, 2] > 0.5]
         if cls.shape[0] != graph_count:
             raise RuntimeError(f"Expected one CLS node per graph, got {cls.shape[0]}")
+        weights = softmax(self.gate(x).view(-1), data.batch)
+        embedding = torch.cat([cls, global_add_pool(x * weights.unsqueeze(1), data.batch)], dim=1)
+        return self.decoder(embedding).view(-1), embedding
+
+
+class TemporalMPNN(SimpleMPNN):
+    """SimpleMPNN over layer-token nodes; reads final-layer CLS plus all-node gated pool."""
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        raw_x, x = data.x, self.encode(data)
+        final_layer = int(data.layer_id.max())
+        cls = x[(raw_x[:, 2] > 0.5) & (data.layer_id == final_layer)]
+        if cls.shape[0] != data.num_graphs:
+            raise RuntimeError(f"Expected one final-layer CLS per graph, got {cls.shape[0]}")
         weights = softmax(self.gate(x).view(-1), data.batch)
         embedding = torch.cat([cls, global_add_pool(x * weights.unsqueeze(1), data.batch)], dim=1)
         return self.decoder(embedding).view(-1), embedding

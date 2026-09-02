@@ -12,8 +12,9 @@ from torch_geometric.data import Batch, Data
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from polygraph.data.storage import rewire_graph
-from polygraph.training.models import EdgeSetModel, EndpointSetModel, NodeEdgeSetModel, SimpleMPNN
+from polygraph.data.storage import append_temporal_identity_edges, rewire_graph
+from polygraph.training.models import (EdgeSetModel, EndpointSetModel, NodeEdgeSetModel,
+                                       SimpleMPNN, TemporalMPNN)
 from polygraph.training.train import TrainConfig, build_model, load_checkpoint
 
 
@@ -91,6 +92,20 @@ def test_old_checkpoint_loads_with_new_config_defaults():
         loaded, loaded_config = load_checkpoint(path, torch.device("cpu"))
     assert loaded_config.architecture == "transformerconv"
     assert type(loaded) is type(model)
+
+
+def test_temporal_edge_construction_and_model():
+    edges = [torch.tensor([[0, 1], [1, 2]]), torch.tensor([[3, 4], [4, 5]])]
+    attrs = [torch.ones(2, 2), torch.ones(2, 2) * 2]
+    edge_index, edge_attr = append_temporal_identity_edges(edges, attrs, tokens=3)
+    assert torch.equal(edge_index[:, -3:], torch.tensor([[0, 1, 2], [3, 4, 5]]))
+    assert torch.equal(edge_attr[:4, -1], torch.zeros(4))
+    assert torch.equal(edge_attr[-3:, -1], torch.ones(3))
+    x = torch.randn(6, 4); x[:, 2] = 0; x[0, 2] = x[3, 2] = 1
+    data = Batch.from_data_list([Data(x=x, edge_index=edge_index, edge_attr=edge_attr,
+                                      layer_id=torch.tensor([0, 0, 0, 1, 1, 1]))])
+    output, _ = TemporalMPNN(4, 3, 8, 2, 0)(data)
+    assert output.shape == (1,)
 
 
 if __name__ == "__main__":

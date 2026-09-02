@@ -118,7 +118,12 @@ def build_model(config: TrainConfig, in_dim: int, edge_dim: int) -> nn.Module:
 
         return SimpleMPNN(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
                           config.dropout, config.readout)
-    if architecture not in {"transformerconv", "temporal_mpnn"}:
+    if architecture == "temporal_mpnn":
+        from .models import TemporalMPNN
+
+        return TemporalMPNN(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
+                            config.dropout, config.readout)
+    if architecture != "transformerconv":
         raise ValueError(f"unknown architecture: {architecture}")
     if len(config.layers) == 1:
         return ReadoutModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
@@ -264,7 +269,8 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
                                              rewire_mode=getattr(config, "rewire_mode", "none"),
                                              edge_features=getattr(config, "edge_features", "attention"),
                                              message_stats_dir=message_dir,
-                                             compact_evidence_dir=compact_dir)
+                                             compact_evidence_dir=compact_dir,
+                                             temporal_edges=getattr(config, "temporal_edges", False))
                     for n in ("train", "val")}
     if config.shuffle_labels:
         datasets["train"] = _ShuffledLabels(datasets["train"], seed=999)

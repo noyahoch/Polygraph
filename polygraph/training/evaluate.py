@@ -122,7 +122,8 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
                                                  rewire_mode=getattr(config, "rewire_mode", "none"),
                                                  edge_features=getattr(config, "edge_features", "attention"),
                                                  message_stats_dir=message_dir,
-                                                 compact_evidence_dir=compact_dir)
+                                                 compact_evidence_dir=compact_dir,
+                                                 temporal_edges=getattr(config, "temporal_edges", False))
                         for n in ("train", "val", "test")}
         print(f"collecting graph predictions ({path.name})...", flush=True)
         train_pred = collect(model, datasets["train"], device, config.batch_size)

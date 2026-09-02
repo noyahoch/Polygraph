@@ -45,6 +45,25 @@ def rewire_graph(edge_index: Tensor, edge_attr: Tensor, mode: str, store_index: 
     return edge_index, edge_attr[permutation]
 
 
+def append_temporal_identity_edges(edge_indices: Sequence[Tensor], edge_attrs: Sequence[Tensor],
+                                   tokens: int) -> Tuple[Tensor, Tensor]:
+    """Add token-preserving forward depth edges and a final edge-type column."""
+    if len(edge_indices) < 2:
+        raise ValueError("temporal graph requires at least two layers")
+    typed_attention = [torch.cat([attr, attr.new_zeros((len(attr), 1))], dim=1)
+                       for attr in edge_attrs]
+    temporal_indices, temporal_attrs = [], []
+    for layer in range(len(edge_indices) - 1):
+        source = torch.arange(tokens) + layer * tokens
+        target = source + tokens
+        temporal_indices.append(torch.stack([source, target]))
+        attr = edge_attrs[0].new_zeros((tokens, edge_attrs[0].shape[1] + 1))
+        attr[:, -1] = 1
+        temporal_attrs.append(attr)
+    return (torch.cat([*edge_indices, *temporal_indices], dim=1),
+            torch.cat([*typed_attention, *temporal_attrs], dim=0))
+
+
 @dataclass
 class GraphShard:
     """A contiguous block of records; edges ragged via a cumulative offset table."""
@@ -324,7 +343,7 @@ class AttentionGraphDataset(Dataset):
                  hidden_dir: Optional[Path] = None, rewire_mode: str = "none",
                  rewire_seed: int = 20260830, edge_features: str = "attention",
                  message_stats_dir: Optional[Path] = None,
-                 compact_evidence_dir: Optional[Path] = None):
+                 compact_evidence_dir: Optional[Path] = None, temporal_edges: bool = False):
         self.store = store if isinstance(store, GraphStore) else GraphStore(store)
         assert tau is None or top_k is None, "tau and top_k are competing rules; pass one"
         if tau is not None and tau < self.store.tau:
@@ -332,6 +351,7 @@ class AttentionGraphDataset(Dataset):
         self.tau, self.top_k, self.layers = tau, top_k, list(layers)
         self.rewire_mode, self.rewire_seed = rewire_mode, int(rewire_seed)
         self.edge_features = edge_features
+        self.temporal_edges = temporal_edges
         # Variant 2: per-token hidden states appended to node features. The hidden shards
         # are written in store order with the store's shard sizes, so alignment is by
         # (shard_index, offset) — asserted per shard on first access.
@@ -441,8 +461,13 @@ class AttentionGraphDataset(Dataset):
         if shard.cls_embeddings is not None:
             # [1, L, D] so PyG batching stacks to [B, L, D]; feeds the representation baselines.
             extras["cls_layers"] = shard.cls_embeddings[offset].float().unsqueeze(0)
-        return Data(x=torch.cat(xs), edge_index=torch.cat(edge_indices, 1),
-                    edge_attr=torch.cat(edge_attrs), layer_id=torch.cat(layer_ids),
+        if self.temporal_edges:
+            final_edge_index, final_edge_attr = append_temporal_identity_edges(
+                edge_indices, edge_attrs, tokens)
+        else:
+            final_edge_index, final_edge_attr = torch.cat(edge_indices, 1), torch.cat(edge_attrs)
+        return Data(x=torch.cat(xs), edge_index=final_edge_index,
+                    edge_attr=final_edge_attr, layer_id=torch.cat(layer_ids),
                     y=meta["y_err"][offset].view(1),
                     image_id=meta["base_index"][offset].long().view(1),
                     vit_correct=(1.0 - meta["y_err"][offset]).view(1),
