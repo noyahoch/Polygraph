@@ -321,6 +321,10 @@ def capture_hidden(classifier: FrozenClassifier, data_root: Path, store_dir: Pat
             with torch.no_grad():
                 out = classifier.model(pixels.to(classifier.device), output_hidden_states=True)
             buffers.append(out.hidden_states[layer].to("cpu", torch.float16))
+            # Release all twelve GPU hidden-state tensors before the next forward.  Keeping
+            # ``out`` alive until reassignment doubles sustained memory versus a one-batch
+            # benchmark and can OOM even when the selected batch itself fits comfortably.
+            del out, pixels
             if classifier.device.type == "mps":
                 torch.mps.empty_cache()
         tensor = torch.cat(buffers)
