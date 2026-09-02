@@ -213,10 +213,15 @@ class GraphStoreWriter:
         if sum(counts) != len(self.stored_keys()):
             raise RuntimeError(f"shards hold {sum(counts)} records but the key list names "
                                f"{len(self.stored_keys())}; re-run extract to finish the store")
+        shards = sorted(p.name for p in self.store_dir.glob("shard_*.pt"))
+        probe = GraphShard.load(self.store_dir / shards[0]) if shards else None
         (self.store_dir / "manifest.json").write_text(json.dumps(dict(
             records=sum(counts), shard_size=self.shard_size, shard_records=counts,
-            shards=sorted(p.name for p in self.store_dir.glob("shard_*.pt")),
-            tau=self.tau, **(extra or {})), indent=2))
+            shards=shards, tau=self.tau,
+            layer_count=None if probe is None else probe.layer_count,
+            num_tokens=None if probe is None else probe.num_tokens,
+            cls_embeddings=False if probe is None else probe.cls_embeddings is not None,
+            **(extra or {})), indent=2))
 
 
 class GraphStore:

@@ -60,6 +60,16 @@ def main() -> int:
             "cls_embeddings": manifest.get("cls_embeddings"),
             "store_key_sha256": hashlib.sha256(encoded).hexdigest(),
         }
+    scan_labels = {}
+    scan_path = root / "data/graph_dataset/scan_records.jsonl"
+    if scan_path.exists():
+        with scan_path.open(encoding="utf-8") as handle:
+            for line in handle:
+                row = json.loads(line)
+                key = (str(row["source"]), int(row["severity"]), int(row["base_index"]))
+                scan_labels[key] = int(not bool(row["correct"]))
+    report["scan_records"] = len(scan_labels)
+
     plans = []
     for path in sorted((root / "data").glob("**/*plan*.json")) if (root / "data").exists() else []:
         plan = load_json(path)
@@ -68,12 +78,20 @@ def main() -> int:
         bases = {name: {(k[0], k[2]) for k in values} for name, values in split_keys.items()}
         overlap = {f"{a}_{b}": len(bases[a] & bases[b]) for a, b in
                    (("train", "val"), ("train", "test"), ("val", "test"))}
-        labels = plan.get("labels", plan.get("y", {})) if isinstance(plan, dict) else {}
+        held_out = plan.get("config", {}).get("held_out", [])
+        balance = {}
+        missing_scan = 0
+        for name, values in split_keys.items():
+            labels = [scan_labels[k] for k in values if k in scan_labels]
+            missing_scan += len(values) - len(labels)
+            counts = Counter(labels)
+            balance[name] = {"correct": counts[0], "wrong": counts[1]}
         plans.append({
             "path": str(path), "sizes": {k: len(v) for k, v in split_keys.items()},
-            "held_out_sources": plan.get("held_out_sources", plan.get("held_out", [])),
+            "held_out_sources": held_out,
             "base_image_overlap": overlap,
-            "class_balance": dict(Counter(map(str, labels.values()))) if isinstance(labels, dict) else {},
+            "class_balance": balance,
+            "missing_scan_records": missing_scan,
             "store_key_coverage": (sum(k in {key_tuple(x) for x in store_keys}
                                        for values in split_keys.values() for k in values)
                                    if store_keys else None),
