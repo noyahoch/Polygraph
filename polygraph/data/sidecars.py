@@ -140,6 +140,16 @@ def value_message_statistics(value: Tensor, output_weight: Tensor,
     return values.norm(dim=-1), projected_sq.clamp_min(0).sqrt(), support
 
 
+def reconstruct_attention_dense(attention: Tensor, value: Tensor, output_weight: Tensor,
+                                output_bias: Optional[Tensor], heads: int) -> Tensor:
+    """Reconstruct the attention output dense result before its residual connection."""
+    batch, tokens, width = value.shape
+    values = value.float().reshape(batch, tokens, heads, width // heads)
+    mixed = torch.einsum("bhij,bjhd->bihd", attention.float(), values).reshape(batch, tokens, width)
+    return torch.nn.functional.linear(mixed, output_weight.float(),
+                                      None if output_bias is None else output_bias.float())
+
+
 def derive_attention_edge_features(edge_attr: Tensor, edge_index: Tensor,
                                    projected_value_norm: Tensor,
                                    decision_support_proxy: Tensor, mode: str) -> Tensor:

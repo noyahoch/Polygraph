@@ -11,7 +11,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from polygraph.data.sidecars import (AlignedSidecar, atomic_torch_save, build_manifest,
                                      compact_class_evidence, derive_attention_edge_features, store_key_sha256,
-                                     validate_manifest, value_message_statistics)
+                                     reconstruct_attention_dense, validate_manifest,
+                                     value_message_statistics)
 
 
 def fixture(root: Path):
@@ -81,6 +82,22 @@ def test_message_norm_algebra():
         explicit.append((value.reshape(3, 7, 3, 4)[:, :, h] @ block.T).norm(dim=-1))
     assert torch.allclose(projected, torch.stack(explicit, -1), atol=2e-5, rtol=2e-5)
     assert raw.shape == support.shape == (3, 7, 3)
+
+
+def test_attention_dense_reconstruction():
+    torch.manual_seed(11)
+    batch, tokens, heads, width = 2, 5, 3, 12
+    value, weight, bias = torch.randn(batch, tokens, width), torch.randn(width, width), torch.randn(width)
+    attention = torch.softmax(torch.randn(batch, heads, tokens, tokens), -1)
+    actual = reconstruct_attention_dense(attention, value, weight, bias, heads)
+    values = value.reshape(batch, tokens, heads, width // heads)
+    explicit = torch.zeros(batch, tokens, width)
+    for b in range(batch):
+        for i in range(tokens):
+            concatenated = torch.cat([sum(attention[b, h, i, j] * values[b, j, h]
+                                           for j in range(tokens)) for h in range(heads)])
+            explicit[b, i] = weight @ concatenated + bias
+    assert torch.allclose(actual, explicit, atol=2e-5, rtol=2e-5)
 
 
 def test_edge_features_use_source_not_target():
