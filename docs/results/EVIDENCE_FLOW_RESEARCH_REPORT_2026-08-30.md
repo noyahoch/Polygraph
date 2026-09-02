@@ -353,13 +353,15 @@ Literature basis (method and experiment sections inspected):
 
 ## 24. GIT STATE
 
-Focused commits before this report:
+Focused commits in this study:
 
 - `d30d3d668b178eb21af5189e0ff43c04178f8524` — reproducible environment/artifact inventory
 - `e947772e220f374e3c5d036382f56ca76f569678` — artifact-aware anchors and suite orchestration
+- `02b93e085a6faab654f5a57147e3b97a82a0479d` — blocker report and historical anchor analysis
+- `2feba149a8c01cfa01a14c220ab3181592d979ab` — complete blocked experiment/test register
 
-The report commit and final `git status --short` are recorded after this file is committed. Generated
-`data/`, `runs/`, caches, checkpoints, tensors, and downloaded papers remain gitignored and uncommitted.
+Final `git status --short` after committing the report metadata was empty. Generated `data/`, `runs/`,
+caches, checkpoints, tensors, and downloaded papers remain gitignored and uncommitted.
 
 ## APPENDIX A — COMPLETE SKIP REGISTER
 
