@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from polygraph.training.research_eval import (grouped_split, paired_group_bootstrap,
                                               select_pnorm, verify_score_registry)
+from polygraph.training.graph_stats import final_layer_graph_statistics
 
 
 def test_group_split_is_disjoint():
@@ -50,6 +51,16 @@ def test_score_registry_rejects_permuted_rows():
             raise AssertionError("misaligned score vectors accepted")
         except ValueError as exc:
             assert "misalignment" in str(exc)
+
+
+def test_graph_statistics_shape_and_finiteness():
+    import torch
+    g = torch.Generator().manual_seed(4)
+    edge_index = torch.randint(0, 9, (2, 40), generator=g)
+    edge_attr = torch.rand(40, 12, generator=g)
+    diagonal = torch.rand(9, 12, generator=g)
+    features = final_layer_graph_statistics(edge_index, edge_attr, diagonal, 9, .2)
+    assert features.shape == (161,) and torch.isfinite(features).all()
 
 
 if __name__ == "__main__":
