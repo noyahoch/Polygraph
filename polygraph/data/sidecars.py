@@ -156,3 +156,24 @@ def derive_attention_edge_features(edge_attr: Tensor, edge_index: Tensor,
     if mode == "evidence_flow":
         return torch.cat([edge_attr, message, decision], dim=-1)
     raise ValueError(f"unknown edge feature mode: {mode}")
+
+
+def compact_class_evidence(hidden: Tensor, predicted_class: Tensor, runner_up_class: Tensor,
+                           layernorm, classifier) -> Tuple[Tensor, Tensor]:
+    """Four token features conditioned only on predicted and runner-up classes.
+
+    Returns (features, normalized_hidden).  There is intentionally no true-class argument.
+    """
+    normalized = layernorm(hidden.float())
+    weight, bias = classifier.weight, classifier.bias
+    predicted_weight = weight[predicted_class]
+    runner_weight = weight[runner_up_class]
+    predicted = torch.einsum("btd,bd->bt", normalized, predicted_weight)
+    runner = torch.einsum("btd,bd->bt", normalized, runner_weight)
+    if bias is not None:
+        predicted = predicted + bias[predicted_class, None]
+        runner = runner + bias[runner_up_class, None]
+    features = torch.stack([torch.asinh(predicted), torch.asinh(runner),
+                            torch.asinh(predicted - runner),
+                            torch.log1p(normalized.norm(dim=-1))], dim=-1)
+    return features, normalized

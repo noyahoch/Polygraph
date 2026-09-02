@@ -205,6 +205,64 @@ def capture_message_stats(classifier: FrozenClassifier, data_root: Path, store_d
     return position
 
 
+def capture_compact_evidence(classifier: FrozenClassifier, store_dir: Path, hidden_dir: Path,
+                             logits_dir: Path, out_dir: Path, batch_size: int = 128) -> int:
+    """Build predicted-class-conditioned token evidence from aligned hidden/logit sidecars."""
+    import json
+    import sys
+
+    from .sidecars import (AlignedSidecar, atomic_json_save, atomic_torch_save, build_manifest,
+                           compact_class_evidence)
+
+    store_manifest = json.loads((store_dir / "manifest.json").read_text())
+    counts = list(map(int, store_manifest["shard_records"]))
+    hidden = AlignedSidecar(hidden_dir, store_dir, "hidden", classifier.model_id, layer=12)
+    logits = AlignedSidecar(logits_dir, store_dir, "logits", classifier.model_id)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    position, worst_cls_delta = 0, 0.0
+    layernorm = classifier.model.vit.layernorm
+    head = classifier.model.classifier
+    for shard_index, count in enumerate(counts):
+        out_path = out_dir / f"compact_evidence_{shard_index:05d}.pt"
+        if out_path.exists():
+            payload = torch.load(out_path, map_location="cpu")
+            if int(payload.get("records", -1)) == count and int(payload.get("layer", -1)) == 12:
+                position += count
+                continue
+            raise RuntimeError(f"incompatible completed compact-evidence shard: {out_path}")
+        hidden_payload, logits_payload = hidden.shard(shard_index), logits.shard(shard_index)
+        buffers = []
+        for start in range(0, count, batch_size):
+            stop = min(start + batch_size, count)
+            state = hidden_payload["hidden"][start:stop].to(classifier.device)
+            top2 = logits_payload["top2_classes"][start:stop].long().to(classifier.device)
+            features, normalized = compact_class_evidence(state, top2[:, 0], top2[:, 1],
+                                                            layernorm, head)
+            reconstructed = head(normalized[:, 0])
+            stored = logits_payload["logits"][start:stop].float().to(classifier.device)
+            worst_cls_delta = max(worst_cls_delta,
+                                  float((reconstructed - stored).abs().max().item()))
+            if not torch.equal(reconstructed.argmax(-1), top2[:, 0]):
+                raise RuntimeError("final-layer normalization/logit-lens reconstruction changed top-1")
+            buffers.append(features.cpu().half())
+        # Stored reference logits are fp16; tolerate only their quantization envelope.
+        if worst_cls_delta > 0.05:
+            raise RuntimeError(f"CLS logit reconstruction mismatch: max delta {worst_cls_delta:g}")
+        atomic_torch_save({"compact_evidence": torch.cat(buffers), "records": count,
+                           "model_id": classifier.model_id, "layer": 12}, out_path)
+        position += count
+    manifest = build_manifest(store_dir, classifier.model_id,
+                              {"compact_evidence": ["N", 197, 4],
+                               "columns": ["asinh_predicted_logit_lens", "asinh_runner_up_logit_lens",
+                                           "asinh_decision_margin", "log1p_hidden_norm"]},
+                              "float16", sys.argv, layer=12)
+    manifest.update({"hidden_input": str(hidden_dir), "logits_input": str(logits_dir),
+                     "max_cls_logit_reconstruction_delta": worst_cls_delta,
+                     "stored_hidden_is_pre_final_layernorm": True})
+    atomic_json_save(manifest, out_dir / "manifest.json")
+    return position
+
+
 def scan(classifier: FrozenClassifier, data_root: Path, scan_path: Path,
          pairs: Sequence[Tuple[str, int]], batch_size: int = 64, limit_per_pool: int = 0) -> None:
     """Record the classifier's verdict over image pools. Resumable, edge-rule agnostic."""

@@ -10,7 +10,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from polygraph.data.sidecars import (AlignedSidecar, atomic_torch_save, build_manifest,
-                                     derive_attention_edge_features, store_key_sha256,
+                                     compact_class_evidence, derive_attention_edge_features, store_key_sha256,
                                      validate_manifest, value_message_statistics)
 
 
@@ -92,6 +92,21 @@ def test_edge_features_use_source_not_target():
                                               "evidence_flow")
     assert torch.allclose(features[0, 2:4], torch.log1p(torch.tensor([1., 1.])))
     assert torch.allclose(features[0, 4:6], torch.asinh(torch.tensor([-1., .75])))
+
+
+def test_compact_evidence_uses_predicted_and_runner_not_true_class():
+    import inspect
+    from torch import nn
+
+    torch.manual_seed(8)
+    hidden = torch.randn(2, 5, 6)
+    predicted, runner = torch.tensor([1, 3]), torch.tensor([2, 0])
+    layernorm, classifier = nn.LayerNorm(6), nn.Linear(6, 4)
+    features, normalized = compact_class_evidence(hidden, predicted, runner, layernorm, classifier)
+    assert features.shape == (2, 5, 4) and normalized.shape == hidden.shape
+    assert "true" not in inspect.signature(compact_class_evidence).parameters
+    changed, _ = compact_class_evidence(hidden, runner, predicted, layernorm, classifier)
+    assert not torch.allclose(features, changed)
 
 
 if __name__ == "__main__":

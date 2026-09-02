@@ -53,6 +53,12 @@ def build_parser() -> argparse.ArgumentParser:
     message.add_argument("--batch-size", type=int, default=64)
     message.add_argument("--benchmark-batches", type=int, default=5)
 
+    compact = sub.add_parser("compact-evidence", help="build predicted-class-conditioned token features")
+    compact.add_argument("--hidden-dir", default="data/graph_dataset/hidden12")
+    compact.add_argument("--logits-dir", default="data/graph_dataset/sidecars/logits")
+    compact.add_argument("--out-dir", default="data/graph_dataset/sidecars/compact_evidence_l12")
+    compact.add_argument("--batch-size", type=int, default=128)
+
     hidden = sub.add_parser("hidden", help="capture per-token hidden states of one ViT layer "
                                            "for every stored record (variant-2 node features)")
     hidden.add_argument("--layer", type=int, default=12, help="ViT block output, 12 = final")
@@ -104,6 +110,16 @@ def main(argv: Sequence[str] | None = None) -> None:
                            batch_size=args.batch_size,
                            overwrite_corrupt_only=args.overwrite_corrupt_only)
         print(f"full logits captured for {n} records")
+
+    elif args.command == "compact-evidence":
+        from .pipeline import FrozenClassifier, capture_compact_evidence
+
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        n = capture_compact_evidence(classifier, root / STORE_DIR, root / args.hidden_dir,
+                                     root / args.logits_dir, root / args.out_dir,
+                                     batch_size=args.batch_size)
+        print(f"compact evidence captured for {n} records")
 
     elif args.command == "message-stats":
         from .pipeline import FrozenClassifier, capture_message_stats
