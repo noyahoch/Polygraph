@@ -41,6 +41,12 @@ def build_parser() -> argparse.ArgumentParser:
     extract.add_argument("--plan", default=None)
     extract.add_argument("--batch-size", type=int, default=32)
 
+    logits = sub.add_parser("logits", help="capture aligned full classifier logits")
+    logits.add_argument("--out-dir", default="data/graph_dataset/sidecars/logits")
+    logits.add_argument("--batch-size", type=int, default=128)
+    logits.add_argument("--benchmark-batches", type=int, default=5)
+    logits.add_argument("--overwrite-corrupt-only", action="store_true")
+
     hidden = sub.add_parser("hidden", help="capture per-token hidden states of one ViT layer "
                                            "for every stored record (variant-2 node features)")
     hidden.add_argument("--layer", type=int, default=12, help="ViT block output, 12 = final")
@@ -82,6 +88,16 @@ def main(argv: Sequence[str] | None = None) -> None:
                           held_out=resolve_sources(args.held_out))
         plan.save(plan_path)
         print(json.dumps(plan.stats, indent=2))
+
+    elif args.command == "logits":
+        from .pipeline import FrozenClassifier, capture_logits
+
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        n = capture_logits(classifier, data_root, root / STORE_DIR, root / args.out_dir,
+                           batch_size=args.batch_size,
+                           overwrite_corrupt_only=args.overwrite_corrupt_only)
+        print(f"full logits captured for {n} records")
 
     elif args.command == "hidden":
         from .pipeline import FrozenClassifier, capture_hidden
