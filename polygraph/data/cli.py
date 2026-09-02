@@ -27,7 +27,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="polygraph.data", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sub.add_parser("scan", help="ViT verdicts over the full corruption grid (resumable)")
+    scan = sub.add_parser("scan", help="ViT verdicts over the full corruption grid (resumable)")
+    scan.add_argument("--batch-size", type=int, default=64)
 
     split = sub.add_parser("split", help="group-disjoint stratified split plan")
     split.add_argument("--plan", default=None)
@@ -38,10 +39,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     extract = sub.add_parser("extract", help="graphs for every record in the plan (resumable)")
     extract.add_argument("--plan", default=None)
+    extract.add_argument("--batch-size", type=int, default=32)
 
     hidden = sub.add_parser("hidden", help="capture per-token hidden states of one ViT layer "
                                            "for every stored record (variant-2 node features)")
     hidden.add_argument("--layer", type=int, default=12, help="ViT block output, 12 = final")
+    hidden.add_argument("--batch-size", type=int, default=64)
     return parser
 
 
@@ -67,7 +70,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         ensure_downloaded(pairs, data_root)
         classifier = FrozenClassifier()
         print(f"device: {classifier.device}", flush=True)
-        scan(classifier, data_root, scan_path, pairs)
+        scan(classifier, data_root, scan_path, pairs, batch_size=args.batch_size)
 
     elif args.command == "split":
         from .splits import build_plan
@@ -86,7 +89,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         classifier = FrozenClassifier()
         print(f"device: {classifier.device}", flush=True)
         n = capture_hidden(classifier, data_root, root / STORE_DIR,
-                           root / f"data/graph_dataset/hidden{args.layer}", layer=args.layer)
+                           root / f"data/graph_dataset/hidden{args.layer}", layer=args.layer,
+                           batch_size=args.batch_size)
         print(f"hidden states captured for {n} records")
 
     elif args.command == "extract":
@@ -103,7 +107,8 @@ def main(argv: Sequence[str] | None = None) -> None:
         classifier = FrozenClassifier()
         print(f"device: {classifier.device} | {builder.name}", flush=True)
         writer = GraphStoreWriter(root / STORE_DIR, shard_size=2000, tau=builder.tau)
-        result = extract(classifier, data_root, builder, keys, lookup, writer)
+        result = extract(classifier, data_root, builder, keys, lookup, writer,
+                         batch_size=args.batch_size)
         writer.write_manifest({"model_id": classifier.model_id,
                                "prediction_drift": result["prediction_drift"]})
         print(f"store holds {result['written']} records")
