@@ -125,7 +125,7 @@ Completed or failed operational tasks:
 | `anchor_report_verification` | version-controlled reports | <1 s | completed | historical-only JSON |
 | `suite_report_handoff` | continue after blocker | 0 s | completed | this report |
 
-No trained configuration has a parameter count or best epoch in this run. The complete 66-row ledger,
+No trained configuration has a parameter count or best epoch in this run. The complete ledger,
 including timestamps, commands, commits, status, reasons, and paths, is in
 `runs/research_20260830/final/experiment_table.csv`.
 
@@ -377,7 +377,8 @@ assets are non-regenerable within the protocol because rescanning/extracting is 
 - Compact evidence: `compact_evidence_extract`, `N1_compact_graph`,
   `N2_compact_node_edge_set`, `N3_compact_endpoint_set`.
 - Message flow: `message_stats_l11_extract`, `M0_attention`, `M1_attention_message`,
-  `M2_attention_decision`, `M3_evidence_flow`, `M4_evidence_compact`, `M5_evidence_hidden`.
+  `M2_attention_decision`, `M3_evidence_flow`, `M4_evidence_compact`, `M5_evidence_hidden`,
+  `graph_tcp_multitask_optional`.
 - Explicit MPNN: `SMP0_attention`, `SMP1_best_flow`, `SMP2_compact_best_flow`.
 - Combiners: `G1_logistic`, `G1_residual`, `G1_gate`, `G2_logistic`, `G2_residual`, `G2_gate`,
   `G3_logistic`, `G3_residual`, `G3_gate`, `G4_logistic`, `G4_residual`, `G4_gate`,
@@ -385,3 +386,7 @@ assets are non-regenerable within the protocol because rescanning/extracting is 
 - Temporal: `T1_temporal_final4`, `T2_temporal_compact`.
 
 There were no aborted experiments. The suite did not consume scientific GPU budget.
+
+The requested research-only test modules `test_research_controls.py`, `test_sidecars.py`, and
+`test_research_eval.py` were also skipped because their corresponding extension was not implemented
+after the missing-store stop condition. The inherited 44 tests and full compilation passed.
