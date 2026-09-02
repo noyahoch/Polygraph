@@ -163,6 +163,9 @@ def capture_hidden(classifier: FrozenClassifier, data_root: Path, store_dir: Pat
     sharded in the SAME order and sizes as the store so readers align by (shard, offset).
     layer=12 means the final block's output (hidden_states[12]); resumable per shard."""
     import json
+    import sys
+
+    from .sidecars import atomic_json_save, atomic_torch_save, build_manifest
 
     keys = [RecordKey(*k) for k in json.loads((store_dir / "store_keys.json").read_text())]
     manifest = json.loads((store_dir / "manifest.json").read_text())
@@ -187,12 +190,11 @@ def capture_hidden(classifier: FrozenClassifier, data_root: Path, store_dir: Pat
             if classifier.device.type == "mps":
                 torch.mps.empty_cache()
         tensor = torch.cat(buffers)
-        tmp = out_path.with_suffix(".tmp")
-        torch.save({"hidden": tensor, "layer": layer, "records": count}, tmp)
-        tmp.rename(out_path)
-    (out_dir / "manifest.json").write_text(json.dumps(
-        {"layer": layer, "records": position, "shard_records": counts,
-         "model_id": classifier.model_id}))
+        atomic_torch_save({"hidden": tensor, "layer": layer, "records": count,
+                           "model_id": classifier.model_id}, out_path)
+    manifest = build_manifest(store_dir, classifier.model_id, {"hidden": ["N", 197, 768]},
+                              "float16", sys.argv, layer=layer)
+    atomic_json_save(manifest, out_dir / "manifest.json")
     return position
 
 

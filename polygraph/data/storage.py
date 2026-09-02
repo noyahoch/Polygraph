@@ -334,6 +334,17 @@ class AttentionGraphDataset(Dataset):
         # (shard_index, offset) — asserted per shard on first access.
         self.hidden_dir = Path(hidden_dir) if hidden_dir else None
         self._hidden_cache: "OrderedDict[int, Tensor]" = OrderedDict()
+        if self.hidden_dir is not None:
+            manifest_path = self.hidden_dir / "manifest.json"
+            if manifest_path.exists():
+                manifest = json.loads(manifest_path.read_text())
+                if "store_key_sha256" in manifest:
+                    from .sidecars import validate_manifest
+                    validate_manifest(self.hidden_dir, self.store.store_dir,
+                                      model_id=json.loads((self.store.store_dir / "manifest.json").read_text()).get("model_id"),
+                                      layer=12)
+                elif int(manifest.get("layer", -1)) != 12:
+                    raise ValueError("legacy hidden sidecar is not layer 12")
         raw = list(range(self.store.total)) if keys is None else self.store.indices_for(keys)
         # Sorted by store position: shards are ~5 GB, so access order must follow disk
         # order or every sample pays a multi-gigabyte load. Nothing may depend on item
