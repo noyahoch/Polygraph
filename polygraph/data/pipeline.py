@@ -143,11 +143,19 @@ def capture_message_stats(classifier: FrozenClassifier, data_root: Path, store_d
     store_manifest = json.loads((store_dir / "manifest.json").read_text())
     counts = list(map(int, store_manifest["shard_records"]))
     out_dir.mkdir(parents=True, exist_ok=True)
-    block = classifier.model.vit.encoder.layer[layer]
-    value_layer = block.attention.attention.value
-    output_weight = block.attention.output.dense.weight.detach()
+    vit = classifier.model.vit
+    blocks = vit.layers if hasattr(vit, "layers") else vit.encoder.layer
+    block = blocks[layer]
+    attention = block.attention
+    if hasattr(attention, "v_proj"):  # transformers >= 5 ViT module layout
+        value_layer = attention.v_proj
+        output_weight = attention.o_proj.weight.detach()
+        heads = int(classifier.model.config.num_attention_heads)
+    else:  # transformers 4.x layout retained for checkpoint/environment compatibility
+        value_layer = attention.attention.value
+        output_weight = attention.output.dense.weight.detach()
+        heads = int(attention.attention.num_attention_heads)
     classifier_weight = classifier.model.classifier.weight.detach()
-    heads = int(block.attention.attention.num_attention_heads)
     captured: List[torch.Tensor] = []
 
     def hook(_module, _inputs, output):
