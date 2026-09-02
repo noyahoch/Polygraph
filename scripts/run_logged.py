@@ -9,12 +9,28 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
 
 def utc_now() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat()
+
+
+def monitor_gpu_memory(pid: int, stop: threading.Event, peak: list[int]) -> None:
+    """Sample this command's CUDA allocation as reported by the driver."""
+    while not stop.wait(0.5):
+        try:
+            output = subprocess.check_output(
+                ["nvidia-smi", "--query-compute-apps=pid,used_memory", "--format=csv,noheader,nounits"],
+                text=True, stderr=subprocess.DEVNULL, timeout=2)
+            for line in output.splitlines():
+                fields = [field.strip() for field in line.split(",")]
+                if len(fields) == 2 and int(fields[0]) == pid:
+                    peak[0] = max(peak[0], int(fields[1]))
+        except (OSError, ValueError, subprocess.SubprocessError):
+            return
 
 
 def main() -> int:
@@ -42,11 +58,16 @@ def main() -> int:
     args.ledger.parent.mkdir(parents=True, exist_ok=True)
     started, t0 = utc_now(), time.monotonic()
     status, reason, returncode = "completed", "", 0
+    peak_gpu_memory = [0]
     with args.log.open("a", encoding="utf-8", buffering=1) as log:
         log.write(f"[{started}] $ {' '.join(command)}\n")
         try:
             proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                                     text=True, bufsize=1)
+            monitor_stop = threading.Event()
+            monitor = threading.Thread(target=monitor_gpu_memory,
+                                       args=(proc.pid, monitor_stop, peak_gpu_memory), daemon=True)
+            monitor.start()
             assert proc.stdout is not None
             deadline = t0 + args.timeout if args.timeout else None
             while True:
@@ -68,6 +89,8 @@ def main() -> int:
                         proc.kill()
                     status, reason, returncode = "aborted", "timeout", 124
                     break
+            monitor_stop.set()
+            monitor.join(timeout=3)
             if status != "aborted":
                 returncode = int(proc.returncode or 0)
                 if returncode:
@@ -91,7 +114,7 @@ def main() -> int:
         "seed": args.seed,
         "configuration": configuration,
         "parameter_count": args.parameter_count,
-        "peak_gpu_memory_mb": None,
+        "peak_gpu_memory_mb": peak_gpu_memory[0] or None,
         "result_files": [str(args.log)],
         "skip_or_failure_reason": reason,
         "notes": args.notes,
