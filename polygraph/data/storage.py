@@ -322,17 +322,31 @@ class AttentionGraphDataset(Dataset):
     def __init__(self, store, layers: Sequence[int], keys: Optional[Sequence[RecordKey]] = None,
                  tau: Optional[float] = None, top_k: Optional[int] = None,
                  hidden_dir: Optional[Path] = None, rewire_mode: str = "none",
-                 rewire_seed: int = 20260830):
+                 rewire_seed: int = 20260830, edge_features: str = "attention",
+                 message_stats_dir: Optional[Path] = None,
+                 compact_evidence_dir: Optional[Path] = None):
         self.store = store if isinstance(store, GraphStore) else GraphStore(store)
         assert tau is None or top_k is None, "tau and top_k are competing rules; pass one"
         if tau is not None and tau < self.store.tau:
             raise ValueError(f"tau={tau} is below the extraction threshold {self.store.tau}")
         self.tau, self.top_k, self.layers = tau, top_k, list(layers)
         self.rewire_mode, self.rewire_seed = rewire_mode, int(rewire_seed)
+        self.edge_features = edge_features
         # Variant 2: per-token hidden states appended to node features. The hidden shards
         # are written in store order with the store's shard sizes, so alignment is by
         # (shard_index, offset) — asserted per shard on first access.
         self.hidden_dir = Path(hidden_dir) if hidden_dir else None
+        self.message_stats = self.compact_evidence = None
+        if edge_features != "attention":
+            if message_stats_dir is None or self.layers != [11]:
+                raise ValueError("non-attention edge features require final-layer message statistics")
+            from .sidecars import AlignedSidecar
+            self.message_stats = AlignedSidecar(message_stats_dir, self.store.store_dir,
+                                                "message_stats", layer=11)
+        if compact_evidence_dir is not None:
+            from .sidecars import AlignedSidecar
+            self.compact_evidence = AlignedSidecar(compact_evidence_dir, self.store.store_dir,
+                                                  "compact_evidence", layer=12)
         self._hidden_cache: "OrderedDict[int, Tensor]" = OrderedDict()
         if self.hidden_dir is not None:
             manifest_path = self.hidden_dir / "manifest.json"
@@ -385,6 +399,12 @@ class AttentionGraphDataset(Dataset):
 
     def __getitem__(self, position: int) -> Data:
         shard, offset = self.store.locate(self.indices[position])
+        message_payload = compact_payload = None
+        message_offset = compact_offset = 0
+        if self.message_stats is not None:
+            message_payload, message_offset = self.message_stats.locate(self.indices[position])
+        if self.compact_evidence is not None:
+            compact_payload, compact_offset = self.compact_evidence.locate(self.indices[position])
         tokens = self.store.num_tokens
         xs, edge_indices, edge_attrs, layer_ids = [], [], [], []
         for slot, layer in enumerate(self.layers):
@@ -397,11 +417,22 @@ class AttentionGraphDataset(Dataset):
                 from bisect import bisect_right
                 shard_index = bisect_right(self.store._bounds, self.indices[position]) - 1
                 parts.append(self._hidden(shard_index)[offset].float())
+            if compact_payload is not None:
+                if layer != 11:
+                    raise ValueError("compact evidence is available only for the final layer")
+                parts.append(compact_payload["compact_evidence"][compact_offset].float())
             xs.append(torch.cat(parts, 1))
             graph = shard.layer_graph(offset, layer, tau=self.tau, top_k=self.top_k)
             edge_index, edge_attr = rewire_graph(
                 graph.edge_index.long(), graph.edge_attr.float(), self.rewire_mode,
                 self.indices[position], self.rewire_seed)
+            if message_payload is not None:
+                from .sidecars import derive_attention_edge_features
+                edge_attr = derive_attention_edge_features(
+                    edge_attr, edge_index,
+                    message_payload["projected_value_norm"][message_offset].float(),
+                    message_payload["decision_support_proxy"][message_offset].float(),
+                    self.edge_features)
             edge_indices.append(edge_index + slot * tokens)
             edge_attrs.append(edge_attr)
             layer_ids.append(torch.full((tokens,), slot, dtype=torch.long))

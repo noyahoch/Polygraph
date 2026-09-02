@@ -250,14 +250,21 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
         if config.hidden and node_features == "base":  # legacy --hidden behavior
             node_features = "hidden"
         hidden_dir = store_dir.parent / "hidden12" if node_features == "hidden" else None
-        if node_features not in {"base", "hidden"}:
-            raise ValueError(f"node feature mode not available yet: {node_features}")
-        if getattr(config, "edge_features", "attention") != "attention":
-            raise ValueError("message-stat sidecar required for non-attention edge features")
+        if node_features not in {"base", "hidden", "compact_evidence"}:
+            raise ValueError(f"unknown node feature mode: {node_features}")
+        compact_dir = (Path(config.compact_evidence_dir) if config.compact_evidence_dir else
+                       store_dir.parent / "sidecars/compact_evidence_l12") \
+                      if node_features == "compact_evidence" else None
+        message_dir = (Path(config.message_stats_dir) if config.message_stats_dir else
+                       store_dir.parent / "sidecars/message_stats_l11") \
+                      if getattr(config, "edge_features", "attention") != "attention" else None
         datasets = {n: AttentionGraphDataset(store, config.layers, plan.splits[n],
                                              tau=config.tau, top_k=config.top_k,
                                              hidden_dir=hidden_dir,
-                                             rewire_mode=getattr(config, "rewire_mode", "none"))
+                                             rewire_mode=getattr(config, "rewire_mode", "none"),
+                                             edge_features=getattr(config, "edge_features", "attention"),
+                                             message_stats_dir=message_dir,
+                                             compact_evidence_dir=compact_dir)
                     for n in ("train", "val")}
     if config.shuffle_labels:
         datasets["train"] = _ShuffledLabels(datasets["train"], seed=999)
