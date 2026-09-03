@@ -58,6 +58,8 @@ model is *less* confident when it hallucinates. The probe wins on **missed prese
 (0.802 vs 0.689) and on the confident-error slice generally. The signal is "confident errors
 the model has no output-level doubt about," not "hallucinations."
 
+**The heart of P1 (Step 4, category-holdout shift test):** the probe's BROAD advantage is largely familiarity — it collapses −0.115 under object-category shift, the same exposure confound that sank representation detectors on the corruption weather holdout. But the CONFIDENT-error law SURVIVES category shift (+0.19 [+0.044,+0.331] on held-out categories). So the real, shift-robust internal-signal advantage lives ONLY in the confident slice — that sharpened claim, not the broad one, is P1's headline.
+
 **Collision (G4, first-pass search — full lit gate still mandatory):** "Wrong With
 Conviction" (2026) publishes this law for LLMs with theory; several 2026 VLM-probe papers
 crowd the space. Our confident-error observation must be positioned as *confirming and
