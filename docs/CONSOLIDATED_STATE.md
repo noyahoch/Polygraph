@@ -92,20 +92,74 @@ a finding), P1 inside. Either branch is a paper.
 | Corruption benchmark + purity controls + complementarity + literature | DONE, committed, pushed |
 | G1 exploitation numbers (corruptions + POPE) | DONE (`exploitation_g1.md`) |
 | POPE probe pilot (n=3000) + y_hall slice | DONE |
-| POPE transfer slice | DONE — popular↔adversarial invalid (76% shared questions, leak caught); honest group-disjoint-by-image test confirms confident-error law at higher power: **+0.199 [+0.129,+0.266]** confident, +0.004 flat overall |
-| Track B backdoor (100% BadNets) — synthetic routing testbed | **VALIDATED** (clean 0.9145, ASR 0.9995 — `docs/results/backdoor_testbed.md`) |
+| POPE within-distribution generalization (group-disjoint by image) | DONE — confident-error law holds on unseen images: **+0.199 [+0.129,+0.266]** confident, +0.004 flat overall |
+| POPE **shift** guard (exposure confound) | **UNANSWERED** — popular↔adversarial was invalid (76% shared questions, leak caught), and group-disjoint-by-image only tests unseen *images*, not shift. Replacement axis queued: held-out object categories (Step 4) |
+| Track B backdoor (100% BadNets) — synthetic routing testbed | **VALIDATED** (clean 0.9145, ASR 0.9995 — `docs/results/backdoor_testbed.md`); routing test = Step 2 |
 | Synthetic 95%-spurious | ABANDONED (design flaw, not fundamental — see §3 of exploitation doc) |
-| Waterbirds routing pilot | PREPARED, NOT launched (`pilots/waterbirds/PLAN.md`) — team call |
+| Waterbirds + CelebA-blond routing pilots | PREPARED, NOT launched — GATED on a Step-2 win |
 | Polygraph tail (CHARM-v2, final-4, τ sweep) | PAUSED (appendix material) |
-| G5 multi-seed (confident slices only) | DEFERRED until headline chosen |
+| G5 multi-seed (headline slices only) | DEFERRED until headline chosen |
 | G4 full literature gate | MANDATORY before any writing; seeded by 4 papers in TEAM_REPORT |
 
-## 7. Immediate next actions (on the numbers, for the team)
+## 7. Immediate next actions (per the Routing Matrix phase plan)
 
-1. When the backdoor model validates (clean-acc drop <2pts, ASR ≥95%), run the **G3-fixed
-   graph-vs-probe routing test** on it — the first real test of whether structure beats a
-   probe when failure is routing-caused.
-2. Read the POPE transfer slice: if the confident-error law does not survive
-   popular↔adversarial transfer, it may itself be disguised familiarity.
-3. Team decides P2 vs P3 emphasis from the routing-test result; then G5 multi-seed on the
-   chosen headline slices, then the mandatory lit gate, then writing.
+1. **Pre-registration frozen** (§8) — claim matrix and success criteria fixed before any
+   routing result. Standing rule: no criterion/threshold/task edited after its result exists.
+2. **Step 2 — backdoor routing test** (local, this week): second trigger model, extraction,
+   too-easy guard, swept graph vs probe within-group, localization + cross-trigger transfer →
+   `docs/results/routing_backdoor.md`.
+3. **Step 3 — unseen-slice lookup** (hours, stored data): graph vs probe on corruption unseen
+   slices + severity slopes — a cheap supporting finding, reported either way.
+4. **Step 4 — POPE category-holdout** (hours, re-split): the replacement shift guard.
+5. Team meeting after Step 2, on this amended doc; team makes the P2-variant/P3 call on a
+   matrix declared before its numbers existed.
+
+---
+
+## 8. PRE-REGISTRATION — The Routing Matrix (frozen 2026-09-03, before any routing result)
+
+**Standing rule: no criterion, threshold, or task list below may be edited after the
+corresponding result exists. Every task in the matrix is reported, win or lose.**
+
+### 8.1 The claim under test
+
+> Attention topology helps failure detection **when the failure is caused by routing** (the
+> model attended to the wrong evidence), and is near-redundant given representations **when
+> the failure is caused by state** (the model attended correctly but concluded wrongly).
+
+A boundary claim: a 2-column matrix; both columns required.
+
+### 8.2 The task matrix (fixed now; all cells reported)
+
+| Task | Failure cause | Status |
+|---|---|---|
+| CIFAR-100-C corruptions | state | DONE — graph marginal +0.0016 (negative cell, held) |
+| POPE / LLaVA | state (per y_hall refinement) | DONE — probe win; shift axis pending (Step 4) |
+| Backdoor triggers (synthetic routing, GT mask) | routing | testbed validated; test = Step 2 |
+| Waterbirds | routing (natural) | prepared; gated on Step 2 |
+| CelebA-blond | routing (natural, standard pairing) | prep alongside Waterbirds |
+
+No task added to or removed from this matrix after Step 2's numbers exist.
+
+### 8.3 Success criteria (fixed now)
+
+`probe` = best hidden-state detector under the standard ladder protocol. `graph` = the GNN
+after its fixed τ/layer sweep (τ ∈ {0.02, 0.1, 0.3} × layer ∈ {6, 9, 12}, selection on val
+only — the sweep is the graph's fair configuration, not tuning-to-result).
+
+- **Ranking win:** graph AUROC > probe AUROC on the routing task, outside the bootstrap CI,
+  on the within-group comparison (errors-vs-correct among triggered/conflicting inputs only).
+- **Attribution win:** graph AUROC within CI of probe (no detection cost) AND the graph's
+  explanation localizes the causal evidence: pointing-game hit-rate ≥ 0.8 on true-positive
+  detections vs the GT mask, AND beats both localization baselines (raw last-layer CLS
+  attention / attention rollout, and the probe's input-gradient saliency). All three evaluated
+  identically.
+- **Generalization win (supporting, not sufficient alone):** detector trained on trigger A
+  transfers to trigger B (different position + pattern) with AUROC drop < 0.05, probe's larger.
+- **Clean negative:** none of the above under the swept configuration and the within-group
+  control → routing column closed, P3 becomes the headline.
+
+**Decision tree.** Ranking win → P2 as "structure detects routing failures". Attribution win
+only → P2 as "structure adds verifiable attribution at zero detection cost" (a score says
+*don't trust this*; a graph says *don't trust it because it used the sticker, here it is*).
+Neither → P3, where this whole matrix, negatives included, is the study.
