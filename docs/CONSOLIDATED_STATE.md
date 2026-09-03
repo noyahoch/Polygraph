@@ -92,7 +92,7 @@ a finding), P1 inside. Either branch is a paper.
 | Corruption benchmark + purity controls + complementarity + literature | DONE, committed, pushed |
 | G1 exploitation numbers (corruptions + POPE) | DONE (`exploitation_g1.md`) |
 | POPE probe pilot (n=3000) + y_hall slice | DONE |
-| POPE popular↔adversarial transfer slice | RUNNING (queued after backdoor, MPS-serialized) |
+| POPE transfer slice | DONE — popular↔adversarial invalid (76% shared questions, leak caught); honest group-disjoint-by-image test confirms confident-error law at higher power: **+0.199 [+0.129,+0.266]** confident, +0.004 flat overall |
 | Track B backdoor (100% BadNets) — synthetic routing testbed | **VALIDATED** (clean 0.9145, ASR 0.9995 — `docs/results/backdoor_testbed.md`) |
 | Synthetic 95%-spurious | ABANDONED (design flaw, not fundamental — see §3 of exploitation doc) |
 | Waterbirds routing pilot | PREPARED, NOT launched (`pilots/waterbirds/PLAN.md`) — team call |
