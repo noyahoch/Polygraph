@@ -133,12 +133,17 @@ def build_model(config: TrainConfig, in_dim: int, edge_dim: int) -> nn.Module:
 
 
 @torch.no_grad()
-def collect(model: nn.Module, dataset, device, batch_size: int = 64) -> Dict[str, np.ndarray]:
+def collect(model: nn.Module, dataset, device, batch_size: int = 64,
+            include_alignment: bool = False) -> Dict[str, np.ndarray]:
     """Detector logits plus the metadata every metric and baseline needs."""
     from torch_geometric.loader import DataLoader
 
     model.eval()
+    # Preserve the historical public return schema by default. Research score
+    # files opt into the extra stable identifiers needed for alignment checks.
     fields = ("logit", "y", "confidence", "margin", "source_id", "severity")
+    if include_alignment:
+        fields += ("image_id", "store_index")
     out: Dict[str, list] = {f: [] for f in fields}
     for batch in DataLoader(dataset, batch_size=batch_size, shuffle=False):
         batch = batch.to(device)
@@ -178,7 +183,7 @@ def train_detector(config: TrainConfig, train_ds, val_ds, device,
     best_state, best_val, best_epoch, stale, history = None, -np.inf, 0, 0, []
     start_epoch = 1
     if state_path is not None and state_path.exists():
-        state = torch.load(state_path, map_location="cpu")
+        state = torch.load(state_path, map_location="cpu", weights_only=False)
         model.load_state_dict(state["model"])
         optimizer.load_state_dict(state["optimizer"])
         best_state, best_val = state["best_state"], state["best_val"]
@@ -298,7 +303,7 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
 
 
 def load_checkpoint(path: Path, device) -> Tuple[nn.Module, TrainConfig]:
-    payload = torch.load(path, map_location="cpu")
+    payload = torch.load(path, map_location="cpu", weights_only=False)
     config = TrainConfig(**payload["config"])
     model = build_model(config, payload["in_dim"], payload["edge_dim"])
     model.load_state_dict(payload["state_dict"])

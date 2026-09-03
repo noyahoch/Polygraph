@@ -12,7 +12,7 @@ from torch_geometric.data import Batch, Data
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from polygraph.data.storage import append_temporal_identity_edges, rewire_graph
+from polygraph.data.storage import GraphData, append_temporal_identity_edges, rewire_graph
 from polygraph.training.models import (EdgeSetModel, EndpointSetModel, NodeEdgeSetModel,
                                        SimpleMPNN, TemporalMPNN)
 from polygraph.training.train import TrainConfig, build_model, load_checkpoint
@@ -75,6 +75,16 @@ def test_rewiring_is_deterministic_and_preserves_required_multisets():
     assert torch.equal(s_i, item.edge_index)
     # Lexicographic row multiset fingerprint; catches accidental feature modification.
     assert sorted(map(tuple, s_e.tolist())) == sorted(map(tuple, item.edge_attr.tolist()))
+
+
+def test_store_index_is_not_incremented_by_pyg_batching():
+    """Mutation guard: plain Data turns a field named store_index into a node offset."""
+    items = []
+    for store_index in (17_000, 17_001, 22_999):
+        item = graph(store_index)
+        items.append(GraphData(**item.to_dict(), store_index=torch.tensor([store_index])))
+    batch = Batch.from_data_list(items)
+    assert batch.store_index.tolist() == [17_000, 17_001, 22_999]
 
 
 def test_old_checkpoint_loads_with_new_config_defaults():

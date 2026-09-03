@@ -105,7 +105,7 @@ class AlignedSidecar:
     def shard(self, shard_index: int) -> Dict[str, Any]:
         if shard_index not in self.cache:
             path = self.sidecar_dir / f"{self.prefix}_{shard_index:05d}.pt"
-            payload = torch.load(path, map_location="cpu")
+            payload = torch.load(path, map_location="cpu", weights_only=False)
             if int(payload.get("records", -1)) != self.counts[shard_index]:
                 raise ValueError(f"sidecar shard {shard_index} record count mismatch")
             self.cache[shard_index] = payload

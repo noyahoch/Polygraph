@@ -29,6 +29,17 @@ META_FIELDS = (("base_index", torch.int32), ("severity", torch.int8), ("source_i
                ("confidence", torch.float32), ("margin", torch.float32))
 
 
+class GraphData(Data):
+    """PyG sample with an immutable global graph-store row identifier."""
+
+    def __inc__(self, key, value, *args, **kwargs):
+        # PyG normally increments fields containing "index" by num_nodes.
+        # store_index is metadata and must never be offset while batching.
+        if key == "store_index":
+            return 0
+        return super().__inc__(key, value, *args, **kwargs)
+
+
 def rewire_graph(edge_index: Tensor, edge_attr: Tensor, mode: str, store_index: int,
                  seed: int = 20260830) -> Tuple[Tensor, Tensor]:
     """Deterministic, label-independent within-graph controls."""
@@ -117,7 +128,7 @@ class GraphShard:
 
     @classmethod
     def load(cls, path: Path) -> "GraphShard":
-        p = torch.load(path, map_location="cpu")
+        p = torch.load(path, map_location="cpu", weights_only=False)
         return cls(p["edge_index"], p["edge_attr"], p["strength"], p["edge_offsets"], p["diagonals"],
                    p["meta"], int(p["layer_count"]), int(p["num_tokens"]), float(p["tau"]),
                    p.get("cls_embeddings"), tuple(p.get("source_names", ALL_SOURCES)))
@@ -325,7 +336,7 @@ class CharmDataset(Dataset):
         coords = node_coordinates(tokens, 0, 1)  # layer column meaningless for a union graph
         diagonals = shard.diagonals[offset].float().permute(1, 0, 2).reshape(tokens, -1)
         meta = shard.meta
-        return Data(x=torch.cat([coords, diagonals], 1), edge_index=edge_index,
+        return GraphData(x=torch.cat([coords, diagonals], 1), edge_index=edge_index,
                     edge_attr=edge_attr, layer_id=torch.zeros(tokens, dtype=torch.long),
                     y=meta["y_err"][offset].view(1),
                     image_id=meta["base_index"][offset].long().view(1),
@@ -414,7 +425,8 @@ class AttentionGraphDataset(Dataset):
 
     def _hidden(self, shard_index: int) -> Tensor:
         if shard_index not in self._hidden_cache:
-            payload = torch.load(self.hidden_dir / f"hidden_{shard_index:05d}.pt", map_location="cpu")
+            payload = torch.load(self.hidden_dir / f"hidden_{shard_index:05d}.pt",
+                                 map_location="cpu", weights_only=False)
             expected = self.store._bounds[shard_index + 1] - self.store._bounds[shard_index]
             assert payload["records"] == expected, "hidden shard misaligned with graph store"
             self._hidden_cache[shard_index] = payload["hidden"]
@@ -471,7 +483,7 @@ class AttentionGraphDataset(Dataset):
                 edge_indices, edge_attrs, tokens)
         else:
             final_edge_index, final_edge_attr = torch.cat(edge_indices, 1), torch.cat(edge_attrs)
-        return Data(x=torch.cat(xs), edge_index=final_edge_index,
+        return GraphData(x=torch.cat(xs), edge_index=final_edge_index,
                     edge_attr=final_edge_attr, layer_id=torch.cat(layer_ids),
                     y=meta["y_err"][offset].view(1),
                     image_id=meta["base_index"][offset].long().view(1),

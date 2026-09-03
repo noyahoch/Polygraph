@@ -9,6 +9,7 @@ lesson: unscaled features let the L2 penalty crush MSP and the combiner scored b
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 from typing import Dict, Optional, Sequence
 
@@ -126,12 +127,32 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
                                                  temporal_edges=getattr(config, "temporal_edges", False))
                         for n in ("train", "val", "test")}
         print(f"collecting graph predictions ({path.name})...", flush=True)
-        train_pred = collect(model, datasets["train"], device, config.batch_size)
+        train_pred = collect(model, datasets["train"], device, config.batch_size,
+                             include_alignment=True)
         # The combiner is fitted on VALIDATION predictions: the graph's train logits are
         # overfit-inflated, which overweighted the graph and pushed the combiner BELOW
         # its best single input (measured: 0.8649 vs MSP 0.8695 on the main run).
-        val_pred = collect(model, datasets["val"], device, config.batch_size)
-        test_pred = collect(model, datasets["test"], device, config.batch_size)
+        val_pred = collect(model, datasets["val"], device, config.batch_size,
+                           include_alignment=True)
+        test_pred = collect(model, datasets["test"], device, config.batch_size,
+                            include_alignment=True)
+        seed = int(path.stem.replace("model_seed", ""))
+        plan_hash = hashlib.sha256(Path(plan_path).read_bytes()).hexdigest()
+        method_name = getattr(config, "architecture", "transformerconv")
+        if getattr(config, "edge_features", "attention") != "attention":
+            method_name += ":" + config.edge_features
+        if getattr(config, "node_features", "base") != "base":
+            method_name += ":" + config.node_features
+        for split_name, prediction in (("train", train_pred), ("val", val_pred),
+                                       ("test", test_pred)):
+            np.savez_compressed(
+                run_dir / f"scores_{split_name}_seed{seed}.npz",
+                score=prediction["logit"], y=prediction["y"],
+                confidence=prediction["confidence"], margin=prediction["margin"],
+                image_id=prediction["image_id"], source_id=prediction["source_id"],
+                severity=prediction["severity"], store_index=prediction["store_index"],
+                method_name=np.asarray(method_name), plan_hash=np.asarray(plan_hash),
+                seed=np.asarray(seed))
         report = evaluate_predictions(test_pred, val_pred, seen_sources)
 
         # Trained non-graph baselines, same protocol and seed as this checkpoint, so the
@@ -151,7 +172,6 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
                 for n in ("train", "val", "test")
             }
         if include_baselines:
-            seed = int(path.stem.replace("model_seed", ""))
             base = baseline_features
             trained_baselines = {}
             print("training baseline output_lr (logistic on output statistics)...", flush=True)
