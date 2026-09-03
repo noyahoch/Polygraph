@@ -93,7 +93,7 @@ a finding), P1 inside. Either branch is a paper.
 | G1 exploitation numbers (corruptions + POPE) | DONE (`exploitation_g1.md`) |
 | POPE probe pilot (n=3000) + y_hall slice | DONE |
 | POPE within-distribution generalization (group-disjoint by image) | DONE — confident-error law holds on unseen images: **+0.199 [+0.129,+0.266]** confident, +0.004 flat overall |
-| POPE **shift** guard (exposure confound) | **UNANSWERED** — popular↔adversarial was invalid (76% shared questions, leak caught), and group-disjoint-by-image only tests unseen *images*, not shift. Replacement axis queued: held-out object categories (Step 4) |
+| POPE **shift** guard (category holdout) | DONE (`step4_category_holdout.md`) — probe's OVERALL edge is familiarity (collapses −0.115 under category shift), but the CONFIDENT-error law SURVIVES (+0.19 [+0.044,+0.331] on held-out categories) |
 | Track B backdoor (100% BadNets) — synthetic routing testbed | **VALIDATED** (clean 0.9145, ASR 0.9995 — `docs/results/backdoor_testbed.md`); routing test = Step 2 |
 | Synthetic 95%-spurious | ABANDONED (design flaw, not fundamental — see §3 of exploitation doc) |
 | Waterbirds + CelebA-blond routing pilots | PREPARED, NOT launched — GATED on a Step-2 win |
