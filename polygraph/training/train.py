@@ -153,9 +153,16 @@ def collect(model: nn.Module, dataset, device, batch_size: int = 64,
     if include_alignment:
         fields += ("image_id", "store_index")
     out: Dict[str, list] = {f: [] for f in fields}
+    collect_tcp = hasattr(model, "forward_multitask")
+    if collect_tcp:
+        out["tcp_logit"] = []
     for batch in DataLoader(dataset, batch_size=batch_size, shuffle=False):
         batch = batch.to(device)
-        logits, _ = model(batch)
+        if collect_tcp:
+            logits, tcp_logit, _ = model.forward_multitask(batch)
+            out["tcp_logit"] += tcp_logit.cpu().tolist()
+        else:
+            logits, _ = model(batch)
         out["logit"] += logits.cpu().tolist()
         for f in fields[1:]:
             out[f] += getattr(batch, f).view(-1).cpu().tolist()

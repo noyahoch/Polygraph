@@ -136,6 +136,24 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
                            include_alignment=True)
         test_pred = collect(model, datasets["test"], device, config.batch_size,
                             include_alignment=True)
+        auxiliary_scores = {}
+        if "tcp_logit" in val_pred:
+            # Both terms are standardized using validation only. A high negative TCP
+            # logit means high predicted error risk, matching the error-head direction.
+            val_error = val_pred["logit"]
+            val_tcp_error = -val_pred["tcp_logit"]
+            error_mean, error_std = float(val_error.mean()), max(float(val_error.std()), 1e-8)
+            tcp_mean, tcp_std = float(val_tcp_error.mean()), max(float(val_tcp_error.std()), 1e-8)
+            for split_name, prediction in (("train", train_pred), ("val", val_pred),
+                                           ("test", test_pred)):
+                prediction["score_tcp"] = -prediction["tcp_logit"]
+                prediction["score_error_tcp_average"] = 0.5 * (
+                    (prediction["logit"] - error_mean) / error_std
+                    + (prediction["score_tcp"] - tcp_mean) / tcp_std)
+            auxiliary_scores = {
+                "tcp_head": test_pred["score_tcp"],
+                "error_tcp_average": test_pred["score_error_tcp_average"],
+            }
         seed = int(path.stem.replace("model_seed", ""))
         plan_hash = hashlib.sha256(Path(plan_path).read_bytes()).hexdigest()
         method_name = getattr(config, "architecture", "transformerconv")
@@ -145,15 +163,22 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
             method_name += ":" + config.node_features
         for split_name, prediction in (("train", train_pred), ("val", val_pred),
                                        ("test", test_pred)):
-            np.savez_compressed(
-                run_dir / f"scores_{split_name}_seed{seed}.npz",
+            payload = dict(
                 score=prediction["logit"], y=prediction["y"],
                 confidence=prediction["confidence"], margin=prediction["margin"],
                 image_id=prediction["image_id"], source_id=prediction["source_id"],
                 severity=prediction["severity"], store_index=prediction["store_index"],
                 method_name=np.asarray(method_name), plan_hash=np.asarray(plan_hash),
                 seed=np.asarray(seed))
+            if "score_tcp" in prediction:
+                payload["score_tcp"] = prediction["score_tcp"]
+                payload["score_error_tcp_average"] = prediction["score_error_tcp_average"]
+            np.savez_compressed(run_dir / f"scores_{split_name}_seed{seed}.npz", **payload)
         report = evaluate_predictions(test_pred, val_pred, seen_sources)
+        for name, scores in auxiliary_scores.items():
+            for slice_name, mask in slice_masks(test_pred, seen_sources).items():
+                if slice_name in report and mask.any():
+                    report[slice_name][name] = detector_metrics(test_pred["y"][mask], scores[mask])
 
         # Trained non-graph baselines, same protocol and seed as this checkpoint, so the
         # detector's advantage cannot be "it was trained" (features read once, reused).

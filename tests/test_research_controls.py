@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from polygraph.data.storage import GraphData, append_temporal_identity_edges, rewire_graph
 from polygraph.training.models import (EdgeSetModel, EndpointSetModel, NodeEdgeSetModel,
                                        SimpleMPNN, TemporalMPNN)
-from polygraph.training.train import TrainConfig, build_model, load_checkpoint
+from polygraph.training.train import TrainConfig, build_model, collect, load_checkpoint
 
 
 def graph(seed=0):
@@ -130,6 +130,19 @@ def test_tcp_multitask_target_is_not_an_inference_input():
     error, predicted_tcp, embedding = model.forward_multitask(batched([item]))
     assert error.shape == predicted_tcp.shape == (1,)
     assert embedding.shape[0] == 1
+
+
+def test_tcp_multitask_evaluation_exports_both_heads_without_target():
+    config = TrainConfig(tcp_multitask=True)
+    model = build_model(config, 16, 12).eval()
+    item = graph(6)
+    item.confidence = torch.tensor([0.8])
+    item.margin = torch.tensor([0.4])
+    item.source_id = torch.tensor([1])
+    item.severity = torch.tensor([2])
+    prediction = collect(model, [item], torch.device("cpu"), batch_size=1)
+    assert prediction["logit"].shape == prediction["tcp_logit"].shape == (1,)
+    assert "tcp_target" not in item
 
 
 if __name__ == "__main__":
