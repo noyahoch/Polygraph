@@ -118,6 +118,20 @@ def test_temporal_edge_construction_and_model():
     assert output.shape == (1,)
 
 
+def test_tcp_multitask_target_is_not_an_inference_input():
+    config = TrainConfig(tcp_multitask=True)
+    model = build_model(config, 16, 12).eval()
+    item = graph(5)
+    # Ordinary inference has no true-class-derived TCP target and must still work.
+    error_without, _ = model(batched([item]))
+    mutated = Data(**item.to_dict(), tcp_target=torch.tensor([123.0]))
+    error_with, _ = model(batched([mutated]))
+    assert torch.allclose(error_without, error_with)
+    error, predicted_tcp, embedding = model.forward_multitask(batched([item]))
+    assert error.shape == predicted_tcp.shape == (1,)
+    assert embedding.shape[0] == 1
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for test in tests:

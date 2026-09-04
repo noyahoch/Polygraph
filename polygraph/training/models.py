@@ -227,3 +227,21 @@ class TemporalMPNN(SimpleMPNN):
         weights = softmax(self.gate(x).view(-1), data.batch)
         embedding = torch.cat([cls, global_add_pool(x * weights.unsqueeze(1), data.batch)], dim=1)
         return self.decoder(embedding).view(-1), embedding
+
+
+class TCPMultiTaskModel(nn.Module):
+    """Adds a training-only TCP regression head without changing inference output."""
+
+    def __init__(self, base: nn.Module, embedding_dim: int):
+        super().__init__()
+        self.base = base
+        self.tcp_head = nn.Linear(embedding_dim, 1)
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        return self.base(data)
+
+    def forward_multitask(self, data: Data) -> Tuple[Tensor, Tensor, Tensor]:
+        error_logit, embedding = self.base(data)
+        if embedding is None:
+            raise RuntimeError("TCP multitask requires a model with a graph embedding")
+        return error_logit, self.tcp_head(embedding).view(-1), embedding

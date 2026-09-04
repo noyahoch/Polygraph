@@ -359,7 +359,8 @@ class AttentionGraphDataset(Dataset):
                  hidden_dir: Optional[Path] = None, rewire_mode: str = "none",
                  rewire_seed: int = 20260830, edge_features: str = "attention",
                  message_stats_dir: Optional[Path] = None,
-                 compact_evidence_dir: Optional[Path] = None, temporal_edges: bool = False):
+                 compact_evidence_dir: Optional[Path] = None, temporal_edges: bool = False,
+                 logits_dir: Optional[Path] = None, tcp_target: bool = False):
         self.store = store if isinstance(store, GraphStore) else GraphStore(store)
         assert tau is None or top_k is None, "tau and top_k are competing rules; pass one"
         if tau is not None and tau < self.store.tau:
@@ -368,11 +369,18 @@ class AttentionGraphDataset(Dataset):
         self.rewire_mode, self.rewire_seed = rewire_mode, int(rewire_seed)
         self.edge_features = edge_features
         self.temporal_edges = temporal_edges
+        self.tcp_target = bool(tcp_target)
         # Variant 2: per-token hidden states appended to node features. The hidden shards
         # are written in store order with the store's shard sizes, so alignment is by
         # (shard_index, offset) — asserted per shard on first access.
         self.hidden_dir = Path(hidden_dir) if hidden_dir else None
         self.message_stats = self.compact_evidence = None
+        self.logits = None
+        if self.tcp_target:
+            if logits_dir is None:
+                raise ValueError("TCP training targets require an aligned logits sidecar")
+            from .sidecars import AlignedSidecar
+            self.logits = AlignedSidecar(logits_dir, self.store.store_dir, "logits")
         if edge_features != "attention":
             if message_stats_dir is None or self.layers != [11]:
                 raise ValueError("non-attention edge features require final-layer message statistics")
@@ -442,6 +450,13 @@ class AttentionGraphDataset(Dataset):
             message_payload, message_offset = self.message_stats.locate(self.indices[position])
         if self.compact_evidence is not None:
             compact_payload, compact_offset = self.compact_evidence.locate(self.indices[position])
+        extras = {}
+        if self.logits is not None:
+            logit_payload, logit_offset = self.logits.locate(self.indices[position])
+            logits = logit_payload["logits"][logit_offset].float()
+            true_class = int(shard.meta["label"][offset])
+            tcp = torch.softmax(logits, dim=0)[true_class].clamp(1e-6, 1 - 1e-6)
+            extras["tcp_target"] = torch.logit(tcp).view(1)
         tokens = self.store.num_tokens
         xs, edge_indices, edge_attrs, layer_ids = [], [], [], []
         for slot, layer in enumerate(self.layers):
@@ -474,7 +489,6 @@ class AttentionGraphDataset(Dataset):
             edge_attrs.append(edge_attr)
             layer_ids.append(torch.full((tokens,), slot, dtype=torch.long))
         meta = shard.meta
-        extras = {}
         if shard.cls_embeddings is not None:
             # [1, L, D] so PyG batching stacks to [B, L, D]; feeds the representation baselines.
             extras["cls_layers"] = shard.cls_embeddings[offset].float().unsqueeze(0)

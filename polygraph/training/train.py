@@ -101,35 +101,43 @@ class _ShuffledLabels(torch.utils.data.Dataset):
 
 def build_model(config: TrainConfig, in_dim: int, edge_dim: int) -> nn.Module:
     architecture = getattr(config, "architecture", "transformerconv")
+    model = None
     if architecture == "edge_set" or config.readout == "edge_set":
         from .models import EdgeSetModel
 
-        return EdgeSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
-    if architecture == "node_edge_set":
+        model = EdgeSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
+    elif architecture == "node_edge_set":
         from .models import NodeEdgeSetModel
 
-        return NodeEdgeSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
-    if architecture == "endpoint_set":
+        model = NodeEdgeSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
+    elif architecture == "endpoint_set":
         from .models import EndpointSetModel
 
-        return EndpointSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
-    if architecture == "simple_mpnn":
+        model = EndpointSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
+    elif architecture == "simple_mpnn":
         from .models import SimpleMPNN
 
-        return SimpleMPNN(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
-                          config.dropout, config.readout)
-    if architecture == "temporal_mpnn":
+        model = SimpleMPNN(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
+                           config.dropout, config.readout)
+    elif architecture == "temporal_mpnn":
         from .models import TemporalMPNN
 
-        return TemporalMPNN(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
-                            config.dropout, config.readout)
-    if architecture != "transformerconv":
+        model = TemporalMPNN(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
+                             config.dropout, config.readout)
+    elif architecture != "transformerconv":
         raise ValueError(f"unknown architecture: {architecture}")
-    if len(config.layers) == 1:
-        return ReadoutModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
-                            config.dropout, config.readout)
-    return SequenceConcatModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
-                               config.dropout, layer_count=len(config.layers))
+    elif len(config.layers) == 1:
+        model = ReadoutModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
+                             config.dropout, config.readout)
+    else:
+        model = SequenceConcatModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
+                                    config.dropout, layer_count=len(config.layers))
+    if getattr(config, "tcp_multitask", False):
+        if config.readout != "cls_gated" or architecture not in {"transformerconv", "simple_mpnn"}:
+            raise ValueError("TCP multitask currently requires cls_gated transformerconv/simple_mpnn")
+        from .models import TCPMultiTaskModel
+        model = TCPMultiTaskModel(model, 2 * config.hidden_dim)
+    return model
 
 
 @torch.no_grad()
@@ -201,8 +209,15 @@ def train_detector(config: TrainConfig, train_ds, val_ds, device,
         for batch in loader:
             batch = batch.to(device)
             optimizer.zero_grad(set_to_none=True)
-            logits, _ = model(batch)
-            loss = criterion(logits, batch.y.view(-1))
+            if config.tcp_multitask:
+                logits, tcp_logit, _ = model.forward_multitask(batch)
+                if not hasattr(batch, "tcp_target"):
+                    raise RuntimeError("TCP target is unavailable in the training dataset")
+                loss = criterion(logits, batch.y.view(-1)) + 0.2 * nn.functional.smooth_l1_loss(
+                    tcp_logit, batch.tcp_target.view(-1))
+            else:
+                logits, _ = model(batch)
+                loss = criterion(logits, batch.y.view(-1))
             loss.backward()
             optimizer.step()
             total += loss.item() * batch.y.numel()
@@ -268,6 +283,8 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
         message_dir = (Path(config.message_stats_dir) if config.message_stats_dir else
                        store_dir.parent / "sidecars/message_stats_l11") \
                       if getattr(config, "edge_features", "attention") != "attention" else None
+        logits_dir = (Path(config.logits_dir) if config.logits_dir else
+                      store_dir.parent / "sidecars/logits") if config.tcp_multitask else None
         datasets = {n: AttentionGraphDataset(store, config.layers, plan.splits[n],
                                              tau=config.tau, top_k=config.top_k,
                                              hidden_dir=hidden_dir,
@@ -275,7 +292,9 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
                                              edge_features=getattr(config, "edge_features", "attention"),
                                              message_stats_dir=message_dir,
                                              compact_evidence_dir=compact_dir,
-                                             temporal_edges=getattr(config, "temporal_edges", False))
+                                             temporal_edges=getattr(config, "temporal_edges", False),
+                                             logits_dir=logits_dir,
+                                             tcp_target=config.tcp_multitask)
                     for n in ("train", "val")}
     if config.shuffle_labels:
         datasets["train"] = _ShuffledLabels(datasets["train"], seed=999)
