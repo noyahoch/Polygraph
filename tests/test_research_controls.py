@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from polygraph.data.storage import GraphData, append_temporal_identity_edges, rewire_graph
 from polygraph.training.models import (EdgeSetModel, EndpointSetModel, NodeEdgeSetModel,
                                        SimpleMPNN, TemporalMPNN)
+from polygraph.training.cli import build_parser
 from polygraph.training.train import TrainConfig, build_model, collect, load_checkpoint
 
 
@@ -143,6 +144,11 @@ def test_tcp_multitask_evaluation_exports_both_heads_without_target():
     prediction = collect(model, [item], torch.device("cpu"), batch_size=1)
     assert prediction["logit"].shape == prediction["tcp_logit"].shape == (1,)
     assert "tcp_target" not in item
+
+
+def test_evaluation_can_select_one_checkpoint_seed():
+    args = build_parser().parse_args(["evaluate", "--seeds", "2", "--no-baselines"])
+    assert args.seeds == [2] and args.no_baselines
 
 
 if __name__ == "__main__":

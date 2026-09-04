@@ -71,6 +71,8 @@ def build_parser() -> argparse.ArgumentParser:
     evaluate.add_argument("--no-baselines", action="store_true",
                           help="skip retraining the non-graph baselines (ablation runs: "
                                "baselines depend on the plan, not the graph config)")
+    evaluate.add_argument("--seeds", type=int, nargs="+", default=None,
+                          help="evaluate only these checkpoint seeds (default: every checkpoint)")
     return parser
 
 
@@ -112,6 +114,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         from .evaluate import evaluate_run
 
         summary = evaluate_run(root / args.run_dir, root / STORE_DIR, plan_path, device,
+                               seeds=args.seeds,
                                include_baselines=not args.no_baselines)
         print(json.dumps(summary["slices"], indent=2))
 
