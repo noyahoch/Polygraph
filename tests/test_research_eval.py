@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from polygraph.training.research_eval import (grouped_split, paired_group_bootstrap,
                                               select_pnorm, verify_score_registry)
 from polygraph.training.graph_stats import final_layer_graph_statistics
+from scripts.evaluate_tcp import SequenceTCP
 
 
 def test_group_split_is_disjoint():
@@ -61,6 +62,14 @@ def test_graph_statistics_shape_and_finiteness():
     diagonal = torch.rand(9, 12, generator=g)
     features = final_layer_graph_statistics(edge_index, edge_attr, diagonal, 9, .2)
     assert features.shape == (161,) and torch.isfinite(features).all()
+
+
+def test_sequence_tcp_is_an_inference_only_function_of_cls_states():
+    import torch
+    model = SequenceTCP().eval()
+    trajectory = torch.randn(4, 12, 768)
+    prediction = model(trajectory)
+    assert prediction.shape == (4,)
 
 
 if __name__ == "__main__":
