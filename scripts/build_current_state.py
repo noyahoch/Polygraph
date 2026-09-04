@@ -27,6 +27,33 @@ def metric_files(root: Path):
     return rows
 
 
+def graph_reports(root: Path):
+    rows = []
+    for path in sorted(root.glob("**/report_model_seed*.json")):
+        try:
+            data = json.loads(path.read_text())
+            seed = int(path.stem.rsplit("seed", 1)[1])
+        except (json.JSONDecodeError, OSError, ValueError, KeyError):
+            continue
+        rows.append({"run": str(path.parent.relative_to(ROOT)), "seed": seed,
+                     "all": data.get("all", {}).get("graph", {}),
+                     "slices": {name: values.get("graph", {}) for name, values in data.items()},
+                     "path": str(path.relative_to(ROOT))})
+    return rows
+
+
+def combiner_reports(root: Path):
+    rows = []
+    for path in sorted(root.glob("**/summary*.json")):
+        try:
+            data = json.loads(path.read_text())
+        except (json.JSONDecodeError, OSError):
+            continue
+        if "test" in data and ("selected" in data or "method" in data):
+            rows.append({**data, "path": str(path.relative_to(ROOT))})
+    return rows
+
+
 def main():
     graph_report = RUN / "message_flow/M0_attention/report_model_seed7.json"
     graph = json.loads(graph_report.read_text()) if graph_report.exists() else None
@@ -36,8 +63,9 @@ def main():
         "store": {"path": "data/graph_dataset/store", **store},
         "plans": {"main": "data/graph_dataset/split_plan_main.json",
                   "weather": "data/graph_dataset/split_plan_weather.json"},
-        "output_results": metric_files(RUN / "output"),
-        "tcp_results": metric_files(RUN / "node_evidence"),
+        "score_results": metric_files(RUN),
+        "graph_results": graph_reports(RUN),
+        "combiner_results": combiner_reports(RUN / "combiners"),
         "raw_graph": ({"method": "M0_attention", "seed": 7,
                        "metrics": graph["all"]["graph"],
                        "msp_same_records": graph["all"]["msp"],
@@ -49,13 +77,22 @@ def main():
             "hidden12": ROOT / "data/graph_dataset/hidden12/manifest.json",
             "compact_evidence_l12": ROOT / "data/graph_dataset/sidecars/compact_evidence_l12/manifest.json",
             "message_stats_l11": ROOT / "data/graph_dataset/sidecars/message_stats_l11/manifest.json",
+            "graph_stats_l11": ROOT / "data/graph_dataset/sidecars/graph_stats_l11/manifest.json",
         }.items() if path.exists()},
+        "strict_plans": [str(path.relative_to(ROOT)) for path in sorted(
+            (RUN / "combiners/strict").glob("**/*_plan.json"))],
         "notes": [
             "Direct comparisons use only the rebuilt dataset, never historical metrics.",
             "M0 differs from historical 0.8417 by -0.00693 and passes the sanity tolerance.",
             "Graph score store_index metadata created before the GraphData fix was PyG-offset; labels and row order remain valid.",
         ],
     }
+    ledger = RUN / "ledger.jsonl"
+    if ledger.exists():
+        entries = [json.loads(line) for line in ledger.read_text().splitlines() if line.strip()]
+        result["ledger"] = {"path": str(ledger.relative_to(ROOT)), "records": len(entries),
+                            "status_counts": {status: sum(e.get("status") == status for e in entries)
+                                              for status in ("completed", "failed", "aborted", "skipped")}}
     out = RUN / "final/current_state.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(result, indent=2, default=str) + "\n")
