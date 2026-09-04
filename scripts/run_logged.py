@@ -7,6 +7,7 @@ import argparse
 import datetime as dt
 import json
 import os
+import select
 import subprocess
 import sys
 import threading
@@ -71,11 +72,15 @@ def main() -> int:
             assert proc.stdout is not None
             deadline = t0 + args.timeout if args.timeout else None
             while True:
-                line = proc.stdout.readline()
-                if line:
-                    sys.stdout.write(line)
-                    sys.stdout.flush()
-                    log.write(line)
+                # Do not block indefinitely in readline(): many training commands only
+                # print every few epochs, which previously let them overrun the timeout.
+                readable, _, _ = select.select([proc.stdout], [], [], 0.5)
+                if readable:
+                    line = proc.stdout.readline()
+                    if line:
+                        sys.stdout.write(line)
+                        sys.stdout.flush()
+                        log.write(line)
                 if proc.poll() is not None:
                     for tail in proc.stdout:
                         sys.stdout.write(tail)

@@ -92,8 +92,15 @@ def fit(splits, method, seed, device):
             if stale >= 8:
                 break
     model.load_state_dict(best); model.eval()
+    def predict_batched(values, batch_size=1024):
+        outputs = []
+        with torch.no_grad():
+            for batch in values.split(batch_size):
+                outputs.append(model(batch.to(device)).view(-1).cpu().numpy())
+        return np.concatenate(outputs)
+
     with torch.no_grad():
-        scores = {k: model(v.to(device)).view(-1).cpu().numpy() for k, v in x.items()}
+        scores = {k: predict_batched(v) for k, v in x.items()}
     return scores, {"best_validation_auroc": float(best_auc), "best_epoch": best_epoch,
                     "parameter_count": sum(p.numel() for p in model.parameters())}
 
@@ -123,6 +130,11 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     for method in ("cls_mlp", "cls_seq"):
         for seed in args.seeds:
+            expected = [args.out_dir / method / f"scores_{split}_seed{seed}.npz"
+                        for split in splits]
+            if all(path.exists() for path in expected):
+                print(method, seed, "already complete; skipping")
+                continue
             scores, training = fit(splits, method, seed, device)
             for split, data in splits.items():
                 save(args.out_dir, method, seed, split, data, scores[split], plan_hash, training)
