@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
+import torch
 from scipy.stats import spearmanr
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -76,7 +77,7 @@ def flag_stats(y, candidate, reference, budget=.5):
     }
 
 
-def score_rows():
+def score_rows(ledger):
     rows, details = [], {}
     for path in sorted(RUN.glob("**/scores_test_seed*.npz")):
         # Exclude feature sidecars and the exported aggregate files themselves.
@@ -90,7 +91,7 @@ def score_rows():
         if not required.issubset(data):
             continue
         method = scalar(data.get("method_name", path.parent.name))
-        if "/strict/" in str(path):
+        if "/strict/" in str(path) and not method.startswith("strict_"):
             method = "strict_" + method
         seed = int(np.asarray(data.get("seed", 7)).item())
         plan, output = references(path, data)
@@ -106,6 +107,23 @@ def score_rows():
         msp = 1 - data["confidence"]
         msp_comp = flag_stats(data["y"], data["score"], msp)
         output_comp = flag_stats(data["y"], data["score"], output["score"]) if output else None
+        checkpoint = path.parent / f"model_seed{seed}.pt"
+        params = None
+        metadata_path = path.with_suffix(".json")
+        if metadata_path.exists():
+            params = json.loads(metadata_path.read_text()).get("parameter_count")
+        if checkpoint.exists() and params is None:
+            payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
+            params = int(sum(value.numel() for value in payload["state_dict"].values()))
+        if method == "strict_output_M5_gate":
+            params = 325  # five fixed width-2 Gate networks, 65 parameters per fold
+        directory_text = str(path.parent.relative_to(ROOT))
+        training_runtime = sum(float(entry.get("runtime_seconds") or 0) for entry in ledger
+                               if entry.get("status") == "completed"
+                               and (entry.get("seed") in (None, seed))
+                               and ("train" in entry.get("command", [])
+                                    or str(entry.get("experiment_id", "")).startswith("strict_gate"))
+                               and directory_text in " ".join(map(str, entry.get("command", []))))
         row = {
             "method": method, "plan": plan, "seed": seed,
             "AUROC": metrics.get("auroc"), "AUPRC": metrics.get("auprc"),
@@ -114,9 +132,8 @@ def score_rows():
             "confident_AUROC": confident_metrics.get("auroc"),
             "blindspot_MSP": msp_comp["blind_recovery"],
             "blindspot_best_output": output_comp["blind_recovery"] if output_comp else None,
-            "runtime": None, "params": None,
-            "checkpoint": str(path.parent / f"model_seed{seed}.pt")
-                          if (path.parent / f"model_seed{seed}.pt").exists() else "",
+            "runtime": training_runtime or None, "params": params,
+            "checkpoint": str(checkpoint) if checkpoint.exists() else "",
             "score_file": str(path.relative_to(ROOT)),
         }
         rows.append(row)
@@ -226,19 +243,22 @@ def ledger_csv():
 
 def main():
     FINAL.mkdir(parents=True, exist_ok=True)
-    rows, details = score_rows()
+    ledgers = ledger_csv()
+    rows, details = score_rows(ledgers)
     fields = ["method", "plan", "seed", "AUROC", "AUPRC", "AURC", "risk05",
               "risk08", "risk09", "confident_AUROC", "blindspot_MSP",
               "blindspot_best_output", "runtime", "params", "checkpoint", "score_file"]
     with (FINAL / "model_comparison.csv").open("w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader(); writer.writerows(rows)
-    ledgers = ledger_csv()
     best = {plan: export_best(plan) for plan in ("main", "weather")}
     existing_main = FINAL / "bootstrap_strict_main.json"
+    previous_bootstrap = FINAL / "bootstrap_deltas.json"
+    previous_weather = (json.loads(previous_bootstrap.read_text()).get("weather")
+                        if previous_bootstrap.exists() else None)
     bootstrap = {
         "main": json.loads(existing_main.read_text()) if existing_main.exists() else bootstraps("main"),
-        "weather": bootstraps("weather"),
+        "weather": previous_weather or bootstraps("weather"),
         "output_vs_msp": json.loads((FINAL / "bootstrap_output_vs_msp.json").read_text())
                          if (FINAL / "bootstrap_output_vs_msp.json").exists() else None,
     }
