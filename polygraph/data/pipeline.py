@@ -18,6 +18,8 @@ from .sources import get_pool, pool_for
 # can flip a genuinely borderline prediction. The scan is canonical (it defined the splits),
 # so isolated flips are recorded; a rate above this means something real changed.
 MAX_DRIFT_FRACTION = 0.001
+LAST4_BLOCK_IDS = (8, 9, 10, 11)
+LAST4_HIDDEN_INDICES = tuple(layer + 1 for layer in LAST4_BLOCK_IDS)
 
 
 def choose_device() -> torch.device:
@@ -229,7 +231,7 @@ def capture_last4_sidecars(classifier: FrozenClassifier, data_root: Path, store_
                            build_manifest, value_message_statistics)
     from .storage import GraphShard
 
-    block_ids, hidden_indices = (8, 9, 10), (9, 10, 11)
+    block_ids, hidden_indices = LAST4_BLOCK_IDS[:3], LAST4_HIDDEN_INDICES[:3]
     keys = [RecordKey(*k) for k in json.loads((store_dir / "store_keys.json").read_text())]
     store_manifest = json.loads((store_dir / "manifest.json").read_text())
     counts = list(map(int, store_manifest["shard_records"]))
@@ -243,7 +245,10 @@ def capture_last4_sidecars(classifier: FrozenClassifier, data_root: Path, store_
             except Exception:
                 pass
     total_required = sum(counts) * len(block_ids) * 197 * 768 * 2
-    required = (sum(counts) - completed_records) * len(block_ids) * 197 * 768 * 2
+    remaining_records = sum(counts) - completed_records
+    required = remaining_records * len(block_ids) * 197 * 768 * 2
+    # Three float16 statistics per token/head plus two int16 class IDs.
+    required += remaining_records * (len(block_ids) * 197 * 12 * 3 * 2 + 2 * 2)
     reserve = 20 * 1024 ** 3
     free = shutil.disk_usage(hidden_out_dir.parent).free
     if free - required < reserve:
@@ -395,13 +400,14 @@ def capture_rewire_cache(store_dir: Path, out_dir: Path, seed: int = 20260905,
                 continue
             raise RuntimeError(f"incompatible completed rewiring cache: {out_path}")
         shard = GraphShard.load(store_dir / manifest["shards"][shard_index])
-        targets, offsets = [], [0]
+        targets, permutations, offsets = [], [], [0]
         stats = {key: 0 for key in totals}
         store_start = sum(counts[:shard_index])
         for offset in range(count):
             graph = shard.layer_graph(offset, layer)
-            changed, _ = rewire_graph(graph.edge_index.long(), graph.edge_attr, "target_permute",
-                                      store_start + offset, seed)
+            generator = torch.Generator().manual_seed(seed + 1_000_003 * (store_start + offset))
+            permutation = torch.randperm(graph.edge_attr.shape[0], generator=generator)
+            changed = graph.edge_index.long().clone(); changed[1] = changed[1, permutation]
             before, after = graph.edge_index.long(), changed
             n = before.shape[1]
             stats["edges"] += n
@@ -410,14 +416,17 @@ def capture_rewire_cache(store_dir: Path, out_dir: Path, seed: int = 20260905,
             tokens = shard.num_tokens
             stats["duplicate_edges_before"] += n - int(torch.unique(before[0] * tokens + before[1]).numel())
             stats["duplicate_edges_after"] += n - int(torch.unique(after[0] * tokens + after[1]).numel())
-            targets.append(after[1].to(torch.int16)); offsets.append(offsets[-1] + n)
-        atomic_torch_save({"targets": torch.cat(targets), "offsets": torch.tensor(offsets),
+            targets.append(after[1].to(torch.int16)); permutations.append(permutation.to(torch.int32))
+            offsets.append(offsets[-1] + n)
+        atomic_torch_save({"targets": torch.cat(targets), "permutation": torch.cat(permutations),
+                           "offsets": torch.tensor(offsets),
                            "records": count, "seed": seed, "layer": layer,
                            "statistics": stats}, out_path)
         for key in totals: totals[key] += stats[key]
     result = build_manifest(store_dir, manifest.get("model_id", "unknown"),
-                            {"targets": ["ragged final-layer targets"], "offsets": ["N+1"],
-                             "policy": "sources fixed; target list permuted; edge rows fixed"},
+                            {"targets": ["ragged final-layer targets"],
+                             "permutation": ["ragged edge-row permutation"], "offsets": ["N+1"],
+                             "policy": "supports target permutation and attribute-row shuffle"},
                             "int16/int64", sys.argv, layer=layer)
     result.update({"seed": seed, "statistics": totals})
     atomic_json_save(result, out_dir / "manifest.json")

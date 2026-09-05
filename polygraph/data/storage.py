@@ -381,7 +381,7 @@ class AttentionGraphDataset(Dataset):
                  message_stats_dir: Optional[Path] = None,
                  compact_evidence_dir: Optional[Path] = None, temporal_edges: bool = False,
                  logits_dir: Optional[Path] = None, tcp_target: bool = False,
-                 rewire_cache_dir: Optional[Path] = None):
+                 rewire_cache_dir: Optional[Path] = None, omit_edges: bool = False):
         self.store = store if isinstance(store, GraphStore) else GraphStore(store)
         assert tau is None or top_k is None, "tau and top_k are competing rules; pass one"
         if tau is not None and tau < self.store.tau:
@@ -389,6 +389,7 @@ class AttentionGraphDataset(Dataset):
         self.tau, self.top_k, self.layers = tau, top_k, list(layers)
         self.rewire_mode, self.rewire_seed = rewire_mode, int(rewire_seed)
         self.edge_features = edge_features
+        self.omit_edges = bool(omit_edges)
         self.temporal_edges = temporal_edges
         self.tcp_target = bool(tcp_target)
         # Variant 2: per-token hidden states appended to node features. The hidden shards
@@ -399,8 +400,8 @@ class AttentionGraphDataset(Dataset):
         self.logits = None
         self.rewire_cache = None
         if rewire_cache_dir is not None:
-            if rewire_mode != "target_permute" or self.layers != [11]:
-                raise ValueError("rewire cache is valid only for final-layer target_permute")
+            if rewire_mode not in {"target_permute", "shuffle_attr"} or self.layers != [11]:
+                raise ValueError("rewire cache is valid only for final-layer rewiring controls")
             from .sidecars import AlignedSidecar
             self.rewire_cache = AlignedSidecar(rewire_cache_dir, self.store.store_dir,
                                                "rewire", layer=11)
@@ -502,15 +503,22 @@ class AttentionGraphDataset(Dataset):
                     raise ValueError("compact evidence is available only for the final layer")
                 parts.append(compact_payload["compact_evidence"][compact_offset].float())
             xs.append(torch.cat(parts, 1))
+            if self.omit_edges:
+                edge_indices.append(torch.empty((2, 0), dtype=torch.long))
+                edge_attrs.append(torch.empty((0, 0), dtype=torch.float32))
+                layer_ids.append(torch.full((tokens,), slot, dtype=torch.long))
+                continue
             graph = shard.layer_graph(offset, layer, tau=self.tau, top_k=self.top_k)
             if self.rewire_cache is not None:
                 payload, record_offset = self.rewire_cache.locate(self.indices[position])
                 start, stop = int(payload["offsets"][record_offset]), int(payload["offsets"][record_offset + 1])
                 if stop - start != graph.edge_index.shape[1]:
                     raise ValueError("rewire cache edge count mismatch")
-                edge_index = graph.edge_index.long().clone()
-                edge_index[1] = payload["targets"][start:stop].long()
-                edge_attr = graph.edge_attr.float()
+                edge_index, edge_attr = graph.edge_index.long().clone(), graph.edge_attr.float()
+                if self.rewire_mode == "target_permute":
+                    edge_index[1] = payload["targets"][start:stop].long()
+                else:
+                    edge_attr = edge_attr[payload["permutation"][start:stop].long()]
             else:
                 edge_index, edge_attr = rewire_graph(
                     graph.edge_index.long(), graph.edge_attr.float(), self.rewire_mode,
@@ -559,11 +567,13 @@ class LastFourGraphDataset(Dataset):
                                              self.store.store_dir, "hidden_last4_missing")
         self.final_hidden = AlignedSidecar(parent / "hidden12", self.store.store_dir,
                                            "hidden", layer=12)
-        self.missing_message = AlignedSidecar(parent / "sidecars/message_stats_last4_missing",
-                                              self.store.store_dir, "message_stats_last4_missing")
-        self.final_message = AlignedSidecar(parent / "sidecars/message_stats_l11",
-                                            self.store.store_dir, "message_stats", layer=11)
         self.mode = mode
+        self.missing_message = self.final_message = None
+        if mode == "union":
+            self.missing_message = AlignedSidecar(parent / "sidecars/message_stats_last4_missing",
+                                                  self.store.store_dir, "message_stats_last4_missing")
+            self.final_message = AlignedSidecar(parent / "sidecars/message_stats_l11",
+                                                self.store.store_dir, "message_stats", layer=11)
         raw = list(range(self.store.total)) if keys is None else self.store.indices_for(keys)
         self.indices = sorted(raw)
 
@@ -588,22 +598,24 @@ class LastFourGraphDataset(Dataset):
         shard, offset = self.store.locate(index)
         hm, om = self.missing_hidden.locate(index)
         hf, of = self.final_hidden.locate(index)
-        mm, sm = self.missing_message.locate(index)
-        mf, sf = self.final_message.locate(index)
         hidden = torch.cat([hm["hidden"][om].float(), hf["hidden"][of].float().unsqueeze(0)], 0)
-        projected = torch.cat([mm["projected_value_norm"][sm].float(),
-                               mf["projected_value_norm"][sf].float().unsqueeze(0)], 0)
-        support = torch.cat([mm["decision_support_proxy"][sm].float(),
-                             mf["decision_support_proxy"][sf].float().unsqueeze(0)], 0)
+        if self.mode == "union":
+            mm, sm = self.missing_message.locate(index)
+            mf, sf = self.final_message.locate(index)
+            projected = torch.cat([mm["projected_value_norm"][sm].float(),
+                                   mf["projected_value_norm"][sf].float().unsqueeze(0)], 0)
+            support = torch.cat([mm["decision_support_proxy"][sm].float(),
+                                 mf["decision_support_proxy"][sf].float().unsqueeze(0)], 0)
         xs, edge_indices, edge_attrs = [], [], []
         for slot, layer in enumerate((8, 9, 10, 11)):
             coords = node_coordinates(self.store.num_tokens, layer, shard.layer_count)
             xs.append(torch.cat([coords, shard.diagonals[offset, layer].float(), hidden[slot]], 1))
-            graph = shard.layer_graph(offset, layer)
-            edge_index = graph.edge_index.long()
-            edge_indices.append(edge_index)
-            edge_attrs.append(derive_attention_edge_features(
-                graph.edge_attr.float(), edge_index, projected[slot], support[slot], "evidence_flow"))
+            if self.mode == "union":
+                graph = shard.layer_graph(offset, layer)
+                edge_index = graph.edge_index.long()
+                edge_indices.append(edge_index)
+                edge_attrs.append(derive_attention_edge_features(
+                    graph.edge_attr.float(), edge_index, projected[slot], support[slot], "evidence_flow"))
         x = torch.stack(xs, 1)  # [tokens, ordered blocks, features]
         if self.mode == "trajectory":
             edge_index = torch.empty((2, 0), dtype=torch.long)

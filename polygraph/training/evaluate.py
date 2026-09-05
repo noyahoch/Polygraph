@@ -130,7 +130,8 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
                                                  compact_evidence_dir=compact_dir,
                                                  temporal_edges=getattr(config, "temporal_edges", False),
                                                  rewire_cache_dir=Path(config.rewire_cache_dir)
-                                                 if getattr(config, "rewire_cache_dir", None) else None)
+                                                 if getattr(config, "rewire_cache_dir", None) else None,
+                                                 omit_edges=getattr(config, "architecture", "") == "hidden_token_set")
                         for n in ("train", "val", "test")}
         print(f"collecting graph predictions ({path.name})...", flush=True)
         train_pred = collect(model, datasets["train"], device, config.batch_size,

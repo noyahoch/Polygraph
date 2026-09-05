@@ -11,6 +11,7 @@ from polygraph.training.models import (FactoredEndpointAffine, HiddenTokenSetMod
                                        M5EndpointSetModel, M5NodeEdgeSetModel,
                                        ResidualGraphModel)
 from polygraph.data.storage import build_layer_union
+from polygraph.data.pipeline import LAST4_BLOCK_IDS, LAST4_HIDDEN_INDICES
 
 
 def graph():
@@ -122,3 +123,9 @@ def test_last_four_models_preserve_ordered_token_identity_and_backpropagate():
     # Mutating layer order changes the ordered history representation.
     reversed_data = copy.copy(data); reversed_data.x = data.x.flip(1)
     assert not torch.allclose(models[0](data)[0], models[0](reversed_data)[0])
+
+
+def test_block_output_hidden_state_correspondence_is_not_final_state_reuse():
+    assert LAST4_BLOCK_IDS == (8, 9, 10, 11)
+    assert LAST4_HIDDEN_INDICES == (9, 10, 11, 12)
+    assert len(set(LAST4_HIDDEN_INDICES)) == 4

@@ -90,13 +90,33 @@ class Suite:
     def command(self, experiment_id, command, mandatory=False, timeout_minutes=None):
         log = self.run / "logs" / f"{experiment_id}.log"
         started, t0 = utc(), time.monotonic()
+        command_text = " ".join(map(str, command))
+        gpu_job = ("polygraph.training train" in command_text or "last4-sidecars" in command_text
+                   or "profile_topology_models" in command_text)
+        used = 0.0
+        if self.ledger.exists():
+            for line in self.ledger.read_text().splitlines():
+                try:
+                    row = json.loads(line)
+                    prior_command = " ".join(map(str, row.get("command", [])))
+                    if row.get("gpu_job") or "polygraph.training train" in prior_command:
+                        used += float(row.get("runtime_seconds", 0))
+                except Exception: pass
+        if gpu_job and not mandatory and used >= self.args.gpu_budget_hours * 3600:
+            self.record(dict(experiment_id=experiment_id, status="skipped", command=list(map(str, command)),
+                             start_time_utc=started, end_time_utc=started, runtime_seconds=0,
+                             mandatory=False, gpu_job=True,
+                             reason=f"target GPU budget already used ({used / 3600:.2f} h)"))
+            return 1
+        if gpu_job and mandatory and used >= 24 * 3600:
+            raise RuntimeError(f"24 GPU-hour hard limit reached before mandatory {experiment_id}")
         if self.args.dry_run:
             print("DRY", *command)
             return 0
         status, reason = "completed", None
         try:
             with log.open("a") as output:
-                output.write(f"\n[{started}] {' '.join(map(str, command))}\n")
+                output.write(f"\n[{started}] {command_text}\n")
                 output.flush()
                 result = subprocess.run(list(map(str, command)), cwd=ROOT, stdout=output,
                                         stderr=subprocess.STDOUT,
@@ -108,6 +128,7 @@ class Suite:
         row = dict(experiment_id=experiment_id, status=status, command=list(map(str, command)),
                    start_time_utc=started, end_time_utc=utc(), runtime_seconds=time.monotonic() - t0,
                    mandatory=mandatory, log=str(log.relative_to(ROOT)), reason=reason)
+        row["gpu_job"] = gpu_job
         self.record(row); self.update_progress()
         if status != "completed" and mandatory:
             raise RuntimeError(f"mandatory {experiment_id} {status}: {reason}; see {log}")
@@ -167,7 +188,12 @@ class Suite:
     @staticmethod
     def best_val(path):
         payload = torch.load(path, map_location="cpu", weights_only=False)
-        return max(float(row["val_auroc"]) for row in payload["history"])
+        selected, delta = -float("inf"), float(payload["config"].get("min_delta", 0.0))
+        for row in payload["history"]:
+            value = float(row["val_auroc"])
+            if value > selected + delta:
+                selected = value
+        return selected
 
     def controls(self):
         self.train("S0_h64", "hidden_token_set", 64, 7, mandatory=True, batch=192)
@@ -188,6 +214,13 @@ class Suite:
                                                        map_location="cpu", weights_only=False)
             family, width = ckpt["config"]["architecture"], ckpt["config"]["hidden_dim"]
             for seed in (1, 2): self.train(name, family, width, seed, mandatory=True, batch=96)
+
+    def profile(self):
+        self.command("profile_legacy_M5", [PY, "scripts/profile_topology_models.py",
+                     "--plan", MAIN_TRAIN, "--store", STORE,
+                     "--out", self.run / "inventory/profile_legacy_M5.json",
+                     "--family", "transformerconv", "--width", 32, "--batch-size", 32],
+                     timeout_minutes=30)
 
     def architectures(self):
         for family in ("transformerconv_residual", "gine", "edge_gated_mean", "gatv2"):
@@ -212,6 +245,17 @@ class Suite:
                        "--hidden-dim", 32, "--gnn-layers", 2, "--batch-size", 64,
                        "--seeds", 7, "--epochs-per-process", 0]
             self.command("R1_target_permuted_M5_seed7", command, mandatory=True, timeout_minutes=150)
+        # R2 is lower priority but uses the same cached permutations and unchanged edge budget.
+        r2 = self.run / "controls/R2_attribute_shuffled_M5"
+        if not ((r2 / "model_seed7.pt").exists() and self.args.resume):
+            command = [PY, "-m", "polygraph.training", "train", "--plan", MAIN_TRAIN,
+                       "--out-dir", r2, "--layers", "last", "--architecture", "transformerconv",
+                       "--node-features", "hidden", "--edge-features", "evidence_flow",
+                       "--message-stats-dir", "data/graph_dataset/sidecars/message_stats_l11",
+                       "--rewire-mode", "shuffle_attr", "--rewire-cache-dir", cache,
+                       "--hidden-dim", 32, "--gnn-layers", 2, "--batch-size", 64,
+                       "--seeds", 7, "--epochs-per-process", 0]
+            self.command("R2_attribute_shuffled_M5_seed7", command, timeout_minutes=90)
 
     def depth(self):
         selected = json.loads((self.run / "configs/architecture_selection.json").read_text())["selected"]
@@ -275,6 +319,61 @@ class Suite:
         manifest["multilayer"] = json.loads(multi_path.read_text()) if multi_path.exists() else None
         atomic_json(self.run / "final/selection_manifest.json", manifest)
 
+    def train_from_checkpoint_config(self, checkpoint, seeds, plan=MAIN_TRAIN, out=None,
+                                     mandatory=False, timeout=120):
+        payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
+        c = payload["config"]
+        out = out or checkpoint.parent
+        for seed in seeds:
+            if (out / f"model_seed{seed}.pt").exists() and self.args.resume: continue
+            command = [PY, "-m", "polygraph.training", "train", "--plan", plan,
+                       "--out-dir", out, "--layers", ",".join(map(str, c["layers"])),
+                       "--architecture", c["architecture"], "--hidden-dim", c["hidden_dim"],
+                       "--gnn-layers", c["gnn_layers"], "--batch-size", c["batch_size"],
+                       "--seeds", seed, "--epochs-per-process", 0, "--epochs", c["epochs"],
+                       "--patience", c["patience"], "--min-delta", c["min_delta"],
+                       "--lr", c["lr"], "--weight-decay", c["weight_decay"]]
+            if c.get("node_features") and c["node_features"] != "base":
+                command += ["--node-features", c["node_features"]]
+            if c.get("edge_features") and c["edge_features"] != "attention":
+                command += ["--edge-features", c["edge_features"], "--message-stats-dir",
+                            c.get("message_stats_dir") or "data/graph_dataset/sidecars/message_stats_l11"]
+            if c.get("jumping_knowledge"): command += ["--jumping-knowledge"]
+            if c.get("multilayer_mode", "none") != "none":
+                command += ["--multilayer-mode", c["multilayer_mode"],
+                            "--multilayer-family", c["multilayer_family"]]
+            self.command(f"confirm_{out.name}_seed{seed}", command, mandatory=mandatory,
+                         timeout_minutes=timeout)
+
+    def confirm(self):
+        selection = json.loads((self.run / "final/selection_manifest.json").read_text())
+        best_gnn = self.run / "architectures" / selection["selected_gnn"] / "model_seed7.pt"
+        legacy = self.best_val(PRIOR / "combiners/strict/main/M5/model_seed7.pt")
+        if self.best_val(best_gnn) >= legacy + .005:
+            self.train_from_checkpoint_config(best_gnn, (1, 2), timeout=150)
+        multi = selection.get("multilayer") or {}
+        if multi.get("best"):
+            best_multi = self.run / "multilayer" / multi["best"] / "model_seed7.pt"
+            if self.best_val(best_multi) >= legacy + .005:
+                self.train_from_checkpoint_config(best_multi, (1, 2), timeout=150)
+        # Weather uses the main-selected architecture/hyperparameters unchanged, with
+        # weather train/base_val for fitting and early stopping.
+        controls = selection["controls"]
+        best_control = max((controls["S1"], controls["S2"]),
+                           key=lambda name: controls[name.split("_")[0] + "_validation"][name])
+        source = self.run / "controls" / best_control / "model_seed7.pt"
+        weather_out = self.run / "controls" / ("weather_" + best_control)
+        self.train_from_checkpoint_config(source, (7, 1, 2), plan=WEATHER_TRAIN,
+                                          out=weather_out, mandatory=True, timeout=150)
+        if self.best_val(best_gnn) >= legacy + .005:
+            self.train_from_checkpoint_config(best_gnn, (7, 1, 2), plan=WEATHER_TRAIN,
+                out=self.run / "architectures" / ("weather_" + best_gnn.parent.name), timeout=150)
+        if multi.get("best"):
+            best_multi = self.run / "multilayer" / multi["best"] / "model_seed7.pt"
+            if self.best_val(best_multi) >= legacy + .005:
+                self.train_from_checkpoint_config(best_multi, (7, 1, 2), plan=WEATHER_TRAIN,
+                    out=self.run / "multilayer" / ("weather_" + best_multi.parent.name), timeout=150)
+
     def evaluate_one(self, category, name, plan=MAIN_EVAL):
         out = self.run / category / name
         cmd = [PY, "-m", "polygraph.training", "evaluate", "--run-dir", out,
@@ -288,6 +387,32 @@ class Suite:
         for name in ("S0_h64", selected["S1"], selected["S2"]): self.evaluate_one("controls", name)
         best = json.loads((self.run / "final/selection_manifest.json").read_text())["selected_gnn"]
         self.evaluate_one("architectures", best)
+        for name in ("L0_token_trajectory", "L1_union_graph", "L1_SET_union_endpoint"):
+            if (self.run / "multilayer" / name / "model_seed7.pt").exists():
+                self.evaluate_one("multilayer", name)
+        controls = json.loads((self.run / "configs/control_selection.json").read_text())
+        best_control = max((controls["S1"], controls["S2"]),
+                           key=lambda name: controls[name.split("_")[0] + "_validation"][name])
+        weather_control = "weather_" + best_control
+        if (self.run / "controls" / weather_control / "model_seed7.pt").exists():
+            self.evaluate_one("controls", weather_control, WEATHER_EVAL)
+        for category in ("architectures", "multilayer"):
+            for directory in (self.run / category).glob("weather_*"):
+                if directory.joinpath("model_seed7.pt").exists():
+                    self.evaluate_one(category, directory.name, WEATHER_EVAL)
+        for name in ("R1_target_permuted_M5", "R2_attribute_shuffled_M5"):
+            if (self.run / "controls" / name / "model_seed7.pt").exists():
+                self.evaluate_one("controls", name)
+        cache = ROOT / "data/graph_dataset/sidecars/rewire_target_l11"
+        if cache.joinpath("manifest.json").exists():
+            checkpoint = PRIOR / "combiners/strict/main/M5/model_seed7.pt"
+            for mode in ("target_permute", "shuffle_attr"):
+                self.command(f"fixed_M5_inference_{mode}",
+                             [PY, "scripts/evaluate_checkpoint_perturbation.py",
+                              "--checkpoint", checkpoint, "--plan", MAIN_EVAL,
+                              "--store", STORE, "--cache", cache, "--mode", mode,
+                              "--out-dir", self.run / f"controls/fixed_M5_inference_{mode}"],
+                             timeout_minutes=90)
 
     def gates(self):
         selected = json.loads((self.run / "configs/control_selection.json").read_text())
@@ -304,6 +429,40 @@ class Suite:
                            "--out-dir", out, "--detector-seed", seed,
                            "--method-name", f"strict_output_{control}_gate"]
                 self.command(f"gate_{control}_seed{seed}", command, mandatory=True, timeout_minutes=30)
+        selection = json.loads((self.run / "final/selection_manifest.json").read_text())
+        promoted = [("architectures", selection["selected_gnn"])]
+        if (selection.get("multilayer") or {}).get("best"):
+            promoted.append(("multilayer", selection["multilayer"]["best"]))
+        for category, name in promoted:
+            directory = self.run / category / name
+            for seed in (7, 1, 2):
+                if not directory.joinpath(f"scores_val_seed{seed}.npz").exists(): continue
+                out = self.run / "gates" / name
+                command = [PY, "scripts/evaluate_strict_gate.py",
+                           "--output-val", PRIOR / f"combiners/strict/main/output/scores_val_seed{seed}.npz",
+                           "--output-test", PRIOR / f"combiners/strict/main/output/scores_test_seed{seed}.npz",
+                           "--internal-val", directory / f"scores_val_seed{seed}.npz",
+                           "--internal-test", directory / f"scores_test_seed{seed}.npz",
+                           "--out-dir", out, "--detector-seed", seed,
+                           "--method-name", f"strict_output_{name}_gate"]
+                self.command(f"gate_{name}_seed{seed}", command, timeout_minutes=30)
+        # Weather matched-control gate (minimum weather confirmation).
+        controls = selection["controls"]
+        best_control = max((controls["S1"], controls["S2"]),
+                           key=lambda name: controls[name.split("_")[0] + "_validation"][name])
+        internal = self.run / "controls" / ("weather_" + best_control)
+        for seed in (7, 1, 2):
+            if not internal.joinpath(f"scores_val_seed{seed}.npz").exists(): continue
+            out = self.run / "gates" / ("weather_" + best_control)
+            self.command(f"gate_weather_{best_control}_seed{seed}",
+                [PY, "scripts/evaluate_strict_gate.py",
+                 "--output-val", PRIOR / f"combiners/strict/weather/output/scores_val_seed{seed}.npz",
+                 "--output-test", PRIOR / f"combiners/strict/weather/output/scores_test_seed{seed}.npz",
+                 "--internal-val", internal / f"scores_val_seed{seed}.npz",
+                 "--internal-test", internal / f"scores_test_seed{seed}.npz",
+                 "--out-dir", out, "--detector-seed", seed,
+                 "--method-name", f"strict_weather_output_{best_control}_gate"],
+                mandatory=True, timeout_minutes=30)
 
     def update_progress(self):
         lines = ["# Topology/depth/last-four study — live durable record", "",
@@ -318,6 +477,22 @@ class Suite:
             except Exception:
                 pass
         (self.run / "final/PROGRESS.md").write_text("\n".join(lines) + "\n")
+        report = ROOT / "docs/results/POLYGRAPH_TOPOLOGY_DEPTH_LAST4_REPORT_2026-09-05.md"
+        if report.exists():
+            text = report.read_text()
+            start, end = "<!-- AUTO_RESULTS_START -->", "<!-- AUTO_RESULTS_END -->"
+            if start in text and end in text:
+                table = [start, "", "| experiment | seed | selected base-val AUROC | epochs |",
+                         "|---|---:|---:|---:|"]
+                table.extend(lines[8:])
+                table += ["", f"Last durable update: {utc()}.", end]
+                before, rest = text.split(start, 1)
+                _, after = rest.split(end, 1)
+                report.write_text(before + "\n".join(table) + after)
+
+    def report(self):
+        self.command("finalize", [PY, "scripts/finalize_topology_depth_last4.py"],
+                     mandatory=True, timeout_minutes=60)
 
     def run_stage(self, stage):
         getattr(self, stage)()
@@ -342,8 +517,8 @@ def parse():
 def main():
     args = parse(); suite = Suite(args)
     if args.stage == "all":
-        for stage in ("inventory", "controls", "architectures", "depth", "capture_last4",
-                      "multilayer", "select", "evaluate"):
+        for stage in ("inventory", "profile", "controls", "rewiring", "architectures", "depth",
+                      "capture_last4", "multilayer", "select", "confirm", "evaluate", "gates", "report"):
             suite.run_stage(stage)
     elif hasattr(suite, args.stage):
         suite.run_stage(args.stage)

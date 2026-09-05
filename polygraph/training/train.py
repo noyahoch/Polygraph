@@ -210,6 +210,8 @@ def train_detector(config: TrainConfig, train_ds, val_ds, device,
     random.seed(config.seed), np.random.seed(config.seed), torch.manual_seed(config.seed)
     sample = train_ds[0]
     model = build_model(config, int(sample.x.shape[-1]), int(sample.edge_attr.shape[-1])).to(device)
+    if device.type == "cuda":
+        torch.cuda.reset_peak_memory_stats(device)
     print(f"  parameters: {sum(p.numel() for p in model.parameters()):,}", flush=True)
     if hasattr(train_ds, "shard_blocks"):
         sampler = ShardShuffleSampler(train_ds, config.seed)
@@ -261,7 +263,9 @@ def train_detector(config: TrainConfig, train_ds, val_ds, device,
         if device.type == "mps":
             torch.mps.empty_cache()
         val_auroc = float(roc_auc_score(val["y"], val["logit"])) if len(np.unique(val["y"])) > 1 else 0.5
-        history.append(dict(epoch=epoch, train_loss=total / max(seen, 1), val_auroc=val_auroc))
+        history.append(dict(epoch=epoch, train_loss=total / max(seen, 1), val_auroc=val_auroc,
+                            peak_gpu_memory_mb=(torch.cuda.max_memory_allocated(device) / 1024**2
+                                                if device.type == "cuda" else None)))
         if val_auroc > best_val + config.min_delta:
             best_val, best_epoch, stale = val_auroc, epoch, 0
             best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
@@ -335,7 +339,8 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
                                              logits_dir=logits_dir,
                                              tcp_target=config.tcp_multitask,
                                              rewire_cache_dir=Path(config.rewire_cache_dir)
-                                             if config.rewire_cache_dir else None)
+                                             if config.rewire_cache_dir else None,
+                                             omit_edges=config.architecture == "hidden_token_set")
                     for n in ("train", "val")}
     if config.shuffle_labels:
         datasets["train"] = _ShuffledLabels(datasets["train"], seed=999)
