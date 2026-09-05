@@ -409,17 +409,17 @@ class AttentionGraphDataset(Dataset):
             if logits_dir is None:
                 raise ValueError("TCP training targets require an aligned logits sidecar")
             from .sidecars import AlignedSidecar
-            self.logits = AlignedSidecar(logits_dir, self.store.store_dir, "logits")
+            self.logits = AlignedSidecar(logits_dir, self.store.store_dir, "logits", cache_shards=1)
         if edge_features != "attention":
             if message_stats_dir is None or self.layers != [11]:
                 raise ValueError("non-attention edge features require final-layer message statistics")
             from .sidecars import AlignedSidecar
             self.message_stats = AlignedSidecar(message_stats_dir, self.store.store_dir,
-                                                "message_stats", layer=11)
+                                                "message_stats", layer=11, cache_shards=1)
         if compact_evidence_dir is not None:
             from .sidecars import AlignedSidecar
             self.compact_evidence = AlignedSidecar(compact_evidence_dir, self.store.store_dir,
-                                                  "compact_evidence", layer=12)
+                                                  "compact_evidence", layer=12, cache_shards=1)
         self._hidden_cache: "OrderedDict[int, Tensor]" = OrderedDict()
         if self.hidden_dir is not None:
             manifest_path = self.hidden_dir / "manifest.json"
@@ -467,7 +467,7 @@ class AttentionGraphDataset(Dataset):
             expected = self.store._bounds[shard_index + 1] - self.store._bounds[shard_index]
             assert payload["records"] == expected, "hidden shard misaligned with graph store"
             self._hidden_cache[shard_index] = payload["hidden"]
-            while len(self._hidden_cache) > 2:
+            while len(self._hidden_cache) > 1:
                 self._hidden_cache.popitem(last=False)
         return self._hidden_cache[shard_index]
 
@@ -564,16 +564,18 @@ class LastFourGraphDataset(Dataset):
         self.store = store if isinstance(store, GraphStore) else GraphStore(store)
         parent = self.store.store_dir.parent
         self.missing_hidden = AlignedSidecar(parent / "sidecars/hidden_last4_missing",
-                                             self.store.store_dir, "hidden_last4_missing")
+                                             self.store.store_dir, "hidden_last4_missing", cache_shards=1)
         self.final_hidden = AlignedSidecar(parent / "hidden12", self.store.store_dir,
-                                           "hidden", layer=12)
+                                           "hidden", layer=12, cache_shards=1)
         self.mode = mode
         self.missing_message = self.final_message = None
         if mode == "union":
             self.missing_message = AlignedSidecar(parent / "sidecars/message_stats_last4_missing",
-                                                  self.store.store_dir, "message_stats_last4_missing")
+                                                  self.store.store_dir, "message_stats_last4_missing",
+                                                  cache_shards=1)
             self.final_message = AlignedSidecar(parent / "sidecars/message_stats_l11",
-                                                self.store.store_dir, "message_stats", layer=11)
+                                                self.store.store_dir, "message_stats", layer=11,
+                                                cache_shards=1)
         raw = list(range(self.store.total)) if keys is None else self.store.indices_for(keys)
         self.indices = sorted(raw)
 

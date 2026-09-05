@@ -50,13 +50,16 @@ L1-SET its matched endpoint-record control.
 ## Durable experiment table
 
 <!-- AUTO_RESULTS_START -->
-| experiment | seed | selected base-val AUROC | epochs | status |
-|---|---:|---:|---:|---|
-| S0 full-hidden token set | 7 | 0.87210 | 13 | completed; best epoch 5 |
 
-S0 used 75,138 parameters and removed all edge and endpoint information. This is a
-base-validation result only; its test metrics remain sealed until configuration
-selection is frozen.
+| experiment | seed | selected base-val AUROC | epochs |
+|---|---:|---:|---:|
+| S0_h64 | 7 | 0.87213 | 13 |
+| S1_h128 | 7 | 0.87277 | 15 |
+| S1_h96 | 7 | 0.86996 | 11 |
+| S2_h64 | 7 | 0.87503 | 12 |
+| S2_h96 | 7 | 0.87746 | 15 |
+
+Last durable update: 2026-09-05T21:29:14.401394+00:00.
 <!-- AUTO_RESULTS_END -->
 
 ## Environment

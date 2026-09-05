@@ -303,7 +303,9 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
     from ..data.storage import AttentionGraphDataset, GraphStore
 
     plan = SplitPlan.load(plan_path)
-    store = GraphStore(store_dir)
+    # Shard-aware sampling needs only the active shard. A second ~5 GiB graph shard
+    # multiplied host pressure without reuse and caused avoidable Linux OOM kills.
+    store = GraphStore(store_dir, cache_shards=1)
     if getattr(config, "multilayer_mode", "none") != "none":
         from ..data.storage import LastFourGraphDataset
         datasets = {n: LastFourGraphDataset(store, plan.splits[n], config.multilayer_mode)

@@ -94,7 +94,7 @@ def evaluate_run(run_dir: Path, store_dir: Path, plan_path: Path, device,
         checkpoints = [p for p in checkpoints if int(p.stem.replace("model_seed", "")) in set(seeds)]
     assert checkpoints, f"no checkpoints in {run_dir}"
     plan = SplitPlan.load(plan_path)
-    store = GraphStore(store_dir)
+    store = GraphStore(store_dir, cache_shards=1)
     seen_sources = sorted({k.source for k in plan.splits["train"]})
 
     per_seed = []

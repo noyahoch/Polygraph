@@ -197,11 +197,11 @@ class Suite:
 
     def controls(self):
         self.train("S0_h64", "hidden_token_set", 64, 7, mandatory=True, batch=192)
-        for name, family, width in (("S1_h96", "m5_node_edge_set", 96),
-                                    ("S1_h128", "m5_node_edge_set", 128),
-                                    ("S2_h64", "m5_endpoint_set", 64),
-                                    ("S2_h96", "m5_endpoint_set", 96)):
-            self.train(name, family, width, 7, mandatory=True, batch=96)
+        for name, family, width, batch in (("S1_h96", "m5_node_edge_set", 96, 96),
+                                           ("S1_h128", "m5_node_edge_set", 128, 24),
+                                           ("S2_h64", "m5_endpoint_set", 64, 64),
+                                           ("S2_h96", "m5_endpoint_set", 96, 48)):
+            self.train(name, family, width, 7, mandatory=True, batch=batch)
         selected = {}
         for prefix in ("S1", "S2"):
             candidates = sorted((self.run / "controls").glob(prefix + "_*"))
@@ -467,23 +467,29 @@ class Suite:
     def update_progress(self):
         lines = ["# Topology/depth/last-four study — live durable record", "",
                  f"Updated: {utc()}", "", "Test evaluation is withheld until selection is frozen.", "",
-                 "| experiment | seed | best base-val AUROC | epochs |", "|---|---:|---:|---:|"]
+                 "| experiment | seed | best base-val AUROC | epochs | status |", "|---|---:|---:|---:|---|"]
         for checkpoint in sorted(self.run.glob("**/model_seed*.pt")):
             try:
                 p = torch.load(checkpoint, map_location="cpu", weights_only=False)
                 history = p.get("history", [])
                 lines.append(f"| {checkpoint.parent.name} | {p['config']['seed']} | "
-                             f"{max(x['val_auroc'] for x in history):.5f} | {len(history)} |")
+                             f"{max(x['val_auroc'] for x in history):.5f} | {len(history)} | completed |")
             except Exception:
                 pass
+        if self.ledger.exists():
+            for raw in self.ledger.read_text().splitlines():
+                row = json.loads(raw)
+                if row.get("status") in {"failed", "aborted", "skipped"}:
+                    lines.append(f"| {row['experiment_id']} | — | — | — | {row['status']}: "
+                                 f"{row.get('reason') or 'recorded in ledger'} |")
         (self.run / "final/PROGRESS.md").write_text("\n".join(lines) + "\n")
         report = ROOT / "docs/results/POLYGRAPH_TOPOLOGY_DEPTH_LAST4_REPORT_2026-09-05.md"
         if report.exists():
             text = report.read_text()
             start, end = "<!-- AUTO_RESULTS_START -->", "<!-- AUTO_RESULTS_END -->"
             if start in text and end in text:
-                table = [start, "", "| experiment | seed | selected base-val AUROC | epochs |",
-                         "|---|---:|---:|---:|"]
+                table = [start, "", "| experiment | seed | selected base-val AUROC | epochs | status |",
+                         "|---|---:|---:|---:|---|"]
                 table.extend(lines[8:])
                 table += ["", f"Last durable update: {utc()}.", end]
                 before, rest = text.split(start, 1)
