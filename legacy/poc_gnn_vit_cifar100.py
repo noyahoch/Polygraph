@@ -40,7 +40,6 @@ from torch.utils.data import DataLoader, Dataset, Subset
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader as PyGDataLoader
 from torch_geometric.nn import GATv2Conv, GCNConv, NNConv, TransformerConv, global_mean_pool
-from torchvision.datasets import CIFAR100
 from tqdm import tqdm
 from transformers import AutoImageProcessor, ViTForImageClassification
 
@@ -928,6 +927,9 @@ def main() -> None:
         dataset = load_hf_streamed_cifar100(args.samples, args.seed)
         indices = list(range(len(dataset)))
     else:
+        # torchvision is only needed for this data source; keep it off the module import path.
+        from torchvision.datasets import CIFAR100
+
         dataset = CIFAR100(root=str(data_root), train=False, download=True)
         indices = make_subset_indices(len(dataset), args.samples, args.seed)
 

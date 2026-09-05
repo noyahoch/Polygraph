@@ -21,6 +21,27 @@ The ViT is never fine-tuned. The research question is whether **attention topolo
 
 **Headline result from session 2:** graph-only stays well below MSP, and an MSP+graph combiner lands at 0.9112 ± 0.0046 vs MSP's 0.9101 — a +0.001 difference, i.e. noise. The one durable positive: on the high-confidence subset (`conf ≥ 0.95`) the graph scores ~0.71 AUROC across 3 seeds, so it is not merely a confidence proxy. See Sections 5.5-5.7.
 
+**Headline change from session 3: the project was rebuilt around CIFAR-100-C at full
+scale, and the proposal's design is now implementable end to end.** The 1,700-row cache
+was never the real limit -- the positive class was: only 852 of the 10,000 clean test
+images are misclassified, and the POC split consumed 850 of them. The clean train split
+does not help (measured: 99.45% accuracy, 274 errors, confidence inflated by fine-tuning).
+The full grid is now scanned -- **1,010,000 records, 239,921 ViT errors (23.8%)** across
+clean data plus 19 corruptions x 5 severities -- and a 75,000-record plan is built
+(52k train / 6k val / 17k test, 50/50, group-disjoint by base image, stratified per
+(corruption, severity) cell, the 4 extra CIFAR-C corruptions held out to test only).
+Graph extraction returned to the proposal's threshold rule `max_h A > tau` at tau=0.02
+(bit-identical to the old POC rule; ~7,600 edges/layer), stored sorted so every stricter
+tau and every top-K view -- including the old top-100 -- derive from one extraction. CLS
+embeddings are stored per layer for the representation baselines. Training now has a real
+validation split, early stopping, multi-seed runs, and evaluation slices with trained
+baselines (output-statistics logistic; CLS-embedding MLP) so the graph cannot win merely
+by being trained. Historical intermediate results from the interim top-100 dataset
+(MSP 0.8675 on its balanced test, decaying 0.8999 -> 0.8194 with severity) remain in
+`data/graph_dataset/graphs/`, readable via [legacy_dataset.py](../legacy/legacy_dataset.py).
+Everything current is documented in the root [README.md](../README.md); the pipeline is
+`python3 -m polygraph.data` / `python3 -m polygraph.training`.
+
 ---
 
 ## 2. Environment (read this first — several footguns)
@@ -36,7 +57,7 @@ Footguns:
 - **`python` is not on PATH. `python3` resolves to system Python which has NO torch.** Always invoke `.venv/bin/python` explicitly.
 - **`rg` (ripgrep) is not installed** in the shell. Use `grep`.
 - **HuggingFace was blocked by a corporate proxy** (`Tunnel connection failed: 403 Forbidden`). **As of session 2 this is no longer true** — `huggingface.co` returned HTTP 200 and the ViT downloaded and re-extracted graphs fine. Re-verify before assuming either state; the proxy may flip back.
-  - The offline path still works regardless: `prepare()` in [lightweight_attention_experiments.py](lightweight_attention_experiments.py) skips loading the ViT entirely when both the graph cache and scan cache exist on disk.
+  - The offline path still works regardless: `prepare()` in [lightweight_attention_experiments.py](../legacy/lightweight_attention_experiments.py) skips loading the ViT entirely when both the graph cache and scan cache exist on disk.
   - You only need network if you delete the caches or change `--edges-per-layer` / `--seed` (which forces graph re-extraction).
 - **If you run commands in a restricted/sandboxed shell, ViT loading fails with `PermissionError ... /Users/yishail/.cache/huggingface/...`.** This is a *filesystem* permission problem, not a network one — the error message misleadingly suggests a stale lock file. Run unsandboxed (or point `HF_HOME` somewhere writable).
 - **`choose_device()` returns `mps` if available, else `cpu`, and a restricted shell hides MPS.** The same config scored graph AUROC **0.7688 on cpu vs 0.7776 on mps** — identical seed and settings. Backend alone moves AUROC by ~0.01, so **always confirm the `Using device:` line matches across runs you intend to compare.**
@@ -323,9 +344,9 @@ Priorities 1, 2 and 4 from the previous list are **done** (Sections 5.5-5.7). Wh
 ## 9. File Map
 
 Code:
-- [lightweight_attention_experiments.py](lightweight_attention_experiments.py) — **the current runner.** Stages 1-5.
-- [poc_gnn_vit_cifar100.py](poc_gnn_vit_cifar100.py) — original POC. Still imported by the new runner for data loading, ViT scan, splits, and model loading helpers. Do not delete.
-- [mlp_flat_attention_baseline.py](mlp_flat_attention_baseline.py) — pre-existing baseline, not used in recent work.
+- [lightweight_attention_experiments.py](../legacy/lightweight_attention_experiments.py) — **the current runner.** Stages 1-5.
+- [poc_gnn_vit_cifar100.py](../legacy/poc_gnn_vit_cifar100.py) — original POC. Still imported by the new runner for data loading, ViT scan, splits, and model loading helpers. Do not delete.
+- [mlp_flat_attention_baseline.py](../legacy/mlp_flat_attention_baseline.py) — pre-existing baseline, not used in recent work.
 
 Results added in session 2:
 - `reports_edge_ablation_{50,100,200,500}/` — edge-count ablation (Section 5.6). `reports_edge_ablation_100/` is also the canonical seed-7 Stage 5 result (Section 5.5).
