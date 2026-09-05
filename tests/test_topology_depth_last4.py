@@ -6,8 +6,11 @@ import torch
 from torch_geometric.data import Batch, Data
 
 from polygraph.training.models import (FactoredEndpointAffine, HiddenTokenSetModel,
+                                       LastFourTokenSetModel, LastFourUnionEndpointSetModel,
+                                       LastFourUnionGraphModel,
                                        M5EndpointSetModel, M5NodeEdgeSetModel,
                                        ResidualGraphModel)
+from polygraph.data.storage import build_layer_union
 
 
 def graph():
@@ -87,3 +90,35 @@ def test_no_family_adds_implicit_self_loops():
         for block in model.blocks:
             if hasattr(block, "add_self_loops"):
                 assert block.add_self_loops is False
+
+
+def test_last_four_union_alignment_and_missing_mask():
+    edges = [torch.tensor([[0, 1], [1, 2]]), torch.tensor([[0, 2], [1, 1]])]
+    attrs = [torch.tensor([[1., 2.], [3., 4.]]), torch.tensor([[5., 6.], [7., 8.]])]
+    union, features = build_layer_union(edges, attrs, tokens=3)
+    assert union.tolist() == [[0, 1, 2], [1, 2, 1]]
+    # 0->1 occurs in both layers; other edges have an unobserved/zero-filled slot.
+    torch.testing.assert_close(features[0], torch.tensor([1., 2., 5., 6., 1., 1.]))
+    torch.testing.assert_close(features[1], torch.tensor([3., 4., 0., 0., 1., 0.]))
+    torch.testing.assert_close(features[2], torch.tensor([0., 0., 7., 8., 0., 1.]))
+
+
+def test_last_four_models_preserve_ordered_token_identity_and_backpropagate():
+    x = torch.randn(5, 4, 10, requires_grad=True)
+    cls = torch.tensor([True, False, False, False, False])
+    edge_index = torch.tensor([[0, 1, 2, 3, 4, 0], [2, 2, 3, 3, 4, 4]])
+    edge_attr = torch.randn(6, 12, requires_grad=True)
+    data = Batch.from_data_list([Data(x=x, cls_mask=cls, edge_index=edge_index,
+                                           edge_attr=edge_attr)])
+    models = [LastFourTokenSetModel(10, 16, 0),
+              LastFourUnionGraphModel(10, 12, 16, 2, 0, "edge_gated_mean"),
+              LastFourUnionEndpointSetModel(10, 12, 16, 0)]
+    for model in models:
+        score = model(data)[0]
+        assert score.shape == (1,)
+        score.sum().backward(retain_graph=True)
+    assert x.grad is not None and torch.isfinite(x.grad).all()
+    assert edge_attr.grad is not None and edge_attr.grad.abs().sum() > 0
+    # Mutating layer order changes the ordered history representation.
+    reversed_data = copy.copy(data); reversed_data.x = data.x.flip(1)
+    assert not torch.allclose(models[0](data)[0], models[0](reversed_data)[0])

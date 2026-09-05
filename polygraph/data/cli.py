@@ -66,6 +66,16 @@ def build_parser() -> argparse.ArgumentParser:
                                            "for every stored record (variant-2 node features)")
     hidden.add_argument("--layer", type=int, default=12, help="ViT block output, 12 = final")
     hidden.add_argument("--batch-size", type=int, default=64)
+
+    last4 = sub.add_parser("last4-sidecars", help="capture missing hidden/message features for blocks 8-10")
+    last4.add_argument("--hidden-out-dir", default="data/graph_dataset/sidecars/hidden_last4_missing")
+    last4.add_argument("--message-out-dir", default="data/graph_dataset/sidecars/message_stats_last4_missing")
+    last4.add_argument("--batch-size", type=int, default=128)
+
+    rewire = sub.add_parser("rewire-cache", help="precompute deterministic final-layer target permutations")
+    rewire.add_argument("--out-dir", default="data/graph_dataset/sidecars/rewire_target_l11")
+    rewire.add_argument("--seed", type=int, default=20260905)
+    rewire.add_argument("--layer", type=int, default=11)
     return parser
 
 
@@ -146,6 +156,21 @@ def main(argv: Sequence[str] | None = None) -> None:
                            root / f"data/graph_dataset/hidden{args.layer}", layer=args.layer,
                            batch_size=args.batch_size)
         print(f"hidden states captured for {n} records")
+
+    elif args.command == "last4-sidecars":
+        from .pipeline import FrozenClassifier, capture_last4_sidecars
+
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        n = capture_last4_sidecars(
+            classifier, data_root, root / STORE_DIR, root / args.hidden_out_dir,
+            root / args.message_out_dir, batch_size=args.batch_size)
+        print(f"last-four missing features captured for {n} records")
+
+    elif args.command == "rewire-cache":
+        from .pipeline import capture_rewire_cache
+        n = capture_rewire_cache(root / STORE_DIR, root / args.out_dir, args.seed, args.layer)
+        print(f"cached rewiring for {n} records")
 
     elif args.command == "extract":
         from .graphs import ThresholdGraphBuilder

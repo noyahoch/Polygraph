@@ -213,6 +213,217 @@ def capture_message_stats(classifier: FrozenClassifier, data_root: Path, store_d
     return position
 
 
+def capture_last4_sidecars(classifier: FrozenClassifier, data_root: Path, store_dir: Path,
+                           hidden_out_dir: Path, message_out_dir: Path,
+                           batch_size: int = 128) -> int:
+    """Capture missing block-8/9/10 outputs and value statistics in one frozen pass.
+
+    Hidden indices 9/10/11 are block outputs 8/9/10. Block 11 / hidden index 12 is
+    recomputed only on the first batch to validate the existing final-layer artifacts.
+    """
+    import json
+    import shutil
+    import sys
+
+    from .sidecars import (AlignedSidecar, atomic_json_save, atomic_torch_save,
+                           build_manifest, value_message_statistics)
+    from .storage import GraphShard
+
+    block_ids, hidden_indices = (8, 9, 10), (9, 10, 11)
+    keys = [RecordKey(*k) for k in json.loads((store_dir / "store_keys.json").read_text())]
+    store_manifest = json.loads((store_dir / "manifest.json").read_text())
+    counts = list(map(int, store_manifest["shard_records"]))
+    completed_records = 0
+    for shard_index, count in enumerate(counts):
+        hp = hidden_out_dir / f"hidden_last4_missing_{shard_index:05d}.pt"
+        if hp.exists():
+            try:
+                if int(torch.load(hp, map_location="cpu", weights_only=False).get("records", -1)) == count:
+                    completed_records += count
+            except Exception:
+                pass
+    total_required = sum(counts) * len(block_ids) * 197 * 768 * 2
+    required = (sum(counts) - completed_records) * len(block_ids) * 197 * 768 * 2
+    reserve = 20 * 1024 ** 3
+    free = shutil.disk_usage(hidden_out_dir.parent).free
+    if free - required < reserve:
+        raise RuntimeError(f"last-four hidden capture needs {required / 1024**3:.2f} GiB and a "
+                           f"20 GiB reserve, but only {free / 1024**3:.2f} GiB is free")
+    hidden_out_dir.mkdir(parents=True, exist_ok=True)
+    message_out_dir.mkdir(parents=True, exist_ok=True)
+
+    vit = classifier.model.vit
+    blocks = vit.layers if hasattr(vit, "layers") else vit.encoder.layer
+    classifier_weight = classifier.model.classifier.weight.detach()
+    heads = int(classifier.model.config.num_attention_heads)
+    captured: Dict[int, List[torch.Tensor]] = {layer: [] for layer in (*block_ids, 11)}
+    handles, output_weights = [], {}
+    for layer in (*block_ids, 11):
+        attention = blocks[layer].attention
+        if hasattr(attention, "v_proj"):
+            value_layer, weight = attention.v_proj, attention.o_proj.weight.detach()
+        else:
+            value_layer, weight = attention.attention.value, attention.output.dense.weight.detach()
+        output_weights[layer] = weight
+        handles.append(value_layer.register_forward_hook(
+            lambda _m, _i, output, layer=layer: captured[layer].append(output.detach())))
+
+    final_hidden = AlignedSidecar(store_dir.parent / "hidden12", store_dir, "hidden",
+                                  classifier.model_id, layer=12)
+    final_message = AlignedSidecar(store_dir.parent / "sidecars/message_stats_l11", store_dir,
+                                   "message_stats", classifier.model_id, layer=11)
+    position = disagreements = 0
+    validation = {"hidden12_max_abs": 0.0, "projected_norm_l11_max_abs": 0.0,
+                  "decision_proxy_l11_max_abs": 0.0, "records": 0}
+    try:
+        for shard_index, count in enumerate(counts):
+            hidden_path = hidden_out_dir / f"hidden_last4_missing_{shard_index:05d}.pt"
+            message_path = message_out_dir / f"message_stats_last4_missing_{shard_index:05d}.pt"
+            if hidden_path.exists() and message_path.exists():
+                hp = torch.load(hidden_path, map_location="cpu", weights_only=False)
+                mp = torch.load(message_path, map_location="cpu", weights_only=False)
+                if (int(hp.get("records", -1)) == count and int(mp.get("records", -1)) == count
+                        and hp.get("hidden_indices") == list(hidden_indices)
+                        and mp.get("block_ids") == list(block_ids)):
+                    position += count
+                    continue
+                raise RuntimeError(f"incompatible completed last-four shard {shard_index}")
+            shard_keys = keys[position:position + count]
+            graph_shard = GraphShard.load(store_dir / store_manifest["shards"][shard_index])
+            hidden_buffers = []
+            stats = {name: [] for name in ("value_norm", "projected_value_norm",
+                                           "decision_support_proxy")}
+            predicted_all, runner_all = [], []
+            for start in tqdm(range(0, count, batch_size), desc=f"last4 shard {shard_index}"):
+                chunk = shard_keys[start:start + batch_size]
+                images = [pool_for(k, data_root).image(k.base_index) for k in chunk]
+                pixels = classifier.processor(images=images, return_tensors="pt")["pixel_values"].to(classifier.device)
+                for values in captured.values(): values.clear()
+                with torch.no_grad():
+                    out = classifier.model(pixels, output_hidden_states=True, output_attentions=False)
+                if any(len(captured[layer]) != 1 for layer in captured):
+                    raise RuntimeError("a last-four value hook did not fire exactly once")
+                top2 = out.logits.float().topk(2, -1).indices
+                expected = graph_shard.meta["pred"][start:start + len(chunk)].to(top2.device).long()
+                disagreements += int((top2[:, 0] != expected).sum())
+                direction = classifier_weight[top2[:, 0]] - classifier_weight[top2[:, 1]]
+                hidden_chunk = torch.stack([out.hidden_states[index] for index in hidden_indices], 1)
+                hidden_buffers.append(hidden_chunk.cpu().half())
+                for layer in block_ids:
+                    raw, projected, support = value_message_statistics(
+                        captured[layer][0], output_weights[layer], direction, heads)
+                    stats["value_norm"].append((layer, raw.cpu().half()))
+                    stats["projected_value_norm"].append((layer, projected.cpu().half()))
+                    stats["decision_support_proxy"].append((layer, support.cpu().half()))
+                predicted_all.append(top2[:, 0].cpu().short()); runner_all.append(top2[:, 1].cpu().short())
+
+                if validation["records"] == 0:
+                    n = len(chunk)
+                    stored_h = final_hidden.shard(shard_index)["hidden"][start:start + n]
+                    validation["hidden12_max_abs"] = float(
+                        (out.hidden_states[12].cpu().half() - stored_h).abs().max())
+                    _, projected11, support11 = value_message_statistics(
+                        captured[11][0], output_weights[11], direction, heads)
+                    stored_m = final_message.shard(shard_index)
+                    validation["projected_norm_l11_max_abs"] = float(
+                        (projected11.cpu().half() - stored_m["projected_value_norm"][start:start+n]).abs().max())
+                    validation["decision_proxy_l11_max_abs"] = float(
+                        (support11.cpu().half() - stored_m["decision_support_proxy"][start:start+n]).abs().max())
+                    validation["records"] = n
+                del out, pixels
+            if disagreements > MAX_DRIFT_FRACTION * max(position + count, 1) + 1:
+                raise RuntimeError(f"systematic last-four prediction drift: {disagreements}/{position + count}")
+            # Lists are interleaved by batch,layer; restore [N,3,T,H].
+            packed = {}
+            for name, values in stats.items():
+                by_layer = [torch.cat([tensor for layer, tensor in values if layer == wanted])
+                            for wanted in block_ids]
+                packed[name] = torch.stack(by_layer, 1)
+            if not hidden_path.exists():
+                atomic_torch_save({"hidden": torch.cat(hidden_buffers), "records": count,
+                                   "model_id": classifier.model_id, "block_ids": list(block_ids),
+                                   "hidden_indices": list(hidden_indices)}, hidden_path)
+            if not message_path.exists():
+                atomic_torch_save({**packed, "predicted_class": torch.cat(predicted_all),
+                                   "runner_up_class": torch.cat(runner_all), "records": count,
+                                   "model_id": classifier.model_id, "block_ids": list(block_ids)}, message_path)
+            position += count
+    finally:
+        for handle in handles: handle.remove()
+
+    hidden_manifest = build_manifest(store_dir, classifier.model_id,
+                                     {"hidden": ["N", 3, 197, 768], "block_ids": list(block_ids),
+                                      "hidden_indices": list(hidden_indices)}, "float16", sys.argv)
+    hidden_manifest.update({"block_ids": list(block_ids), "hidden_indices": list(hidden_indices),
+                            "stored_states_are_pre_final_layernorm": True,
+                            "full_required_bytes": total_required,
+                            "remaining_required_bytes_at_start": required,
+                            "final_layer_validation": validation})
+    atomic_json_save(hidden_manifest, hidden_out_dir / "manifest.json")
+    message_manifest = build_manifest(store_dir, classifier.model_id,
+                                      {"value_norm": ["N", 3, 197, heads],
+                                       "projected_value_norm": ["N", 3, 197, heads],
+                                       "decision_support_proxy": ["N", 3, 197, heads],
+                                       "block_ids": list(block_ids)}, "float16/int16", sys.argv)
+    message_manifest.update({"block_ids": list(block_ids),
+                             "class_direction": "same final predicted-vs-runner-up classes for every block",
+                             "final_layer_validation": validation, "prediction_disagreements": disagreements})
+    atomic_json_save(message_manifest, message_out_dir / "manifest.json")
+    return position
+
+
+def capture_rewire_cache(store_dir: Path, out_dir: Path, seed: int = 20260905,
+                         layer: int = 11) -> int:
+    """Precompute deterministic target permutations once, preserving every edge row."""
+    import json
+    import sys
+
+    from .sidecars import atomic_json_save, atomic_torch_save, build_manifest
+    from .storage import GraphShard, rewire_graph
+
+    manifest = json.loads((store_dir / "manifest.json").read_text())
+    counts = list(map(int, manifest["shard_records"]))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    totals = {"edges": 0, "self_loops_before": 0, "self_loops_after": 0,
+              "duplicate_edges_before": 0, "duplicate_edges_after": 0}
+    for shard_index, count in enumerate(counts):
+        out_path = out_dir / f"rewire_{shard_index:05d}.pt"
+        if out_path.exists():
+            payload = torch.load(out_path, map_location="cpu", weights_only=False)
+            if int(payload.get("records", -1)) == count and int(payload.get("seed", -1)) == seed:
+                for key in totals: totals[key] += int(payload["statistics"][key])
+                continue
+            raise RuntimeError(f"incompatible completed rewiring cache: {out_path}")
+        shard = GraphShard.load(store_dir / manifest["shards"][shard_index])
+        targets, offsets = [], [0]
+        stats = {key: 0 for key in totals}
+        store_start = sum(counts[:shard_index])
+        for offset in range(count):
+            graph = shard.layer_graph(offset, layer)
+            changed, _ = rewire_graph(graph.edge_index.long(), graph.edge_attr, "target_permute",
+                                      store_start + offset, seed)
+            before, after = graph.edge_index.long(), changed
+            n = before.shape[1]
+            stats["edges"] += n
+            stats["self_loops_before"] += int((before[0] == before[1]).sum())
+            stats["self_loops_after"] += int((after[0] == after[1]).sum())
+            tokens = shard.num_tokens
+            stats["duplicate_edges_before"] += n - int(torch.unique(before[0] * tokens + before[1]).numel())
+            stats["duplicate_edges_after"] += n - int(torch.unique(after[0] * tokens + after[1]).numel())
+            targets.append(after[1].to(torch.int16)); offsets.append(offsets[-1] + n)
+        atomic_torch_save({"targets": torch.cat(targets), "offsets": torch.tensor(offsets),
+                           "records": count, "seed": seed, "layer": layer,
+                           "statistics": stats}, out_path)
+        for key in totals: totals[key] += stats[key]
+    result = build_manifest(store_dir, manifest.get("model_id", "unknown"),
+                            {"targets": ["ragged final-layer targets"], "offsets": ["N+1"],
+                             "policy": "sources fixed; target list permuted; edge rows fixed"},
+                            "int16/int64", sys.argv, layer=layer)
+    result.update({"seed": seed, "statistics": totals})
+    atomic_json_save(result, out_dir / "manifest.json")
+    return sum(counts)
+
+
 def capture_compact_evidence(classifier: FrozenClassifier, store_dir: Path, hidden_dir: Path,
                              logits_dir: Path, out_dir: Path, batch_size: int = 128) -> int:
     """Build predicted-class-conditioned token evidence from aligned hidden/logit sidecars."""

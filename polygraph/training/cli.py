@@ -48,7 +48,8 @@ def build_parser() -> argparse.ArgumentParser:
                        choices=["transformerconv", "simple_mpnn", "edge_set", "node_edge_set",
                                 "endpoint_set", "temporal_mpnn", "hidden_token_set",
                                 "m5_node_edge_set", "m5_endpoint_set", "transformerconv_residual",
-                                "gine", "edge_gated_mean", "gatv2"])
+                                "gine", "edge_gated_mean", "gatv2", "last4_token_set",
+                                "last4_union_graph", "last4_union_endpoint_set"])
     train.add_argument("--node-features", default=None,
                        choices=["base", "compact_evidence", "hidden"])
     train.add_argument("--edge-features", default="attention",
@@ -58,9 +59,13 @@ def build_parser() -> argparse.ArgumentParser:
     train.add_argument("--compact-evidence-dir")
     train.add_argument("--rewire-mode", default="none",
                        choices=["none", "target_permute", "shuffle_attr"])
+    train.add_argument("--rewire-cache-dir")
     train.add_argument("--temporal-edges", action="store_true")
     train.add_argument("--tcp-multitask", action="store_true")
     train.add_argument("--jumping-knowledge", action="store_true")
+    train.add_argument("--multilayer-mode", default="none", choices=["none", "trajectory", "union"])
+    train.add_argument("--multilayer-family", default="edge_gated_mean",
+                       choices=["transformerconv_residual", "gine", "edge_gated_mean", "gatv2"])
     train.add_argument("--epochs", type=int, default=60)
     train.add_argument("--patience", type=int, default=8)
     train.add_argument("--min-delta", type=float, default=0.002)
@@ -108,7 +113,10 @@ def main(argv: Sequence[str] | None = None) -> None:
                              rewire_mode=args.rewire_mode, temporal_edges=args.temporal_edges,
                              tcp_multitask=args.tcp_multitask, epochs=args.epochs,
                              patience=args.patience, min_delta=args.min_delta, lr=args.lr,
-                             weight_decay=args.weight_decay, jumping_knowledge=args.jumping_knowledge)
+                             weight_decay=args.weight_decay, jumping_knowledge=args.jumping_knowledge,
+                             multilayer_mode=args.multilayer_mode,
+                             multilayer_family=args.multilayer_family,
+                             rewire_cache_dir=args.rewire_cache_dir)
         print(f"device: {device} | layers: {layers} | readout: {args.readout} "
               f"| hidden_dim: {args.hidden_dim} | gnn_layers: {args.gnn_layers}", flush=True)
         train_run(root / STORE_DIR, plan_path, root / args.out_dir, config, args.seeds, device)

@@ -27,6 +27,7 @@ def main():
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--detector-seed", type=int, required=True)
     parser.add_argument("--gate-seed", type=int, default=20260830)
+    parser.add_argument("--method-name", default="strict_output_M5_gate")
     args = parser.parse_args()
 
     val_scores, val_meta = load_aligned([args.output_val, args.internal_val])
@@ -67,9 +68,9 @@ def main():
     fields = {key: test_meta[key] for key in
               ("y", "confidence", "margin", "image_id", "source_id", "severity", "store_index")}
     np.savez_compressed(path, score=score, **fields,
-                        method_name=np.asarray("strict_output_M5_gate"),
+                        method_name=np.asarray(args.method_name),
                         plan_hash=test_meta["plan_hash"], seed=np.asarray(args.detector_seed))
-    report = {"method": "strict_output_M5_gate", "detector_seed": args.detector_seed,
+    report = {"method": args.method_name, "detector_seed": args.detector_seed,
               "gate_seed": args.gate_seed, "inputs": val_names,
               "selection": "fixed mixture gate; five-fold base-image GroupKFold on meta_val",
               "oof_meta_validation": detector_metrics(y, oof), "folds": folds,

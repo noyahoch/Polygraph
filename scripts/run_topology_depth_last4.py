@@ -197,6 +197,22 @@ class Suite:
         if scored: atomic_json(self.run / "configs/architecture_selection.json",
                                {"selected": max(scored, key=scored.get), "base_val": scored})
 
+    def rewiring(self):
+        cache = ROOT / "data/graph_dataset/sidecars/rewire_target_l11"
+        self.command("R1_cache", [PY, "-m", "polygraph.data", "rewire-cache",
+                                  "--out-dir", cache, "--seed", 20260905, "--layer", 11],
+                     mandatory=True, timeout_minutes=90)
+        out = self.run / "controls/R1_target_permuted_M5"
+        if not ((out / "model_seed7.pt").exists() and self.args.resume):
+            command = [PY, "-m", "polygraph.training", "train", "--plan", MAIN_TRAIN,
+                       "--out-dir", out, "--layers", "last", "--architecture", "transformerconv",
+                       "--node-features", "hidden", "--edge-features", "evidence_flow",
+                       "--message-stats-dir", "data/graph_dataset/sidecars/message_stats_l11",
+                       "--rewire-mode", "target_permute", "--rewire-cache-dir", cache,
+                       "--hidden-dim", 32, "--gnn-layers", 2, "--batch-size", 64,
+                       "--seeds", 7, "--epochs-per-process", 0]
+            self.command("R1_target_permuted_M5_seed7", command, mandatory=True, timeout_minutes=150)
+
     def depth(self):
         selected = json.loads((self.run / "configs/architecture_selection.json").read_text())["selected"]
         family = selected.removeprefix("A_")
@@ -207,6 +223,42 @@ class Suite:
             for depth in (1, 4):
                 self.train(f"D_{fam}_d{depth}", fam, 64, 7, category="architectures", depth=depth,
                            batch=48, jk=depth >= 4)
+
+    def capture_last4(self):
+        records = json.loads((STORE / "manifest.json").read_text())["records"]
+        required = int(records) * 3 * 197 * 768 * 2
+        stat_required = int(records) * 3 * 197 * 12 * 3 * 2
+        disk = os.statvfs(ROOT)
+        estimate = {"records": records, "hidden_bytes": required,
+                    "message_bytes": stat_required, "estimated_total_gib": (required + stat_required) / 1024**3,
+                    "free_before_gib": disk.f_bavail * disk.f_frsize / 1024**3,
+                    "required_reserve_gib": 20, "representation": "full float16 768d"}
+        atomic_json(self.run / "multilayer/storage_estimate.json", estimate)
+        cmd = [PY, "-m", "polygraph.data", "last4-sidecars", "--batch-size", 128]
+        self.command("capture_last4_missing", cmd, mandatory=False, timeout_minutes=120)
+
+    def train_multilayer(self, name, architecture, mode, family, width=64, seed=7, batch=32):
+        out = self.run / "multilayer" / name
+        if (out / f"model_seed{seed}.pt").exists() and self.args.resume: return
+        command = [PY, "-m", "polygraph.training", "train", "--plan", MAIN_TRAIN,
+                   "--out-dir", out, "--architecture", architecture, "--multilayer-mode", mode,
+                   "--multilayer-family", family, "--hidden-dim", width, "--gnn-layers", 2,
+                   "--batch-size", batch, "--seeds", seed, "--epochs-per-process", 0]
+        self.command(f"{name}_seed{seed}", command, mandatory=True, timeout_minutes=150)
+
+    def multilayer(self):
+        required = [ROOT / "data/graph_dataset/sidecars/hidden_last4_missing/manifest.json",
+                    ROOT / "data/graph_dataset/sidecars/message_stats_last4_missing/manifest.json"]
+        if not all(p.exists() for p in required):
+            raise RuntimeError("last-four sidecars are incomplete; resume capture_last4 first")
+        architecture = json.loads((self.run / "configs/architecture_selection.json").read_text())["selected"]
+        family = architecture.removeprefix("A_")
+        self.train_multilayer("L0_token_trajectory", "last4_token_set", "trajectory", family, batch=96)
+        self.train_multilayer("L1_union_graph", "last4_union_graph", "union", family, batch=24)
+        self.train_multilayer("L1_SET_union_endpoint", "last4_union_endpoint_set", "union", family, batch=32)
+        scored = {p.parent.name: self.best_val(p) for p in (self.run / "multilayer").glob("*/model_seed7.pt")}
+        atomic_json(self.run / "configs/multilayer_selection.json", {"base_val": scored,
+                    "best": max(scored, key=scored.get) if scored else None})
 
     def select(self):
         controls = json.loads((self.run / "configs/control_selection.json").read_text())
@@ -219,6 +271,8 @@ class Suite:
                     "architectures": architectures,
                     "depth_base_val": candidates, "selected_gnn": max(candidates, key=candidates.get),
                     "planned_matrix_sha256": sha(self.run / "configs/planned_matrix.json")}
+        multi_path = self.run / "configs/multilayer_selection.json"
+        manifest["multilayer"] = json.loads(multi_path.read_text()) if multi_path.exists() else None
         atomic_json(self.run / "final/selection_manifest.json", manifest)
 
     def evaluate_one(self, category, name, plan=MAIN_EVAL):
@@ -234,6 +288,22 @@ class Suite:
         for name in ("S0_h64", selected["S1"], selected["S2"]): self.evaluate_one("controls", name)
         best = json.loads((self.run / "final/selection_manifest.json").read_text())["selected_gnn"]
         self.evaluate_one("architectures", best)
+
+    def gates(self):
+        selected = json.loads((self.run / "configs/control_selection.json").read_text())
+        for control in (selected["S1"], selected["S2"]):
+            for seed in (7, 1, 2):
+                out = self.run / "gates" / control
+                target = out / f"scores_test_seed{seed}.npz"
+                if target.exists() and self.args.resume: continue
+                command = [PY, "scripts/evaluate_strict_gate.py",
+                           "--output-val", PRIOR / f"combiners/strict/main/output/scores_val_seed{seed}.npz",
+                           "--output-test", PRIOR / f"combiners/strict/main/output/scores_test_seed{seed}.npz",
+                           "--internal-val", self.run / f"controls/{control}/scores_val_seed{seed}.npz",
+                           "--internal-test", self.run / f"controls/{control}/scores_test_seed{seed}.npz",
+                           "--out-dir", out, "--detector-seed", seed,
+                           "--method-name", f"strict_output_{control}_gate"]
+                self.command(f"gate_{control}_seed{seed}", command, mandatory=True, timeout_minutes=30)
 
     def update_progress(self):
         lines = ["# Topology/depth/last-four study — live durable record", "",
@@ -272,7 +342,8 @@ def parse():
 def main():
     args = parse(); suite = Suite(args)
     if args.stage == "all":
-        for stage in ("inventory", "controls", "architectures", "depth", "select", "evaluate"):
+        for stage in ("inventory", "controls", "architectures", "depth", "capture_last4",
+                      "multilayer", "select", "evaluate"):
             suite.run_stage(stage)
     elif hasattr(suite, args.stage):
         suite.run_stage(args.stage)

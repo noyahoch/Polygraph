@@ -174,7 +174,8 @@ class EndpointSetModel(nn.Module):
 def _cls_and_pool(x: Tensor, raw_x: Tensor, batch: Tensor, gate: nn.Module) -> Tensor:
     """Direct CLS access plus learned permutation-invariant global pooling."""
     graph_count = int(batch.max().item()) + 1 if batch.numel() else 0
-    cls = x[raw_x[:, 2] > 0.5]
+    cls_mask = raw_x if raw_x.dtype == torch.bool and raw_x.ndim == 1 else raw_x[:, 2] > 0.5
+    cls = x[cls_mask]
     if cls.shape[0] != graph_count:
         raise RuntimeError(f"Expected one CLS node per graph, got {cls.shape[0]} for {graph_count}")
     weights = softmax(gate(x).view(-1), batch)
@@ -347,8 +348,83 @@ class ResidualGraphModel(nn.Module):
 
     def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
         x = self.encode(data)
-        embedding = _cls_and_pool(x, data.x, data.batch, self.gate)
+        embedding = _cls_and_pool(x, getattr(data, "cls_mask", data.x), data.batch, self.gate)
         return self.decoder(embedding).view(-1), embedding
+
+
+class TokenHistoryEncoder(nn.Module):
+    """Shared per-block projection followed by an ordered four-step GRU."""
+
+    def __init__(self, in_dim: int, hidden_dim: int):
+        super().__init__()
+        self.projection = nn.Linear(in_dim, hidden_dim)
+        self.layer_embedding = nn.Parameter(torch.zeros(4, hidden_dim))
+        self.gru = nn.GRU(hidden_dim, hidden_dim, batch_first=True)
+
+    def forward(self, history: Tensor) -> Tensor:
+        if history.ndim != 3 or history.shape[1] != 4:
+            raise ValueError(f"expected [nodes,4,features], got {tuple(history.shape)}")
+        projected = torch.relu(self.projection(history) + self.layer_embedding.unsqueeze(0))
+        return self.gru(projected)[0][:, -1]
+
+
+class LastFourTokenSetModel(nn.Module):
+    """L0: ordered token histories without attention edges."""
+
+    def __init__(self, in_dim: int, hidden_dim: int, dropout: float):
+        super().__init__()
+        self.history = TokenHistoryEncoder(in_dim, hidden_dim)
+        self.gate = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, 1))
+        self.decoder = nn.Sequential(nn.Linear(4 * hidden_dim, hidden_dim), nn.ReLU(),
+                                     nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        x = self.history(data.x)
+        embedding = torch.cat([_cls_and_pool(x, data.cls_mask, data.batch, self.gate),
+                               global_mean_pool(x, data.batch), global_max_pool(x, data.batch)], 1)
+        return self.decoder(embedding).view(-1), embedding
+
+
+class LastFourUnionGraphModel(nn.Module):
+    """L1: token-history encoder plus an attributed union graph."""
+
+    def __init__(self, in_dim: int, edge_dim: int, hidden_dim: int, layers: int,
+                 dropout: float, family: str):
+        super().__init__()
+        self.history = TokenHistoryEncoder(in_dim, hidden_dim)
+        self.graph = ResidualGraphModel(hidden_dim, edge_dim, hidden_dim, layers, dropout, family)
+        self.graph.input = nn.Identity()
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        from torch_geometric.data import Data as PyGData
+        x = self.history(data.x)
+        projected = PyGData(x=x, edge_index=data.edge_index, edge_attr=data.edge_attr,
+                            batch=data.batch, cls_mask=data.cls_mask)
+        return self.graph(projected)
+
+
+class LastFourUnionEndpointSetModel(nn.Module):
+    """L1-SET: same projected histories/union records as L1, without message passing."""
+
+    def __init__(self, in_dim: int, edge_dim: int, hidden_dim: int, dropout: float):
+        super().__init__()
+        self.history = TokenHistoryEncoder(in_dim, hidden_dim)
+        self.endpoint = M5EndpointSetModel(hidden_dim, edge_dim, hidden_dim, dropout)
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        x = self.history(data.x)
+        nodes = self.endpoint.node_phi(x)
+        from torch_geometric.utils import scatter
+        records = self.endpoint.record_tail(self.endpoint.record_affine(x, data.edge_index, data.edge_attr))
+        graph_of_edge = data.batch[data.edge_index[0]]
+        count = scatter(torch.ones_like(graph_of_edge, dtype=x.dtype), graph_of_edge, dim=0,
+                        dim_size=data.num_graphs, reduce="sum").log1p().unsqueeze(1)
+        embedding = torch.cat([
+            _cls_and_pool(nodes, data.cls_mask, data.batch, self.endpoint.gate),
+            global_mean_pool(nodes, data.batch), global_max_pool(nodes, data.batch),
+            scatter(records, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="mean"),
+            scatter(records, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="max"), count], 1)
+        return self.endpoint.rho(embedding).view(-1), embedding
 
 
 class SimpleMPNN(nn.Module):

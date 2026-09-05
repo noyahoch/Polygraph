@@ -53,6 +53,9 @@ class TrainConfig:
     temporal_edges: bool = False
     tcp_multitask: bool = False
     jumping_knowledge: bool = False
+    multilayer_mode: str = "none"
+    multilayer_family: str = "edge_gated_mean"
+    rewire_cache_dir: Optional[str] = None
 
 
 class ShardShuffleSampler(torch.utils.data.Sampler):
@@ -129,6 +132,16 @@ def build_model(config: TrainConfig, in_dim: int, edge_dim: int) -> nn.Module:
         model = ResidualGraphModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
                                    config.dropout, architecture,
                                    getattr(config, "jumping_knowledge", False))
+    elif architecture == "last4_token_set":
+        from .models import LastFourTokenSetModel
+        model = LastFourTokenSetModel(in_dim, config.hidden_dim, config.dropout)
+    elif architecture == "last4_union_graph":
+        from .models import LastFourUnionGraphModel
+        model = LastFourUnionGraphModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
+                                        config.dropout, config.multilayer_family)
+    elif architecture == "last4_union_endpoint_set":
+        from .models import LastFourUnionEndpointSetModel
+        model = LastFourUnionEndpointSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
     elif architecture == "simple_mpnn":
         from .models import SimpleMPNN
 
@@ -196,7 +209,7 @@ def train_detector(config: TrainConfig, train_ds, val_ds, device,
 
     random.seed(config.seed), np.random.seed(config.seed), torch.manual_seed(config.seed)
     sample = train_ds[0]
-    model = build_model(config, int(sample.x.shape[1]), int(sample.edge_attr.shape[1])).to(device)
+    model = build_model(config, int(sample.x.shape[-1]), int(sample.edge_attr.shape[-1])).to(device)
     print(f"  parameters: {sum(p.numel() for p in model.parameters()):,}", flush=True)
     if hasattr(train_ds, "shard_blocks"):
         sampler = ShardShuffleSampler(train_ds, config.seed)
@@ -287,7 +300,11 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
 
     plan = SplitPlan.load(plan_path)
     store = GraphStore(store_dir)
-    if config.charm:
+    if getattr(config, "multilayer_mode", "none") != "none":
+        from ..data.storage import LastFourGraphDataset
+        datasets = {n: LastFourGraphDataset(store, plan.splits[n], config.multilayer_mode)
+                    for n in ("train", "val")}
+    elif config.charm:
         from ..data.storage import CharmDataset
 
         datasets = {n: CharmDataset(store, plan.splits[n], tau=config.tau)
@@ -316,7 +333,9 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
                                              compact_evidence_dir=compact_dir,
                                              temporal_edges=getattr(config, "temporal_edges", False),
                                              logits_dir=logits_dir,
-                                             tcp_target=config.tcp_multitask)
+                                             tcp_target=config.tcp_multitask,
+                                             rewire_cache_dir=Path(config.rewire_cache_dir)
+                                             if config.rewire_cache_dir else None)
                     for n in ("train", "val")}
     if config.shuffle_labels:
         datasets["train"] = _ShuffledLabels(datasets["train"], seed=999)
@@ -334,7 +353,7 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
                                                   datasets["val"], device, state_path)
         if finished:
             payload = {"state_dict": model.state_dict(), "config": asdict(seed_config),
-                       "in_dim": int(sample.x.shape[1]), "edge_dim": int(sample.edge_attr.shape[1]),
+                       "in_dim": int(sample.x.shape[-1]), "edge_dim": int(sample.edge_attr.shape[-1]),
                        "plan": str(plan_path), "history": history}
             temporary = final_path.with_suffix(".pt.tmp")
             torch.save(payload, temporary)

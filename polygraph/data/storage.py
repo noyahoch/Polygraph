@@ -75,6 +75,26 @@ def append_temporal_identity_edges(edge_indices: Sequence[Tensor], edge_attrs: S
             torch.cat([*typed_attention, *temporal_attrs], dim=0))
 
 
+def build_layer_union(edge_indices: Sequence[Tensor], edge_attrs: Sequence[Tensor],
+                      tokens: int) -> Tuple[Tensor, Tensor]:
+    """Union aligned layer edges with zero-filled slots and an explicit presence mask."""
+    if not edge_indices or len(edge_indices) != len(edge_attrs):
+        raise ValueError("one edge-index and edge-attribute tensor is required per layer")
+    width, layers = edge_attrs[0].shape[1], len(edge_attrs)
+    if any(attr.shape[1] != width for attr in edge_attrs):
+        raise ValueError("all layer edge features must have the same width")
+    ids = [edge[0].long() * tokens + edge[1].long() for edge in edge_indices]
+    union, inverse = torch.unique(torch.cat(ids), return_inverse=True)
+    result = edge_attrs[0].new_zeros((len(union), layers * width + layers))
+    cursor = 0
+    for slot, attr in enumerate(edge_attrs):
+        positions = inverse[cursor:cursor + len(attr)]
+        result[positions, slot * width:(slot + 1) * width] = attr
+        result[positions, layers * width + slot] = 1
+        cursor += len(attr)
+    return torch.stack([union // tokens, union % tokens]), result
+
+
 @dataclass
 class GraphShard:
     """A contiguous block of records; edges ragged via a cumulative offset table."""
@@ -360,7 +380,8 @@ class AttentionGraphDataset(Dataset):
                  rewire_seed: int = 20260830, edge_features: str = "attention",
                  message_stats_dir: Optional[Path] = None,
                  compact_evidence_dir: Optional[Path] = None, temporal_edges: bool = False,
-                 logits_dir: Optional[Path] = None, tcp_target: bool = False):
+                 logits_dir: Optional[Path] = None, tcp_target: bool = False,
+                 rewire_cache_dir: Optional[Path] = None):
         self.store = store if isinstance(store, GraphStore) else GraphStore(store)
         assert tau is None or top_k is None, "tau and top_k are competing rules; pass one"
         if tau is not None and tau < self.store.tau:
@@ -376,6 +397,13 @@ class AttentionGraphDataset(Dataset):
         self.hidden_dir = Path(hidden_dir) if hidden_dir else None
         self.message_stats = self.compact_evidence = None
         self.logits = None
+        self.rewire_cache = None
+        if rewire_cache_dir is not None:
+            if rewire_mode != "target_permute" or self.layers != [11]:
+                raise ValueError("rewire cache is valid only for final-layer target_permute")
+            from .sidecars import AlignedSidecar
+            self.rewire_cache = AlignedSidecar(rewire_cache_dir, self.store.store_dir,
+                                               "rewire", layer=11)
         if self.tcp_target:
             if logits_dir is None:
                 raise ValueError("TCP training targets require an aligned logits sidecar")
@@ -475,9 +503,18 @@ class AttentionGraphDataset(Dataset):
                 parts.append(compact_payload["compact_evidence"][compact_offset].float())
             xs.append(torch.cat(parts, 1))
             graph = shard.layer_graph(offset, layer, tau=self.tau, top_k=self.top_k)
-            edge_index, edge_attr = rewire_graph(
-                graph.edge_index.long(), graph.edge_attr.float(), self.rewire_mode,
-                self.indices[position], self.rewire_seed)
+            if self.rewire_cache is not None:
+                payload, record_offset = self.rewire_cache.locate(self.indices[position])
+                start, stop = int(payload["offsets"][record_offset]), int(payload["offsets"][record_offset + 1])
+                if stop - start != graph.edge_index.shape[1]:
+                    raise ValueError("rewire cache edge count mismatch")
+                edge_index = graph.edge_index.long().clone()
+                edge_index[1] = payload["targets"][start:stop].long()
+                edge_attr = graph.edge_attr.float()
+            else:
+                edge_index, edge_attr = rewire_graph(
+                    graph.edge_index.long(), graph.edge_attr.float(), self.rewire_mode,
+                    self.indices[position], self.rewire_seed)
             if message_payload is not None:
                 from .sidecars import derive_attention_edge_features
                 edge_attr = derive_attention_edge_features(
@@ -507,3 +544,79 @@ class AttentionGraphDataset(Dataset):
                     source_id=meta["source_id"][offset].long().view(1),
                     severity=meta["severity"][offset].long().view(1),
                     store_index=torch.tensor([self.indices[position]], dtype=torch.long), **extras)
+
+
+class LastFourGraphDataset(Dataset):
+    """Correct block-8..11 hidden/evidence observations as trajectories or a union graph."""
+
+    def __init__(self, store, keys: Optional[Sequence[RecordKey]] = None, mode: str = "union"):
+        if mode not in {"trajectory", "union"}:
+            raise ValueError(f"unknown last-four mode: {mode}")
+        from .sidecars import AlignedSidecar
+        self.store = store if isinstance(store, GraphStore) else GraphStore(store)
+        parent = self.store.store_dir.parent
+        self.missing_hidden = AlignedSidecar(parent / "sidecars/hidden_last4_missing",
+                                             self.store.store_dir, "hidden_last4_missing")
+        self.final_hidden = AlignedSidecar(parent / "hidden12", self.store.store_dir,
+                                           "hidden", layer=12)
+        self.missing_message = AlignedSidecar(parent / "sidecars/message_stats_last4_missing",
+                                              self.store.store_dir, "message_stats_last4_missing")
+        self.final_message = AlignedSidecar(parent / "sidecars/message_stats_l11",
+                                            self.store.store_dir, "message_stats", layer=11)
+        self.mode = mode
+        raw = list(range(self.store.total)) if keys is None else self.store.indices_for(keys)
+        self.indices = sorted(raw)
+
+    def __len__(self): return len(self.indices)
+
+    def labels(self):
+        import numpy as np
+        out = np.empty(len(self.indices), dtype=np.float32)
+        for position, index in enumerate(self.indices):
+            shard, offset = self.store.locate(index); out[position] = float(shard.meta["y_err"][offset])
+        return out
+
+    def shard_blocks(self):
+        blocks = {}
+        for position, index in enumerate(self.indices):
+            blocks.setdefault(bisect_right(self.store._bounds, index) - 1, []).append(position)
+        return list(blocks.values())
+
+    def __getitem__(self, position):
+        from .sidecars import derive_attention_edge_features
+        index = self.indices[position]
+        shard, offset = self.store.locate(index)
+        hm, om = self.missing_hidden.locate(index)
+        hf, of = self.final_hidden.locate(index)
+        mm, sm = self.missing_message.locate(index)
+        mf, sf = self.final_message.locate(index)
+        hidden = torch.cat([hm["hidden"][om].float(), hf["hidden"][of].float().unsqueeze(0)], 0)
+        projected = torch.cat([mm["projected_value_norm"][sm].float(),
+                               mf["projected_value_norm"][sf].float().unsqueeze(0)], 0)
+        support = torch.cat([mm["decision_support_proxy"][sm].float(),
+                             mf["decision_support_proxy"][sf].float().unsqueeze(0)], 0)
+        xs, edge_indices, edge_attrs = [], [], []
+        for slot, layer in enumerate((8, 9, 10, 11)):
+            coords = node_coordinates(self.store.num_tokens, layer, shard.layer_count)
+            xs.append(torch.cat([coords, shard.diagonals[offset, layer].float(), hidden[slot]], 1))
+            graph = shard.layer_graph(offset, layer)
+            edge_index = graph.edge_index.long()
+            edge_indices.append(edge_index)
+            edge_attrs.append(derive_attention_edge_features(
+                graph.edge_attr.float(), edge_index, projected[slot], support[slot], "evidence_flow"))
+        x = torch.stack(xs, 1)  # [tokens, ordered blocks, features]
+        if self.mode == "trajectory":
+            edge_index = torch.empty((2, 0), dtype=torch.long)
+            edge_attr = torch.empty((0, 148), dtype=torch.float32)
+        else:
+            edge_index, edge_attr = build_layer_union(edge_indices, edge_attrs, self.store.num_tokens)
+        meta = shard.meta
+        return GraphData(x=x, cls_mask=torch.arange(self.store.num_tokens) == 0,
+                         edge_index=edge_index, edge_attr=edge_attr,
+                         y=meta["y_err"][offset].view(1),
+                         image_id=meta["base_index"][offset].long().view(1),
+                         confidence=meta["confidence"][offset].view(1),
+                         margin=meta["margin"][offset].view(1),
+                         source_id=meta["source_id"][offset].long().view(1),
+                         severity=meta["severity"][offset].long().view(1),
+                         store_index=torch.tensor([index], dtype=torch.long))
