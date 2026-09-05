@@ -52,6 +52,7 @@ class TrainConfig:
     rewire_mode: str = "none"
     temporal_edges: bool = False
     tcp_multitask: bool = False
+    jumping_knowledge: bool = False
 
 
 class ShardShuffleSampler(torch.utils.data.Sampler):
@@ -114,6 +115,20 @@ def build_model(config: TrainConfig, in_dim: int, edge_dim: int) -> nn.Module:
         from .models import EndpointSetModel
 
         model = EndpointSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
+    elif architecture == "hidden_token_set":
+        from .models import HiddenTokenSetModel
+        model = HiddenTokenSetModel(in_dim, config.hidden_dim, config.dropout)
+    elif architecture == "m5_node_edge_set":
+        from .models import M5NodeEdgeSetModel
+        model = M5NodeEdgeSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
+    elif architecture == "m5_endpoint_set":
+        from .models import M5EndpointSetModel
+        model = M5EndpointSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
+    elif architecture in {"transformerconv_residual", "gine", "edge_gated_mean", "gatv2"}:
+        from .models import ResidualGraphModel
+        model = ResidualGraphModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
+                                   config.dropout, architecture,
+                                   getattr(config, "jumping_knowledge", False))
     elif architecture == "simple_mpnn":
         from .models import SimpleMPNN
 
@@ -318,9 +333,12 @@ def train_run(store_dir: Path, plan_path: Path, out_dir: Path, config: TrainConf
         model, history, finished = train_detector(seed_config, datasets["train"],
                                                   datasets["val"], device, state_path)
         if finished:
-            torch.save({"state_dict": model.state_dict(), "config": asdict(seed_config),
-                        "in_dim": int(sample.x.shape[1]), "edge_dim": int(sample.edge_attr.shape[1]),
-                        "plan": str(plan_path), "history": history}, final_path)
+            payload = {"state_dict": model.state_dict(), "config": asdict(seed_config),
+                       "in_dim": int(sample.x.shape[1]), "edge_dim": int(sample.edge_attr.shape[1]),
+                       "plan": str(plan_path), "history": history}
+            temporary = final_path.with_suffix(".pt.tmp")
+            torch.save(payload, temporary)
+            temporary.replace(final_path)
             state_path.unlink(missing_ok=True)
             print(f"checkpoint saved: {final_path}", flush=True)
         return  # one segment per process, finished or not

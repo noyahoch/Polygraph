@@ -16,7 +16,8 @@ from typing import Tuple
 import torch
 from torch import Tensor, nn
 from torch_geometric.data import Data
-from torch_geometric.nn import TransformerConv, global_add_pool, global_max_pool, global_mean_pool
+from torch_geometric.nn import (GATv2Conv, GINEConv, TransformerConv, global_add_pool,
+                                 global_max_pool, global_mean_pool)
 from torch_geometric.utils import softmax
 
 
@@ -168,6 +169,186 @@ class EndpointSetModel(nn.Module):
             scatter(records, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="max"),
         ], dim=-1)
         return self.rho(pooled).view(-1), None
+
+
+def _cls_and_pool(x: Tensor, raw_x: Tensor, batch: Tensor, gate: nn.Module) -> Tensor:
+    """Direct CLS access plus learned permutation-invariant global pooling."""
+    graph_count = int(batch.max().item()) + 1 if batch.numel() else 0
+    cls = x[raw_x[:, 2] > 0.5]
+    if cls.shape[0] != graph_count:
+        raise RuntimeError(f"Expected one CLS node per graph, got {cls.shape[0]} for {graph_count}")
+    weights = softmax(gate(x).view(-1), batch)
+    return torch.cat([cls, global_add_pool(x * weights.unsqueeze(1), batch)], dim=1)
+
+
+class HiddenTokenSetModel(nn.Module):
+    """S0: all M5 node values, no edges or endpoint association."""
+
+    def __init__(self, in_dim: int, hidden_dim: int, dropout: float):
+        super().__init__()
+        self.node_phi = nn.Sequential(nn.Linear(in_dim, hidden_dim), nn.ReLU(),
+                                      nn.Linear(hidden_dim, hidden_dim), nn.ReLU())
+        self.gate = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, 1))
+        self.rho = nn.Sequential(nn.Dropout(dropout), nn.Linear(4 * hidden_dim, hidden_dim), nn.ReLU(),
+                                 nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        h = self.node_phi(data.x)
+        direct = _cls_and_pool(h, data.x, data.batch, self.gate)
+        embedding = torch.cat([direct, global_mean_pool(h, data.batch),
+                               global_max_pool(h, data.batch)], dim=1)
+        return self.rho(embedding).view(-1), embedding
+
+
+class M5NodeEdgeSetModel(nn.Module):
+    """S1: full node/edge multisets with direct CLS access, but no endpoints."""
+
+    def __init__(self, in_dim: int, edge_dim: int, hidden_dim: int, dropout: float):
+        super().__init__()
+        self.node_phi = nn.Sequential(nn.Linear(in_dim, hidden_dim), nn.ReLU(),
+                                      nn.Linear(hidden_dim, hidden_dim), nn.ReLU())
+        self.edge_phi = nn.Sequential(nn.Linear(edge_dim, hidden_dim), nn.ReLU(),
+                                      nn.Linear(hidden_dim, hidden_dim), nn.ReLU())
+        self.gate = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, 1))
+        # CLS, gated nodes, node mean/max, edge mean/max, log edge count.
+        self.rho = nn.Sequential(nn.Linear(6 * hidden_dim + 1, hidden_dim), nn.ReLU(),
+                                 nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        from torch_geometric.utils import scatter
+
+        nodes, edges = self.node_phi(data.x), self.edge_phi(data.edge_attr)
+        graph_of_edge = data.batch[data.edge_index[0]]
+        count = scatter(torch.ones_like(graph_of_edge, dtype=nodes.dtype), graph_of_edge,
+                        dim=0, dim_size=data.num_graphs, reduce="sum").log1p().unsqueeze(1)
+        embedding = torch.cat([
+            _cls_and_pool(nodes, data.x, data.batch, self.gate),
+            global_mean_pool(nodes, data.batch), global_max_pool(nodes, data.batch),
+            scatter(edges, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="mean"),
+            scatter(edges, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="max"), count], dim=1)
+        return self.rho(embedding).view(-1), embedding
+
+
+class FactoredEndpointAffine(nn.Module):
+    """Affine([x_source,x_target,e]) without materialising repeated endpoint tensors."""
+
+    def __init__(self, node_dim: int, edge_dim: int, out_dim: int):
+        super().__init__()
+        self.source = nn.Linear(node_dim, out_dim, bias=False)
+        self.target = nn.Linear(node_dim, out_dim, bias=False)
+        self.edge = nn.Linear(edge_dim, out_dim, bias=True)
+
+    def forward(self, x: Tensor, edge_index: Tensor, edge_attr: Tensor) -> Tensor:
+        source, target = edge_index
+        # Project once per node; only compact width-dimensional values are gathered.
+        return self.source(x)[source] + self.target(x)[target] + self.edge(edge_attr)
+
+
+class M5EndpointSetModel(nn.Module):
+    """S2: endpoint-local records plus an independent node branch; no message passing."""
+
+    def __init__(self, in_dim: int, edge_dim: int, hidden_dim: int, dropout: float):
+        super().__init__()
+        self.node_phi = nn.Sequential(nn.Linear(in_dim, hidden_dim), nn.ReLU(),
+                                      nn.Linear(hidden_dim, hidden_dim), nn.ReLU())
+        self.record_affine = FactoredEndpointAffine(in_dim, edge_dim, hidden_dim)
+        self.record_tail = nn.Sequential(nn.ReLU(), nn.Linear(hidden_dim, hidden_dim), nn.ReLU())
+        self.gate = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, 1))
+        # CLS, gated nodes, node mean/max, record mean/max, log edge count.
+        self.rho = nn.Sequential(nn.Linear(6 * hidden_dim + 1, hidden_dim), nn.ReLU(),
+                                 nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        from torch_geometric.utils import scatter
+
+        nodes = self.node_phi(data.x)
+        records = self.record_tail(self.record_affine(data.x, data.edge_index, data.edge_attr))
+        graph_of_edge = data.batch[data.edge_index[0]]
+        count = scatter(torch.ones_like(graph_of_edge, dtype=nodes.dtype), graph_of_edge,
+                        dim=0, dim_size=data.num_graphs, reduce="sum").log1p().unsqueeze(1)
+        embedding = torch.cat([
+            _cls_and_pool(nodes, data.x, data.batch, self.gate),
+            global_mean_pool(nodes, data.batch), global_max_pool(nodes, data.batch),
+            scatter(records, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="mean"),
+            scatter(records, graph_of_edge, dim=0, dim_size=data.num_graphs, reduce="max"), count], dim=1)
+        return self.rho(embedding).view(-1), embedding
+
+
+class EdgeGatedMeanBlock(nn.Module):
+    """Efficient edge-aware gated mean block with an explicit residual/root path."""
+
+    def __init__(self, hidden_dim: int, edge_dim: int, dropout: float):
+        super().__init__()
+        self.msg_source, self.msg_edge = nn.Linear(hidden_dim, hidden_dim), nn.Linear(edge_dim, hidden_dim)
+        self.gate_source = nn.Linear(hidden_dim, hidden_dim, bias=False)
+        self.gate_target = nn.Linear(hidden_dim, hidden_dim, bias=False)
+        self.gate_edge = nn.Linear(edge_dim, hidden_dim)
+        self.update = nn.Sequential(nn.Linear(2 * hidden_dim + 1, hidden_dim), nn.ReLU(),
+                                    nn.Linear(hidden_dim, hidden_dim))
+        self.norm, self.dropout = nn.LayerNorm(hidden_dim), nn.Dropout(dropout)
+
+    def forward(self, x: Tensor, edge_index: Tensor, edge_attr: Tensor) -> Tensor:
+        from torch_geometric.utils import scatter
+
+        source, target = edge_index
+        msg = self.msg_source(x)[source] + self.msg_edge(edge_attr)
+        gate = torch.sigmoid(self.gate_source(x)[source] + self.gate_target(x)[target]
+                             + self.gate_edge(edge_attr))
+        numerator = scatter(gate * msg, target, dim=0, dim_size=x.shape[0], reduce="sum")
+        denominator = scatter(gate, target, dim=0, dim_size=x.shape[0], reduce="sum").clamp_min(1e-8)
+        aggregate = numerator / denominator
+        degree = scatter(torch.ones_like(target, dtype=x.dtype), target, dim=0,
+                         dim_size=x.shape[0], reduce="sum").log1p().unsqueeze(1)
+        return torch.relu(self.norm(x + self.dropout(self.update(torch.cat([x, aggregate, degree], 1)))))
+
+
+class ResidualGraphModel(nn.Module):
+    """Common residual scaffold for the edge-aware architecture comparison."""
+
+    def __init__(self, in_dim: int, edge_dim: int, hidden_dim: int, layers: int,
+                 dropout: float, family: str, jumping_knowledge: bool = False):
+        super().__init__()
+        self.family, self.jumping_knowledge = family, jumping_knowledge
+        self.input = nn.Linear(in_dim, hidden_dim)
+        self.edge_input = nn.Linear(edge_dim, hidden_dim)
+        blocks = []
+        for _ in range(layers):
+            if family == "transformerconv_residual":
+                blocks.append(TransformerConv(hidden_dim, hidden_dim, heads=2, concat=False,
+                                              edge_dim=hidden_dim, root_weight=False))
+            elif family == "gine":
+                mlp = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
+                                    nn.Linear(hidden_dim, hidden_dim))
+                blocks.append(GINEConv(mlp, eps=0.0, train_eps=True, edge_dim=hidden_dim))
+            elif family == "edge_gated_mean":
+                blocks.append(EdgeGatedMeanBlock(hidden_dim, hidden_dim, dropout))
+            elif family == "gatv2":
+                blocks.append(GATv2Conv(hidden_dim, hidden_dim, heads=2, concat=False,
+                                       edge_dim=hidden_dim, add_self_loops=False, residual=False))
+            else:
+                raise ValueError(f"unknown residual graph family: {family}")
+        self.blocks = nn.ModuleList(blocks)
+        self.norms = nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in blocks])
+        self.dropout = nn.Dropout(dropout)
+        self.gate = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, 1))
+        self.decoder = nn.Sequential(nn.Dropout(dropout), nn.Linear(2 * hidden_dim, hidden_dim), nn.ReLU(),
+                                     nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
+
+    def encode(self, data: Data) -> Tensor:
+        x, edge = self.input(data.x), self.edge_input(data.edge_attr)
+        states = []
+        for block, norm in zip(self.blocks, self.norms):
+            if self.family == "edge_gated_mean":
+                x = block(x, data.edge_index, edge)
+            else:
+                x = torch.relu(norm(x + self.dropout(block(x, data.edge_index, edge))))
+            states.append(x)
+        return torch.stack(states).amax(0) if self.jumping_knowledge and len(states) > 1 else x
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        x = self.encode(data)
+        embedding = _cls_and_pool(x, data.x, data.batch, self.gate)
+        return self.decoder(embedding).view(-1), embedding
 
 
 class SimpleMPNN(nn.Module):
