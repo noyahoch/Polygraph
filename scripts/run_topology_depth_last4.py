@@ -71,7 +71,8 @@ def planned_matrix():
              for name, depth, description in [
                  ("token_trajectory_set", 0, "ordered per-token four-block trajectory without graph"),
                  ("union_graph", 2, "four-block union attributed graph"),
-                 ("union_endpoint_set", 0, "matched four-block endpoint records")]]
+                 ("union_endpoint_set", 0, "matched four-block endpoint records"),
+                 ("graph_sequence", 2, "ordered shared-GNN graph observations without token recurrence")]]
     return rows
 
 
@@ -125,6 +126,8 @@ class Suite:
                 status, reason = "failed", f"exit code {result.returncode}"
         except subprocess.TimeoutExpired:
             status, reason = "aborted", "bounded runtime cutoff; resumable state retained"
+            if self._promote_budget_state(command):
+                reason = "bounded runtime cutoff; validation-selected checkpoint retained"
         row = dict(experiment_id=experiment_id, status=status, command=list(map(str, command)),
                    start_time_utc=started, end_time_utc=utc(), runtime_seconds=time.monotonic() - t0,
                    mandatory=mandatory, log=str(log.relative_to(ROOT)), reason=reason)
@@ -133,6 +136,39 @@ class Suite:
         if status != "completed" and mandatory:
             raise RuntimeError(f"mandatory {experiment_id} {status}: {reason}; see {log}")
         return 0 if status == "completed" else 1
+
+    def _promote_budget_state(self, command):
+        """Turn a timed-out trainer's durable best state into an evaluable checkpoint.
+
+        New state files carry the exact model dimensions and configuration. Older state
+        files remain resumable and are deliberately not guessed at.
+        """
+        argv = list(map(str, command))
+        if "polygraph.training" not in argv or "train" not in argv or "--out-dir" not in argv:
+            return False
+        out = Path(argv[argv.index("--out-dir") + 1])
+        if not out.is_absolute(): out = ROOT / out
+        seeds = [int(argv[argv.index("--seeds") + 1])] if "--seeds" in argv else []
+        promoted = False
+        for seed in seeds:
+            state_path, final_path = out / f"state_seed{seed}.pt", out / f"model_seed{seed}.pt"
+            if final_path.exists() or not state_path.exists(): continue
+            state = torch.load(state_path, map_location="cpu", weights_only=False)
+            required = {"best_state", "config", "in_dim", "edge_dim", "history"}
+            if not required <= set(state) or state["best_state"] is None: continue
+            payload = {"state_dict": state["best_state"], "config": state["config"],
+                       "in_dim": state["in_dim"], "edge_dim": state["edge_dim"],
+                       "plan": argv[argv.index("--plan") + 1] if "--plan" in argv else None,
+                       "history": state["history"], "budget_limited": True,
+                       "last_completed_epoch": state.get("epoch")}
+            temporary = final_path.with_suffix(".pt.tmp")
+            torch.save(payload, temporary); temporary.replace(final_path)
+            atomic_json(out / f"budget_limited_seed{seed}.json",
+                        {"last_completed_epoch": state.get("epoch"),
+                         "selected_epoch": state.get("best_epoch"),
+                         "selected_base_val_auroc": state.get("best_val")})
+            promoted = True
+        return promoted
 
     def inventory(self):
         manifests = [STORE / "manifest.json", ROOT / "data/graph_dataset/hidden12/manifest.json",
@@ -278,17 +314,21 @@ class Suite:
                     "free_before_gib": disk.f_bavail * disk.f_frsize / 1024**3,
                     "required_reserve_gib": 20, "representation": "full float16 768d"}
         atomic_json(self.run / "multilayer/storage_estimate.json", estimate)
-        cmd = [PY, "-m", "polygraph.data", "last4-sidecars", "--batch-size", 128]
+        # Prior full-hidden and message captures both completed at batch 512 on this
+        # 24 GiB A5000 (batch 1024 OOMed). Reuse the measured largest safe batch.
+        cmd = [PY, "-m", "polygraph.data", "last4-sidecars", "--batch-size", 512]
         self.command("capture_last4_missing", cmd, mandatory=False, timeout_minutes=120)
 
-    def train_multilayer(self, name, architecture, mode, family, width=64, seed=7, batch=32):
+    def train_multilayer(self, name, architecture, mode, family, width=64, seed=7, batch=32,
+                         mandatory=True):
         out = self.run / "multilayer" / name
         if (out / f"model_seed{seed}.pt").exists() and self.args.resume: return
         command = [PY, "-m", "polygraph.training", "train", "--plan", MAIN_TRAIN,
                    "--out-dir", out, "--architecture", architecture, "--multilayer-mode", mode,
                    "--multilayer-family", family, "--hidden-dim", width, "--gnn-layers", 2,
                    "--batch-size", batch, "--seeds", seed, "--epochs-per-process", 0]
-        self.command(f"{name}_seed{seed}", command, mandatory=True, timeout_minutes=150)
+        self.command(f"{name}_seed{seed}", command, mandatory=mandatory,
+                     timeout_minutes=150 if mandatory else 90)
 
     def multilayer(self):
         required = [ROOT / "data/graph_dataset/sidecars/hidden_last4_missing/manifest.json",
@@ -300,6 +340,8 @@ class Suite:
         self.train_multilayer("L0_token_trajectory", "last4_token_set", "trajectory", family, batch=96)
         self.train_multilayer("L1_union_graph", "last4_union_graph", "union", family, batch=24)
         self.train_multilayer("L1_SET_union_endpoint", "last4_union_endpoint_set", "union", family, batch=32)
+        self.train_multilayer("L2_graph_sequence", "last4_graph_sequence", "sequence", family,
+                              batch=24, mandatory=False)
         scored = {p.parent.name: self.best_val(p) for p in (self.run / "multilayer").glob("*/model_seed7.pt")}
         atomic_json(self.run / "configs/multilayer_selection.json", {"base_val": scored,
                     "best": max(scored, key=scored.get) if scored else None})
@@ -387,7 +429,8 @@ class Suite:
         for name in ("S0_h64", selected["S1"], selected["S2"]): self.evaluate_one("controls", name)
         best = json.loads((self.run / "final/selection_manifest.json").read_text())["selected_gnn"]
         self.evaluate_one("architectures", best)
-        for name in ("L0_token_trajectory", "L1_union_graph", "L1_SET_union_endpoint"):
+        for name in ("L0_token_trajectory", "L1_union_graph", "L1_SET_union_endpoint",
+                     "L2_graph_sequence"):
             if (self.run / "multilayer" / name / "model_seed7.pt").exists():
                 self.evaluate_one("multilayer", name)
         controls = json.loads((self.run / "configs/control_selection.json").read_text())
@@ -472,8 +515,9 @@ class Suite:
             try:
                 p = torch.load(checkpoint, map_location="cpu", weights_only=False)
                 history = p.get("history", [])
+                selected = self.best_val(checkpoint)
                 lines.append(f"| {checkpoint.parent.name} | {p['config']['seed']} | "
-                             f"{max(x['val_auroc'] for x in history):.5f} | {len(history)} | completed |")
+                             f"{selected:.5f} | {len(history)} | completed |")
             except Exception:
                 pass
         if self.ledger.exists():

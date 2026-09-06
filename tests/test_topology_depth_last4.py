@@ -1,17 +1,21 @@
 """Mutation-oriented tests for the topology/depth follow-up models."""
 
 import copy
+import tempfile
+from pathlib import Path
 
 import torch
 from torch_geometric.data import Batch, Data
 
 from polygraph.training.models import (FactoredEndpointAffine, HiddenTokenSetModel,
+                                       LastFourGraphSequenceModel,
                                        LastFourTokenSetModel, LastFourUnionEndpointSetModel,
                                        LastFourUnionGraphModel,
                                        M5EndpointSetModel, M5NodeEdgeSetModel,
                                        ResidualGraphModel)
 from polygraph.data.storage import build_layer_union
 from polygraph.data.pipeline import LAST4_BLOCK_IDS, LAST4_HIDDEN_INDICES
+from scripts.run_topology_depth_last4 import Suite
 
 
 def graph():
@@ -93,6 +97,38 @@ def test_no_family_adds_implicit_self_loops():
                 assert block.add_self_loops is False
 
 
+def test_consistent_node_relabeling_leaves_graph_prediction_unchanged():
+    torch.manual_seed(19)
+    original = graph()
+    permutation = torch.tensor([3, 0, 4, 1, 2])  # new index -> old index
+    inverse = torch.empty_like(permutation); inverse[permutation] = torch.arange(5)
+    relabeled = Data(x=original.x[permutation],
+                     edge_index=inverse[original.edge_index],
+                     edge_attr=original.edge_attr.clone(), y=original.y)
+    for family in ("transformerconv_residual", "gine", "edge_gated_mean", "gatv2"):
+        model = ResidualGraphModel(10, 6, 16, 2, 0, family).eval()
+        a = model(Batch.from_data_list([original]))[0]
+        b = model(Batch.from_data_list([relabeled]))[0]
+        torch.testing.assert_close(a, b, atol=2e-6, rtol=2e-6)
+
+
+def test_budget_limited_state_is_promoted_without_using_last_epoch_weights():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp); out = root / "candidate"; out.mkdir()
+        best = {"weight": torch.tensor([2.0])}
+        torch.save({"epoch": 5, "model": {"weight": torch.tensor([99.0])},
+                    "best_state": best, "best_epoch": 3, "best_val": .8,
+                    "history": [{"epoch": 3, "val_auroc": .8}], "config": {"seed": 7},
+                    "in_dim": 4, "edge_dim": 6}, out / "state_seed7.pt")
+        suite = object.__new__(Suite)
+        command = ["python", "-m", "polygraph.training", "train", "--plan", "plan.json",
+                   "--out-dir", str(out), "--seeds", "7"]
+        assert suite._promote_budget_state(command)
+        payload = torch.load(out / "model_seed7.pt", map_location="cpu", weights_only=False)
+        torch.testing.assert_close(payload["state_dict"]["weight"], best["weight"])
+        assert payload["budget_limited"] is True and payload["last_completed_epoch"] == 5
+
+
 def test_last_four_union_alignment_and_missing_mask():
     edges = [torch.tensor([[0, 1], [1, 2]]), torch.tensor([[0, 2], [1, 1]])]
     attrs = [torch.tensor([[1., 2.], [3., 4.]]), torch.tensor([[5., 6.], [7., 8.]])]
@@ -123,6 +159,26 @@ def test_last_four_models_preserve_ordered_token_identity_and_backpropagate():
     # Mutating layer order changes the ordered history representation.
     reversed_data = copy.copy(data); reversed_data.x = data.x.flip(1)
     assert not torch.allclose(models[0](data)[0], models[0](reversed_data)[0])
+
+
+def test_ordered_graph_sequence_has_no_cross_layer_edges_and_uses_order():
+    torch.manual_seed(29)
+    tokens, width = 5, 10
+    x = torch.randn(4 * tokens, width)
+    x[:, 2] = 0; x[torch.arange(4) * tokens, 2] = 1
+    base_edges = torch.tensor([[0, 1, 2, 3, 4, 0], [2, 2, 3, 3, 4, 4]])
+    edge_index = torch.cat([base_edges + layer * tokens for layer in range(4)], 1)
+    assert torch.equal(edge_index[0] // tokens, edge_index[1] // tokens)
+    data = Batch.from_data_list([Data(x=x, edge_index=edge_index,
+        edge_attr=torch.randn(edge_index.shape[1], 6),
+        cls_mask=(torch.arange(tokens) == 0).repeat(4),
+        layer_id=torch.arange(4).repeat_interleave(tokens))])
+    model = LastFourGraphSequenceModel(width, 6, 16, 1, 0, "edge_gated_mean").eval()
+    original = model(data)[0]
+    changed = copy.copy(data)
+    changed.x = data.x.view(4, tokens, width).flip(0).reshape_as(data.x)
+    changed.edge_attr = data.edge_attr.view(4, -1, 6).flip(0).reshape_as(data.edge_attr)
+    assert not torch.allclose(original, model(changed)[0])
 
 
 def test_block_output_hidden_state_correspondence_is_not_final_state_reuse():

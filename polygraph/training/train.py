@@ -142,6 +142,10 @@ def build_model(config: TrainConfig, in_dim: int, edge_dim: int) -> nn.Module:
     elif architecture == "last4_union_endpoint_set":
         from .models import LastFourUnionEndpointSetModel
         model = LastFourUnionEndpointSetModel(in_dim, edge_dim, config.hidden_dim, config.dropout)
+    elif architecture == "last4_graph_sequence":
+        from .models import LastFourGraphSequenceModel
+        model = LastFourGraphSequenceModel(in_dim, edge_dim, config.hidden_dim, config.gnn_layers,
+                                           config.dropout, config.multilayer_family)
     elif architecture == "simple_mpnn":
         from .models import SimpleMPNN
 
@@ -278,7 +282,9 @@ def train_detector(config: TrainConfig, train_ds, val_ds, device,
             torch.save({"epoch": epoch, "model": model.state_dict(),
                         "optimizer": optimizer.state_dict(), "best_state": best_state,
                         "best_val": best_val, "best_epoch": best_epoch, "stale": stale,
-                        "history": history}, tmp)
+                        "history": history, "config": asdict(config),
+                        "in_dim": int(sample.x.shape[-1]),
+                        "edge_dim": int(sample.edge_attr.shape[-1])}, tmp)
             tmp.rename(state_path)
         if stale >= config.patience:
             print(f"  early stop (best {best_val:.4f} @ epoch {best_epoch})", flush=True)

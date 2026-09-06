@@ -56,7 +56,11 @@ def parameter_count(path):
         state = payload["state_dict"]
         history = payload.get("history", [])
         peak = max((row.get("peak_gpu_memory_mb") or 0 for row in history), default=None)
-        best_epoch = max(history, key=lambda row: row["val_auroc"])["epoch"] if history else None
+        selected, best_epoch = -float("inf"), None
+        min_delta = float(payload.get("config", {}).get("min_delta", 0.0))
+        for row in history:
+            if float(row["val_auroc"]) > selected + min_delta:
+                selected, best_epoch = float(row["val_auroc"]), row["epoch"]
         return (sum(value.numel() for value in state.values()), str(checkpoint.relative_to(ROOT)),
                 peak, best_epoch)
     return None, None, None, None

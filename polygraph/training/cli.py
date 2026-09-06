@@ -49,7 +49,8 @@ def build_parser() -> argparse.ArgumentParser:
                                 "endpoint_set", "temporal_mpnn", "hidden_token_set",
                                 "m5_node_edge_set", "m5_endpoint_set", "transformerconv_residual",
                                 "gine", "edge_gated_mean", "gatv2", "last4_token_set",
-                                "last4_union_graph", "last4_union_endpoint_set"])
+                                "last4_union_graph", "last4_union_endpoint_set",
+                                "last4_graph_sequence"])
     train.add_argument("--node-features", default=None,
                        choices=["base", "compact_evidence", "hidden"])
     train.add_argument("--edge-features", default="attention",

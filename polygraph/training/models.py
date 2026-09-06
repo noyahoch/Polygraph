@@ -427,6 +427,33 @@ class LastFourUnionEndpointSetModel(nn.Module):
         return self.endpoint.rho(embedding).view(-1), embedding
 
 
+class LastFourGraphSequenceModel(nn.Module):
+    """L2: shared per-block GNN followed by an ordered graph-level GRU.
+
+    The four graphs are disjoint. Their order enters only after each layer graph has
+    been encoded/read out, so this does not pass state between individual tokens.
+    """
+
+    def __init__(self, in_dim: int, edge_dim: int, hidden_dim: int, layers: int,
+                 dropout: float, family: str):
+        super().__init__()
+        self.graph = ResidualGraphModel(in_dim, edge_dim, hidden_dim, layers, dropout, family)
+        self.graph.decoder = nn.Identity()  # the shared convolution/readout is reused below
+        self.sequence = nn.GRU(2 * hidden_dim, 2 * hidden_dim, batch_first=True)
+        self.decoder = nn.Sequential(nn.Dropout(dropout), nn.Linear(2 * hidden_dim, hidden_dim),
+                                     nn.ReLU(), nn.Dropout(dropout), nn.Linear(hidden_dim, 1))
+
+    def forward(self, data: Data) -> Tuple[Tensor, Tensor]:
+        x = self.graph.encode(data)
+        layer_graph = data.batch * 4 + data.layer_id
+        per_layer = _cls_and_pool(x, data.cls_mask, layer_graph, self.graph.gate)
+        if per_layer.shape[0] != data.num_graphs * 4:
+            raise RuntimeError("expected exactly four ordered graph observations per record")
+        ordered = per_layer.view(data.num_graphs, 4, -1)
+        embedding = self.sequence(ordered)[0][:, -1]
+        return self.decoder(embedding).view(-1), embedding
+
+
 class SimpleMPNN(nn.Module):
     """Two-layer explicit mean-message MPNN with no learned attention coefficient."""
 

@@ -558,7 +558,7 @@ class LastFourGraphDataset(Dataset):
     """Correct block-8..11 hidden/evidence observations as trajectories or a union graph."""
 
     def __init__(self, store, keys: Optional[Sequence[RecordKey]] = None, mode: str = "union"):
-        if mode not in {"trajectory", "union"}:
+        if mode not in {"trajectory", "union", "sequence"}:
             raise ValueError(f"unknown last-four mode: {mode}")
         from .sidecars import AlignedSidecar
         self.store = store if isinstance(store, GraphStore) else GraphStore(store)
@@ -569,7 +569,7 @@ class LastFourGraphDataset(Dataset):
                                            "hidden", layer=12, cache_shards=1)
         self.mode = mode
         self.missing_message = self.final_message = None
-        if mode == "union":
+        if mode in {"union", "sequence"}:
             self.missing_message = AlignedSidecar(parent / "sidecars/message_stats_last4_missing",
                                                   self.store.store_dir, "message_stats_last4_missing",
                                                   cache_shards=1)
@@ -601,7 +601,7 @@ class LastFourGraphDataset(Dataset):
         hm, om = self.missing_hidden.locate(index)
         hf, of = self.final_hidden.locate(index)
         hidden = torch.cat([hm["hidden"][om].float(), hf["hidden"][of].float().unsqueeze(0)], 0)
-        if self.mode == "union":
+        if self.mode in {"union", "sequence"}:
             mm, sm = self.missing_message.locate(index)
             mf, sf = self.final_message.locate(index)
             projected = torch.cat([mm["projected_value_norm"][sm].float(),
@@ -612,7 +612,7 @@ class LastFourGraphDataset(Dataset):
         for slot, layer in enumerate((8, 9, 10, 11)):
             coords = node_coordinates(self.store.num_tokens, layer, shard.layer_count)
             xs.append(torch.cat([coords, shard.diagonals[offset, layer].float(), hidden[slot]], 1))
-            if self.mode == "union":
+            if self.mode in {"union", "sequence"}:
                 graph = shard.layer_graph(offset, layer)
                 edge_index = graph.edge_index.long()
                 edge_indices.append(edge_index)
@@ -622,10 +622,21 @@ class LastFourGraphDataset(Dataset):
         if self.mode == "trajectory":
             edge_index = torch.empty((2, 0), dtype=torch.long)
             edge_attr = torch.empty((0, 148), dtype=torch.float32)
-        else:
+            cls_mask = torch.arange(self.store.num_tokens) == 0
+            layer_id = None
+        elif self.mode == "union":
             edge_index, edge_attr = build_layer_union(edge_indices, edge_attrs, self.store.num_tokens)
+            cls_mask = torch.arange(self.store.num_tokens) == 0
+            layer_id = None
+        else:
+            x = torch.cat(xs, 0)
+            edge_index = torch.cat([edges + slot * self.store.num_tokens
+                                    for slot, edges in enumerate(edge_indices)], 1)
+            edge_attr = torch.cat(edge_attrs, 0)
+            cls_mask = (torch.arange(self.store.num_tokens) == 0).repeat(4)
+            layer_id = torch.arange(4).repeat_interleave(self.store.num_tokens)
         meta = shard.meta
-        return GraphData(x=x, cls_mask=torch.arange(self.store.num_tokens) == 0,
+        return GraphData(x=x, cls_mask=cls_mask, layer_id=layer_id,
                          edge_index=edge_index, edge_attr=edge_attr,
                          y=meta["y_err"][offset].view(1),
                          image_id=meta["base_index"][offset].long().view(1),
