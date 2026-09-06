@@ -5,11 +5,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 
 import torch
 from torch_geometric.data import Batch
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
 from polygraph.data.splits import SplitPlan
 from polygraph.data.storage import AttentionGraphDataset, GraphStore

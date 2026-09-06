@@ -338,10 +338,12 @@ class Suite:
         architecture = json.loads((self.run / "configs/architecture_selection.json").read_text())["selected"]
         family = architecture.removeprefix("A_")
         self.train_multilayer("L0_token_trajectory", "last4_token_set", "trajectory", family, batch=96)
-        self.train_multilayer("L1_union_graph", "last4_union_graph", "union", family, batch=24)
-        self.train_multilayer("L1_SET_union_endpoint", "last4_union_endpoint_set", "union", family, batch=32)
+        # The initial L1 batch-24 window peaked at only 1.23 GiB allocated CUDA
+        # memory. Resume its durable epoch-4 state at batch 96 to use the A5000.
+        self.train_multilayer("L1_union_graph", "last4_union_graph", "union", family, batch=96)
+        self.train_multilayer("L1_SET_union_endpoint", "last4_union_endpoint_set", "union", family, batch=96)
         self.train_multilayer("L2_graph_sequence", "last4_graph_sequence", "sequence", family,
-                              batch=24, mandatory=False)
+                              batch=96, mandatory=False)
         scored = {p.parent.name: self.best_val(p) for p in (self.run / "multilayer").glob("*/model_seed7.pt")}
         atomic_json(self.run / "configs/multilayer_selection.json", {"base_val": scored,
                     "best": max(scored, key=scored.get) if scored else None})

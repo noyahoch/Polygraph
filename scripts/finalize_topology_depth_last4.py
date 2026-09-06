@@ -5,16 +5,19 @@ from __future__ import annotations
 
 import csv
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
 import torch
 from scipy.stats import spearmanr
 
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
 from polygraph.training.evaluate import detector_metrics
 from polygraph.training.research_eval import paired_group_bootstrap, verify_score_registry
 
-ROOT = Path(__file__).resolve().parent.parent
 RUN = ROOT / "runs/topology_depth_last4_20260905"
 PRIOR = ROOT / "runs/research_20260830/combiners/strict"
 
@@ -69,6 +72,15 @@ def parameter_count(path):
 def references(plan):
     root = PRIOR / plan
     return {"output": root / "output", "M5": root / "M5", "gate": root / "gate"}
+
+
+def gate_directories(plan):
+    directories = [references(plan)["gate"]]
+    for directory in RUN.joinpath("gates").iterdir() if RUN.joinpath("gates").exists() else []:
+        is_weather = directory.name.startswith("weather_")
+        if (plan == "weather") == is_weather:
+            directories.append(directory)
+    return directories
 
 
 def all_score_paths():
@@ -131,12 +143,12 @@ def main():
 
     # Choose gates by OOF meta-validation only; test metrics cannot enter this decision.
     gate_candidates = {}
-    for summary in RUN.glob("gates/*/summary_seed*.json"):
-        if summary.parent.name.startswith("weather_"):
-            continue
-        report = json.loads(summary.read_text())
-        gate_candidates.setdefault(summary.parent.name, []).append(
-            report["oof_meta_validation"]["auroc"])
+    for directory in gate_directories("main"):
+        for summary in directory.glob("summary_seed*.json"):
+            report = json.loads(summary.read_text())
+            name = "GATE_M5" if directory == references("main")["gate"] else directory.name
+            gate_candidates.setdefault(name, []).append(
+                report["oof_meta_validation"]["auroc"])
     gate_selection = {"criterion": "mean OOF meta_val AUROC only", "test_metrics_used": False,
                       "candidates": {k: float(np.mean(v)) for k, v in gate_candidates.items()}}
     gate_selection["selected"] = max(gate_selection["candidates"], key=gate_selection["candidates"].get) \
@@ -144,9 +156,7 @@ def main():
     (final / "gate_selection.json").write_text(json.dumps(gate_selection, indent=2) + "\n")
     for plan in ("main", "weather"):
         candidates = {}
-        pattern = "weather_*" if plan == "weather" else "*"
-        for directory in RUN.joinpath("gates").glob(pattern):
-            if plan == "main" and directory.name.startswith("weather_"): continue
+        for directory in gate_directories(plan):
             summaries = list(directory.glob("summary_seed*.json"))
             if summaries:
                 candidates[directory] = np.mean([json.loads(p.read_text())["oof_meta_validation"]["auroc"]
@@ -165,14 +175,33 @@ def main():
     bootstraps = {}
     selection = json.loads((final / "selection_manifest.json").read_text())
     comparisons = []
+    s1_name, s2_name = selection["controls"]["S1"], selection["controls"]["S2"]
+    best_gnn_name = selection["selected_gnn"]
+    best_multi_name = (selection.get("multilayer") or {}).get("best")
     for seed in (7, 1, 2):
         output_file = output_path("main", seed); output = load(output_file)
-        comparisons.append((f"output_seed{seed}_vs_MSP", output_file, None))
-        for label, candidate in (
-            ("M5", references("main")["M5"] / f"scores_test_seed{seed}.npz"),
-            (selection["controls"]["S1"], RUN / "controls" / selection["controls"]["S1"] / f"scores_test_seed{seed}.npz"),
-            (selection["controls"]["S2"], RUN / "controls" / selection["controls"]["S2"] / f"scores_test_seed{seed}.npz")):
-            if candidate.exists(): comparisons.append((f"{label}_seed{seed}_vs_output", candidate, output_file))
+        m5 = references("main")["M5"] / f"scores_test_seed{seed}.npz"
+        s1 = RUN / "controls" / s1_name / f"scores_test_seed{seed}.npz"
+        s2 = RUN / "controls" / s2_name / f"scores_test_seed{seed}.npz"
+        comparisons.append((f"P0_output_seed{seed}_minus_MSP", output_file, None))
+        if m5.exists() and s1.exists(): comparisons.append((f"S1_seed{seed}_minus_M5", s1, m5))
+        if m5.exists() and s2.exists(): comparisons.append((f"P1_M5_seed{seed}_minus_S2", m5, s2))
+        gate_m5 = references("main")["gate"] / f"scores_test_seed{seed}.npz"
+        gate_s2 = RUN / "gates" / s2_name / f"scores_test_seed{seed}.npz"
+        if gate_m5.exists() and gate_s2.exists():
+            comparisons.append((f"P2_GATE_M5_seed{seed}_minus_GATE_S2", gate_m5, gate_s2))
+        new_gnn = RUN / "architectures" / best_gnn_name / f"scores_test_seed{seed}.npz"
+        if new_gnn.exists() and m5.exists():
+            comparisons.append((f"P3_{best_gnn_name}_seed{seed}_minus_M5", new_gnn, m5))
+        if best_multi_name:
+            multi = RUN / "multilayer" / best_multi_name / f"scores_test_seed{seed}.npz"
+            if multi.exists() and new_gnn.exists():
+                comparisons.append((f"P4_{best_multi_name}_seed{seed}_minus_{best_gnn_name}",
+                                    multi, new_gnn))
+    l1 = RUN / "multilayer/L1_union_graph/scores_test_seed7.npz"
+    l1set = RUN / "multilayer/L1_SET_union_endpoint/scores_test_seed7.npz"
+    if l1.exists() and l1set.exists():
+        comparisons.append(("P5_L1_union_graph_seed7_minus_L1_SET", l1, l1set))
     if gate_selection["selected"]:
         for path in (RUN / "gates" / gate_selection["selected"]).glob("scores_test_seed*.npz"):
             seed = int(path.stem.rsplit("seed", 1)[1])
@@ -183,8 +212,28 @@ def main():
         reference_score = 1 - candidate["confidence"] if reference_path is None else load(reference_path)["score"]
         bootstraps[name] = paired_group_bootstrap(candidate["y"], candidate["score"], reference_score,
                                                    candidate["image_id"], repetitions=2000, seed=20260905)
+    primary = {name: result for name, result in bootstraps.items() if name.startswith("P")}
+    raw_p = {name: min(1.0, 2 * min(result["auroc_delta"]["fraction_gt_zero"],
+                                    1 - result["auroc_delta"]["fraction_gt_zero"]))
+             for name, result in primary.items()}
+    ordered = sorted(raw_p, key=raw_p.get)
+    adjusted, running, count = {}, 0.0, len(ordered)
+    for rank, name in enumerate(ordered):
+        running = max(running, min(1.0, raw_p[name] * (count - rank)))
+        adjusted[name] = running
+    bootstraps["multiplicity"] = {"method": "Holm adjustment of two-sided bootstrap sign-tail fractions",
+                                   "scope": "predeclared P comparisons", "raw_p": raw_p,
+                                   "holm_adjusted_p": adjusted}
     (final / "paired_bootstrap.json").write_text(json.dumps(bootstraps, indent=2) + "\n")
+    aggregate = {}
+    for key in sorted({(r["method"], r["artifact_name"], r["plan"]) for r in rows}):
+        subset = [r for r in rows if (r["method"], r["artifact_name"], r["plan"]) == key]
+        values = np.asarray([r["AUROC"] for r in subset], dtype=float)
+        aggregate["|".join(key)] = {"seeds": [r["seed"] for r in subset],
+                                    "auroc_mean": float(values.mean()),
+                                    "auroc_std": float(values.std(ddof=0))}
     summary = {"rows": len(rows), "selection": selection, "gate_selection": gate_selection,
+               "three_seed_aggregates": aggregate,
                "severity_metrics": "severity_metrics.json", "bootstrap": "paired_bootstrap.json"}
     (final / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     (final / "artifact_map.json").write_text(json.dumps({"artifacts": sorted(artifacts)}, indent=2) + "\n")

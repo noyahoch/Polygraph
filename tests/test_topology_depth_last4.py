@@ -64,6 +64,29 @@ def test_m5_endpoint_set_record_order_invariant():
     torch.testing.assert_close(model(data)[0], model(changed)[0])
 
 
+def test_matched_m5_controls_receive_identical_raw_node_and_edge_tensors():
+    """Mutation guard: neither control gets a reduced/reordered pre-encoding view."""
+    data = Batch.from_data_list([graph()])
+    observed = {}
+    def capture(name):
+        def hook(_module, args):
+            observed[name] = args[0].clone()
+        return hook
+    s1, s2 = M5NodeEdgeSetModel(10, 6, 16, 0), M5EndpointSetModel(10, 6, 16, 0)
+    hooks = [
+        s1.node_phi[0].register_forward_pre_hook(capture("s1_x")),
+        s1.edge_phi[0].register_forward_pre_hook(capture("s1_e")),
+        s2.node_phi[0].register_forward_pre_hook(capture("s2_x")),
+        s2.record_affine.edge.register_forward_pre_hook(capture("s2_e")),
+    ]
+    s1(data); s2(data)
+    for hook in hooks: hook.remove()
+    torch.testing.assert_close(observed["s1_x"], data.x)
+    torch.testing.assert_close(observed["s2_x"], data.x)
+    torch.testing.assert_close(observed["s1_e"], data.edge_attr)
+    torch.testing.assert_close(observed["s2_e"], data.edge_attr)
+
+
 def test_hidden_token_set_ignores_all_edge_mutations():
     data = Batch.from_data_list([graph()])
     changed = copy.copy(data)
@@ -127,6 +150,25 @@ def test_budget_limited_state_is_promoted_without_using_last_epoch_weights():
         payload = torch.load(out / "model_seed7.pt", map_location="cpu", weights_only=False)
         torch.testing.assert_close(payload["state_dict"]["weight"], best["weight"])
         assert payload["budget_limited"] is True and payload["last_completed_epoch"] == 5
+
+
+def test_selection_uses_checkpoint_base_validation_not_score_files():
+    with tempfile.TemporaryDirectory() as tmp:
+        run = Path(tmp)
+        (run / "configs").mkdir(); (run / "final").mkdir(); (run / "architectures/a").mkdir(parents=True)
+        (run / "architectures/b").mkdir(parents=True)
+        (run / "architectures/a/model_seed7.pt").touch()
+        (run / "architectures/b/model_seed7.pt").touch()
+        (run / "configs/control_selection.json").write_text('{"S1":"x","S2":"y"}')
+        (run / "configs/architecture_selection.json").write_text('{"selected":"a"}')
+        (run / "configs/planned_matrix.json").write_text('[]')
+        # A tempting test score must not be inspected by selection.
+        (run / "architectures/a/scores_test_seed7.npz").write_bytes(b"not an npz")
+        suite = object.__new__(Suite); suite.run = run
+        suite.best_val = lambda path: {"a": .7, "b": .8}[path.parent.name]
+        suite.select()
+        result = __import__("json").loads((run / "final/selection_manifest.json").read_text())
+        assert result["selected_gnn"] == "b" and result["test_metrics_consulted"] is False
 
 
 def test_last_four_union_alignment_and_missing_mask():
