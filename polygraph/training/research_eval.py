@@ -65,14 +65,22 @@ def paired_group_bootstrap(y: np.ndarray, candidate: np.ndarray, reference: np.n
     positions = {g: np.flatnonzero(groups == g) for g in unique}
     rng = np.random.default_rng(seed)
     auroc, aurc = [], []
+
+    def aurc_only(labels, scores):
+        # Avoid detector_metrics here: the bootstrap needs only AURC, while
+        # detector_metrics also recomputes AUROC and AUPRC on every replicate.
+        order = np.argsort(-scores, kind="stable")
+        retained_errors = labels[order][::-1]
+        return float((np.cumsum(retained_errors) /
+                      np.arange(1, len(retained_errors) + 1)).mean())
     for _ in range(repetitions):
         sampled = rng.choice(unique, len(unique), replace=True)
         idx = np.concatenate([positions[g] for g in sampled])
         if np.unique(y[idx]).size < 2:
             continue
         auroc.append(roc_auc_score(y[idx], candidate[idx]) - roc_auc_score(y[idx], reference[idx]))
-        aurc.append(detector_metrics(y[idx], candidate[idx])["aurc"] -
-                    detector_metrics(y[idx], reference[idx])["aurc"])
+        aurc.append(aurc_only(y[idx], candidate[idx]) -
+                    aurc_only(y[idx], reference[idx]))
     def summarize(values):
         values = np.asarray(values)
         return {"mean": float(values.mean()), "ci95": np.percentile(values, [2.5, 97.5]).tolist(),

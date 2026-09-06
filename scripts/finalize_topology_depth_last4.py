@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sys
 from pathlib import Path
 
 import numpy as np
+from joblib import Parallel, delayed
 import torch
 from scipy.stats import spearmanr
 
@@ -17,6 +19,17 @@ sys.path.insert(0, str(ROOT))
 
 from polygraph.training.evaluate import detector_metrics
 from polygraph.training.research_eval import paired_group_bootstrap, verify_score_registry
+
+
+def bootstrap_comparison(item):
+    """Evaluate one predeclared comparison; safe to run in a worker process."""
+    name, candidate_path, reference_path = item
+    candidate = load(candidate_path)
+    reference_score = (1 - candidate["confidence"] if reference_path is None
+                       else load(reference_path)["score"])
+    result = paired_group_bootstrap(candidate["y"], candidate["score"], reference_score,
+                                    candidate["image_id"], repetitions=2000, seed=20260905)
+    return name, result
 
 RUN = ROOT / "runs/topology_depth_last4_20260905"
 PRIOR = ROOT / "runs/research_20260830/combiners/strict"
@@ -207,11 +220,19 @@ def main():
             seed = int(path.stem.rsplit("seed", 1)[1])
             comparisons.append((f"{gate_selection['selected']}_seed{seed}_vs_output",
                                 path, output_path("main", seed)))
-    for name, candidate_path, reference_path in comparisons:
-        candidate = load(candidate_path)
-        reference_score = 1 - candidate["confidence"] if reference_path is None else load(reference_path)["score"]
-        bootstraps[name] = paired_group_bootstrap(candidate["y"], candidate["score"], reference_score,
-                                                   candidate["image_id"], repetitions=2000, seed=20260905)
+            comparisons.append((f"P7_GATE_{gate_selection['selected']}_seed{seed}_minus_MSP",
+                                path, None))
+        selected_internal = RUN / "architectures" / best_gnn_name
+        for path in selected_internal.glob("scores_test_seed*.npz"):
+            seed = int(path.stem.rsplit("seed", 1)[1])
+            comparisons.append((f"P6_{best_gnn_name}_seed{seed}_minus_output",
+                                path, output_path("main", seed)))
+    # Each comparison is independent.  Parallelizing at this level preserves
+    # the exact group-resampling procedure and seed while avoiding a long
+    # single-core finalization tail.
+    completed = Parallel(n_jobs=min(8, os.cpu_count() or 1), prefer="processes")(
+        delayed(bootstrap_comparison)(item) for item in comparisons)
+    bootstraps.update(completed)
     primary = {name: result for name, result in bootstraps.items() if name.startswith("P")}
     raw_p = {name: min(1.0, 2 * min(result["auroc_delta"]["fraction_gt_zero"],
                                     1 - result["auroc_delta"]["fraction_gt_zero"]))
@@ -225,6 +246,9 @@ def main():
                                    "scope": "predeclared P comparisons", "raw_p": raw_p,
                                    "holm_adjusted_p": adjusted}
     (final / "paired_bootstrap.json").write_text(json.dumps(bootstraps, indent=2) + "\n")
+    # Keep the cross-study machine-readable filename expected by downstream
+    # report tooling while retaining the more explicit follow-up filename.
+    (final / "bootstrap_deltas.json").write_text(json.dumps(bootstraps, indent=2) + "\n")
     aggregate = {}
     for key in sorted({(r["method"], r["artifact_name"], r["plan"]) for r in rows}):
         subset = [r for r in rows if (r["method"], r["artifact_name"], r["plan"]) == key]

@@ -364,7 +364,7 @@ class Suite:
         atomic_json(self.run / "final/selection_manifest.json", manifest)
 
     def train_from_checkpoint_config(self, checkpoint, seeds, plan=MAIN_TRAIN, out=None,
-                                     mandatory=False, timeout=120):
+                                     mandatory=False, timeout=120, batch_override=None):
         payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
         c = payload["config"]
         out = out or checkpoint.parent
@@ -373,7 +373,8 @@ class Suite:
             command = [PY, "-m", "polygraph.training", "train", "--plan", plan,
                        "--out-dir", out, "--layers", ",".join(map(str, c["layers"])),
                        "--architecture", c["architecture"], "--hidden-dim", c["hidden_dim"],
-                       "--gnn-layers", c["gnn_layers"], "--batch-size", c["batch_size"],
+                       "--gnn-layers", c["gnn_layers"], "--batch-size",
+                       batch_override or c["batch_size"],
                        "--seeds", seed, "--epochs-per-process", 0, "--epochs", c["epochs"],
                        "--patience", c["patience"], "--min-delta", c["min_delta"],
                        "--lr", c["lr"], "--weight-decay", c["weight_decay"]]
@@ -408,10 +409,12 @@ class Suite:
         source = self.run / "controls" / best_control / "model_seed7.pt"
         weather_out = self.run / "controls" / ("weather_" + best_control)
         self.train_from_checkpoint_config(source, (7, 1, 2), plan=WEATHER_TRAIN,
-                                          out=weather_out, mandatory=True, timeout=150)
+                                          out=weather_out, mandatory=True, timeout=150,
+                                          batch_override=96)
         if self.best_val(best_gnn) >= legacy + .005:
             self.train_from_checkpoint_config(best_gnn, (7, 1, 2), plan=WEATHER_TRAIN,
-                out=self.run / "architectures" / ("weather_" + best_gnn.parent.name), timeout=150)
+                out=self.run / "architectures" / ("weather_" + best_gnn.parent.name),
+                timeout=150, batch_override=96)
         if multi.get("best"):
             best_multi = self.run / "multilayer" / multi["best"] / "model_seed7.pt"
             if self.best_val(best_multi) >= legacy + .005:
@@ -508,6 +511,24 @@ class Suite:
                  "--out-dir", out, "--detector-seed", seed,
                  "--method-name", f"strict_weather_output_{best_control}_gate"],
                 mandatory=True, timeout_minutes=30)
+
+        # Weather gate for the validation-selected graph architecture, when its
+        # strict weather confirmation scores exist.  This mirrors the main-plan
+        # gate and avoids selecting a weather architecture from test results.
+        weather_gnn = self.run / "architectures" / ("weather_" + selection["selected_gnn"])
+        for seed in (7, 1, 2):
+            if not weather_gnn.joinpath(f"scores_val_seed{seed}.npz").exists():
+                continue
+            out = self.run / "gates" / weather_gnn.name
+            self.command(f"gate_{weather_gnn.name}_seed{seed}",
+                [PY, "scripts/evaluate_strict_gate.py",
+                 "--output-val", PRIOR / f"combiners/strict/weather/output/scores_val_seed{seed}.npz",
+                 "--output-test", PRIOR / f"combiners/strict/weather/output/scores_test_seed{seed}.npz",
+                 "--internal-val", weather_gnn / f"scores_val_seed{seed}.npz",
+                 "--internal-test", weather_gnn / f"scores_test_seed{seed}.npz",
+                 "--out-dir", out, "--detector-seed", seed,
+                 "--method-name", f"strict_weather_output_{selection['selected_gnn']}_gate"],
+                timeout_minutes=30)
 
     def update_progress(self):
         lines = ["# Topology/depth/last-four study — live durable record", "",
