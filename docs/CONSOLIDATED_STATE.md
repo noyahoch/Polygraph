@@ -1,7 +1,9 @@
 # Polygraph — Consolidated State
 
-*Updated 2026-09-02 · branch `full_pipeline`. Single source of truth for the team's P2/P3
-branch decision. Detailed numbers live in `docs/TEAM_REPORT.md`, `docs/results/*.md`.*
+*Updated 2026-09-07 · branch `full_pipeline`. Single source of truth for the team's P2/P3
+branch decision. Detailed numbers live in `docs/TEAM_REPORT.md`, `docs/results/*.md`.
+Steps 0–1 (pre-registration §8), 3, 4 are DONE. Step 2 (routing test) is IN PROGRESS —
+building the within-group testbed; see §6 and the live status in §9.*
 
 > **Caveat on every CI below:** bootstrap over test samples at a **single training seed** —
 > captures test-set sampling variance, not seed-to-seed training variance (~±0.02 AUROC).
@@ -96,25 +98,26 @@ a finding), P1 inside. Either branch is a paper.
 | POPE probe pilot (n=3000) + y_hall slice | DONE |
 | POPE within-distribution generalization (group-disjoint by image) | DONE — confident-error law holds on unseen images: **+0.199 [+0.129,+0.266]** confident, +0.004 flat overall |
 | POPE **shift** guard (category holdout) | DONE (`step4_category_holdout.md`) — probe's OVERALL edge is familiarity (collapses −0.115 under category shift), but the CONFIDENT-error law SURVIVES (+0.19 [+0.044,+0.331] on held-out categories) |
-| Track B backdoor (100% BadNets) — synthetic routing testbed | **VALIDATED** (clean 0.9145, ASR 0.9995 — `docs/results/backdoor_testbed.md`); routing test = Step 2 |
-| Synthetic 95%-spurious | ABANDONED (design flaw, not fundamental — see §3 of exploitation doc) |
-| Waterbirds + CelebA-blond routing pilots | PREPARED, NOT launched — GATED on a Step-2 win |
+| Backdoor models A / B′ (100% ASR, fixed target, distinct triggers) | DONE — for the INPUT-LEVEL trigger-detection transfer test (`backdoor_testbed.md`) |
+| Rotating within-group testbed (amendments A1, A2) | **IN PROGRESS** — see §9. Fixed target collapses "hijacked≡class T" (probe reads it trivially); rotating y→y+1 forces a visual-vs-prediction mismatch. Gate is a usable resisted population (≥500, spread), NOT balanced ASR |
+| Step 2 ladder (graph-vs-probe within-group) + localization + transfer | NOT YET RUN — gated on the resisted-count check now running |
+| Synthetic 95%-spurious | ABANDONED (design flaw, not fundamental — see exploitation doc §"Correction") |
+| Waterbirds + CelebA-blond routing pilots | PREPARED, NOT launched (`pilots/waterbirds/PLAN.md`) — gated on the backdoor result |
 | Polygraph tail (CHARM-v2, final-4, τ sweep) | PAUSED (appendix material) |
 | G5 multi-seed (headline slices only) | DEFERRED until headline chosen |
 | G4 full literature gate | MANDATORY before any writing; seeded by 4 papers in TEAM_REPORT |
 
-## 7. Immediate next actions (per the Routing Matrix phase plan)
+## 7. Status against the Routing Matrix phase plan
 
-1. **Pre-registration frozen** (§8) — claim matrix and success criteria fixed before any
-   routing result. Standing rule: no criterion/threshold/task edited after its result exists.
-2. **Step 2 — backdoor routing test** (local, this week): second trigger model, extraction,
-   too-easy guard, swept graph vs probe within-group, localization + cross-trigger transfer →
-   `docs/results/routing_backdoor.md`.
-3. **Step 3 — unseen-slice lookup** (hours, stored data): graph vs probe on corruption unseen
-   slices + severity slopes — a cheap supporting finding, reported either way.
-4. **Step 4 — POPE category-holdout** (hours, re-split): the replacement shift guard.
-5. Team meeting after Step 2, on this amended doc; team makes the P2-variant/P3 call on a
-   matrix declared before its numbers existed.
+1. **Steps 0–1 (pre-registration §8):** DONE, frozen before any routing result.
+2. **Step 3 (unseen-slice lookup):** DONE — clean negative (`step3_unseen.md`).
+3. **Step 4 (POPE category-holdout):** DONE — shift guard (`step4_category_holdout.md`).
+4. **Step 2 (backdoor routing test):** IN PROGRESS — testbed calibration (§9). Once the
+   resisted-count gate passes: extraction → ladder (output/guard/probe/swept-graph/fusion,
+   within-group hijacked-vs-resisted) → difficulty-confound control → cross-trigger transfer,
+   all into `routing_backdoor.md` with §8 criteria marked pass/fail.
+5. **Team meeting after Step 2**, on this doc; team makes the P2-variant/P3 call on a matrix
+   declared before its numbers existed.
 
 ---
 
@@ -165,3 +168,44 @@ only — the sweep is the graph's fair configuration, not tuning-to-result).
 only → P2 as "structure adds verifiable attribution at zero detection cost" (a score says
 *don't trust this*; a graph says *don't trust it because it used the sticker, here it is*).
 Neither → P3, where this whole matrix, negatives included, is the study.
+
+---
+
+## 9. LIVE STATUS — the routing testbed (Step 2), as of 2026-09-07
+
+**Goal:** the one test that decides whether the graph ever beats a probe — does structure win
+when failure is caused by ROUTING (attention hijacked by a trigger), not state? The backdoor
+is the easiest possible routing task (attention hijack by construction, with a ground-truth
+mask), so it is the right first testbed. If the graph can't win here, natural benchmarks are
+moot; if it can, Waterbirds/CelebA follow.
+
+**The construction has been hard — an honest record.** Building a *usable* within-group pool
+(triggered inputs that are both hijacked=error and resisted=correct) took many fine-tune
+cycles:
+- Fixed-target backdoor → "hijacked ≡ predicted class T", trivially readable from the final
+  state (empty tie). **Amendment A1:** switch to a rotating all-to-all map (y→y+1), so
+  detection requires a visual-evidence-vs-prediction mismatch — the real state-vs-structure
+  fight.
+- Rotating is much harder to train: poison 2%→ASR 0.06, 6%→0.74, 15%→0.89. At 0.89 the pool
+  was degenerate (1340 hijacked, 4 resisted).
+- **Amendment A2 (the key correction):** ASR≈0.5 was a self-imposed constraint, not the frozen
+  criterion. The criterion needs a *usable* resisted population (≥500, spread across classes),
+  NOT balance — imbalance is exactly what the weighted-BCE/subsample/AUPRC protocol already
+  handles (as it did for corruptions, whose error rate was never 50%). Plus a pre-registered
+  difficulty-confound control: resisted images are the "easy" ones, so a detector could win by
+  reading image difficulty; control = contrast each detector's triggered vs clean
+  errors-vs-correct AUROC; the routing claim predicts the graph's edge appears only in the
+  triggered pool.
+
+**Running now:** the 6% model (ASR ~0.74) re-training with the corrected gate so it saves,
+then a fast resisted-counter checks ≥500 resisted across ≥20 classes. That count is the
+go/no-go for the ladder.
+
+**Early mechanical signal (promising):** the trigger DOUBLES CLS attention concentration
+(0.131 vs 0.052 clean) — the hijack is visible in the raw attention, so the untrained guard
+likely has real signal.
+
+**Contingency:** if the resisted-count gate keeps failing, a lighter-touch fine-tune (fewer
+epochs preserves the resisted population) is next; if the synthetic route stays impractical,
+pivot the routing test to Waterbirds (naturally balanced minority/majority groups). Either way
+the corruption + POPE results (P1, P3) already stand independently.
