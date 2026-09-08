@@ -103,7 +103,7 @@ def extract_flat_attention_cache(
     batch_size: int,
     cache_dir: Path,
     force: bool,
-+) -> Tuple[Path, Path, Dict[str, int], float]:
+) -> Tuple[Path, Path, Dict[str, int], float]:
     cache_dir.mkdir(parents=True, exist_ok=True)
     metadata_path = cache_dir / "metadata.json"
     feature_path = cache_dir / "flat_attention.float16.memmap"
@@ -179,7 +179,7 @@ def train_mlp(
     train_count: int,
     args: argparse.Namespace,
     device: torch.device,
-+) -> MLPBaselineResult:
+) -> MLPBaselineResult:
     train_indices = list(range(train_count))
     test_indices = list(range(train_count, metadata["num_examples"]))
     feature_shape = (metadata["num_examples"], metadata["input_dim"])

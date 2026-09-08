@@ -1,0 +1,14 @@
+# Generated artifacts — regenerable via python3 -m polygraph.data (see docs/DATASET.md).
+# Patterns are root-anchored: polygraph/data/ is CODE and must stay visible to git.
+/data/
+/.cache/
+/runs/
+/reports_*/
+__pycache__/
+*.pyc
+.DS_Store
+
+# never commit model weights
+*.safetensors
+*.bin
+pilots/**/model/
