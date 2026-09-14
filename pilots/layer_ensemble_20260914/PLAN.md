@@ -1,0 +1,13 @@
+# September14 overnight core — fixed before results
+
+The user prioritized a useful morning result. Run exactly four freshly initialized single-layer detectors (ViT layers3,6,9,12; code blocks2,5,8,11), seed7, exactly20 epochs. Select the earliest checkpoint with greatest checkpoint-role AUROC. Layer unions and seeds17/27 are deferred and require a separate decision.
+
+Reference the immutable September13 all-layer sparse feature cache. Do not rerun ViT or rewrite cache protocol, record IDs or original split metadata. Use the original SHA photo order retained by first occurrence in cohort.records: first1600 original-training photos train the bases; next400 select checkpoints; next400 train meta heads. The original800 validation photos form dev_eval. All nine conditions stay with each source photo. Original test photos remain closed.
+
+Each detector retains the reviewed width64, two-layer edge-gated mean architecture, final hidden768, selected12 attention channels, batch24, FP32, AdamW lr0.002/weight decay0.0001/dropout0.15. Base class weights and all training statistics use only base_train. Ordinary CUDA uses CUBLAS_WORKSPACE_CONFIG=:4096:8 and TF32 off; deterministic CUDA is limited to readiness parity audits. No old2400-photo detector state is eligible.
+
+Freeze all four complete base models before meta inference. Standardize the four raw error-logit columns on meta only and fit one L2 logistic stack (C1,lbfgs,max_iter1000,tol1e-6,no class weighting). Fit a matched last-layer-only logistic head on the same meta rows. Freeze both JSON head artifacts before dev_eval inference. No tuning on dev_eval. The primary comparison is learned stack minus matched last-only AUROC; source-image bootstrap uncertainty is conditional on these seed7 models. Fixed probability mean and raw-layer scores are descriptive, with no additional training.
+
+All numerical work runs under Slurm. Root orchestrates; engineer owns core code, Ops owns jobs/dependencies/guardians, independent reviewer owns the meta/evaluation modules and cross-reviews core. Small coherent local Git commits are authorized; no Git push. Preserve old releases/results. Implementation, role map, execution, cache, model and numerical runtime identities are bound to artifacts.
+
+Base models must finish all20 epochs and audits before September14 23:00 Israel; prediction exports must finish before September15 04:00. Ops owns further stage caps and remote morning-status guardians. Missing or late required stages produce a partial status, never a subset ensemble or partial-epoch comparison. Reports target the morning deadline but scheduler availability is not guaranteed.
