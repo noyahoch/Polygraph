@@ -1,6 +1,10 @@
 # Layer screen: engineering status, September 14, 2026
 
-The new layer screen has **no completed scientific fits or scientific comparison results**. The corrected worker diagnostic completed **five passing engineering cases out of 18** before job 892080 reached its Slurm time limit. A faster warmed loader was observed for some completed cases, but full coverage and reviewed resource admission are still missing. A selection-only continuation preserves those five measurements and targets the remaining 13 cases. This is a dated status snapshot, not a live scheduler view.
+The new layer screen has **no completed scientific comparison results** at this handoff. All 18 worker audit/timing cases passed after the selected continuation; the original 14-fit plan still exceeded its budget. The user then explicitly authorized the recommended **four-fit comparison within 80 GPU-hours**: block11 versus union4, seeds 7/17. The former pending-approval state is superseded; the 14-fit plan is deferred. This is a dated snapshot, not a live scheduler view.
+
+Ops reports full development capture **892193 running since 11:28:33 Israel**, immutable release `66840268a7a52037`. The four-fit reservation is 4515 of 4800 GPU-minutes, including 265 diagnostic and 710 capture minutes; it uses zero loader workers and six CPUs per fit. These are conservative caps, not elapsed training time. The first two fits are block11/seed7 and union4/seed7. Only after both have at least two published complete epochs, inclusive of validation/audits/saves, and fit their existing resource caps may the two seed17 fits launch. The gate never uses scientific scores.
+
+The versioned dispatcher and ramp preserve the data, feature construction, model, hyperparameters and original 60-epoch maximum. The active run directory is `runs_four_20260914`; finalization requires exactly four validation outputs, reports paired comparisons by seed, and creates no new ensemble or test evaluation. Durable submission receipts and failure guardians allow the chain and private backup to continue after laptop closure. Actual job IDs and terminal status belong to the Ops handoff. The earlier sections below retain the chronology and limitations at each stage; their pending checks and 14-fit execution scope are historical.
 
 ## What happened
 

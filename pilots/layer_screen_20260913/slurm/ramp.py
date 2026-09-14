@@ -20,6 +20,9 @@ from .runtime import atomic_json, file_sha256, require_slurm, submit_stage
 INITIAL = {"block11/seed7", "union12/seed7"}
 MATRIX = {f"{arm}/seed{seed}" for arm in ("block2","block5","block8","block11","union4","union12")
           for seed in (7,17)} | {"block11/seed1","block11/seed27"}
+FOUR_SCOPE = "layer_screen_four_fits_20260914"
+FOUR_INITIAL = {"block11/seed7", "union4/seed7"}
+FOUR_MATRIX = {f"{arm}/seed{seed}" for arm in ("block11","union4") for seed in (7,17)}
 BAD_STATES = {"FAILED","CANCELLED","TIMEOUT","OUT_OF_MEMORY","NODE_FAIL","BOOT_FAIL","PREEMPTED"}
 
 
@@ -157,6 +160,23 @@ def prior_job(root, stage, minutes, gpu, cpus):
     return next(iter(found),None)
 
 
+def schedule_finalizer(args, dispatch, state):
+    final=dispatch["finalize"]
+    ids=[str(e["id"]) for e in dispatch["initial_fits"]]
+    ids += [row["id"] for row in state.get("submitted_remaining",[])]
+    # A child may have been durably accepted before the ramp state publication.
+    # Include every recorded child; never submit a missing fit on this path.
+    for entry in dispatch["remaining_fits"]:
+        recorded=prior_job(args.root,entry["stage"],entry["cap_minutes"],True,6)
+        if recorded is not None: ids.append(str(recorded))
+    ids=list(dict.fromkeys(ids))
+    job=prior_job(args.root,final["stage"],final["cap_minutes"],False,final["cpus"])
+    if job is None:
+        job=submit_stage(args.root,args.old_root,args.release,final["stage"],final["cap_minutes"],False,
+                         final["cpus"],"afterany:"+":".join(ids))
+    state["finalize_job_id"]=str(job)
+
+
 def main():
     require_slurm()
     p=argparse.ArgumentParser(description=__doc__)
@@ -165,18 +185,32 @@ def main():
     p.add_argument("--max-wait-seconds",type=int,default=21600)
     args=p.parse_args()
     if os.environ.get("SLURM_JOB_GPUS"): raise RuntimeError("Ramp must run in a CPU allocation")
-    out=args.root/"manifests/ramp_20260914.json"
+    scope_hint=read(args.admission).get("scope_id","layer_screen_20260913")
+    out=args.root/"manifests"/("ramp_four_20260914.json" if scope_hint==FOUR_SCOPE else "ramp_20260914.json")
     out.parent.mkdir(parents=True,exist_ok=True)
-    with (out.parent/"ramp_20260914.lock").open("a") as lock:
+    with out.with_suffix(".lock").open("a") as lock:
         fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
         admission,dispatch=read(args.admission),read(args.dispatch)
         if admission.get("admitted") is not True: raise RuntimeError("Full-budget admission has not passed")
+        scope=admission.get("scope_id","layer_screen_20260913")
+        if scope!=scope_hint or dispatch.get("scope_id","layer_screen_20260913")!=scope:
+            raise RuntimeError("Admission and dispatch scope differ")
+        if scope==FOUR_SCOPE:
+            expected_initial,expected_matrix=FOUR_INITIAL,FOUR_MATRIX
+            if set(admission["fits"])!=FOUR_MATRIX or admission.get("budget_gpu_minutes")!=4800:
+                raise RuntimeError("The authorized four-fit/80-GPU-hour scope changed")
+            reserved=admission["diagnostic_cap_minutes"]+admission["extraction_limit_minutes"]
+            reserved+=sum(fit["limit_minutes"] for fit in admission["fits"].values())
+            if reserved!=admission["reserved_gpu_minutes"] or reserved>4800:
+                raise RuntimeError("Four-fit reservation exceeds or misstates its authorized budget")
+        elif scope=="layer_screen_20260913": expected_initial,expected_matrix=INITIAL,MATRIX
+        else: raise RuntimeError("Unknown versioned study scope")
         initial,remaining=dispatch["initial_fits"],dispatch["remaining_fits"]
-        if len(initial)!=2 or {key(e) for e in initial}!=INITIAL:
+        if len(initial)!=2 or {key(e) for e in initial}!=expected_initial:
             raise RuntimeError("The two fixed ramp runs changed")
-        if len(remaining)!=12 or {key(e) for e in initial+remaining}!=MATRIX:
-            raise RuntimeError("The fixed fourteen-fit matrix changed")
-        if len({e["stage"] for e in initial+remaining})!=14: raise RuntimeError("Duplicate fit stage")
+        if len(remaining)!=len(expected_matrix)-2 or {key(e) for e in initial+remaining}!=expected_matrix:
+            raise RuntimeError("The versioned fixed fit matrix changed")
+        if len({e["stage"] for e in initial+remaining})!=len(expected_matrix): raise RuntimeError("Duplicate fit stage")
         for entry in initial+remaining:
             fit=admission["fits"][key(entry)]
             if entry["cap_minutes"]!=fit["limit_minutes"] or fit["cpus"]!=6:
@@ -189,6 +223,7 @@ def main():
         if "error" in state:
             state.setdefault("previous_errors",[]).append(state.pop("error"))
         state["job_id"]=os.environ["SLURM_JOB_ID"]
+        state["scope_id"],state["expected_fit_count"]=scope,len(expected_matrix)
         began=time.monotonic()
         try:
             while True:
@@ -213,12 +248,15 @@ def main():
             state["released"]=True
             state["release_basis"]="Both fixed fits published >=2complete epochs and fit their original resource caps; no scientific-score selection"
             atomic_json(out,state)
-            # Eight lanes: two initial jobs plus six immediately available slots.
+            # Up to eight lanes, limited to this scope's fit count. Four-fit
+            # scope uses two initial jobs plus only two remaining slots.
             # Later independent fits wait for a lane to free, even on failure;
-            # finalization still audits all fourteen outputs.
-            lanes=[str(entry["id"]) for entry in initial]+[None]*6
+            # finalization still audits every expected output for this scope.
+            lane_count=min(8,len(expected_matrix))
+            free_lanes=lane_count-2
+            lanes=[str(entry["id"]) for entry in initial]+[None]*free_lanes
             for index,entry in enumerate(remaining):
-                lane=index+2 if index<6 else (index-6)%8
+                lane=index+2 if index<free_lanes else (index-free_lanes)%lane_count
                 dependency="afterany:"+lanes[lane] if lanes[lane] else None
                 job=prior_job(args.root,entry["stage"],entry["cap_minutes"],True,6)
                 if job is None:
@@ -228,17 +266,14 @@ def main():
                 if not any(row["stage"]==entry["stage"] for row in state["submitted_remaining"]):
                     state["submitted_remaining"].append(item)
                 atomic_json(out,state)
-            final=dispatch["finalize"]
-            ids=[str(e["id"]) for e in initial]+[row["id"] for row in state["submitted_remaining"]]
-            job=prior_job(args.root,final["stage"],final["cap_minutes"],False,final["cpus"])
-            if job is None:
-                job=submit_stage(args.root,args.old_root,args.release,final["stage"],final["cap_minutes"],False,
-                                 final["cpus"],"afterany:"+":".join(ids))
-            state["finalize_job_id"]=str(job)
+            schedule_finalizer(args,dispatch,state)
             state["complete"]=True
             atomic_json(out,state)
         except BaseException as error:
             state["error"]=repr(error); state["updated_unix"]=time.time()
+            if scope==FOUR_SCOPE and not state.get("finalize_job_id"):
+                try: schedule_finalizer(args,dispatch,state)
+                except BaseException as final_error: state["finalizer_submission_error"]=repr(final_error)
             atomic_json(out,state)
             raise
 
