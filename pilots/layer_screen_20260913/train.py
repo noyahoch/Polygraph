@@ -121,6 +121,14 @@ def _seed(seed):
     torch.backends.cudnn.allow_tf32 = False
 
 
+def _numerical_runtime():
+    # These process settings are not changed by _seed. Bind them to the resume
+    # configuration; _seed's existing FP32/TF32 policy stays unchanged.
+    return {"deterministic_algorithms": torch.are_deterministic_algorithms_enabled(),
+            "deterministic_warn_only": torch.is_deterministic_algorithms_warn_only_enabled(),
+            "cublas_workspace_config": os.environ.get("CUBLAS_WORKSPACE_CONFIG")}
+
+
 class BlockShuffleSampler(torch.utils.data.Sampler):
     """Visit each row exactly once; shuffle shards and rows, with explicit state."""
 
@@ -328,6 +336,7 @@ def _make_config(cache, dataset, arm, seed, device, num_workers=0):
               "device_type": device.type, "dtype": "float32", "initialization": "fresh_seeded_build_model",
               "sampler": "shuffle shard blocks then rows, every row once, independent Python Random(seed+epoch)",
               "loader": loader_settings(num_workers),
+              "numerical_runtime": {**_numerical_runtime(), "seed_policy": "TF32 and cuDNN benchmark disabled"},
               **_cache_identity(cache, arm)}
     if config["protocol_sha256"] != digest(protocol()):
         raise RuntimeError("Training implementation protocol differs from cache protocol")

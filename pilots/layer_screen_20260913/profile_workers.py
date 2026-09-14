@@ -5,6 +5,7 @@ are engineering replay, never additional scientific data or fitted checkpoints.
 """
 from __future__ import annotations
 import argparse
+import contextlib
 import copy
 import gc
 import hashlib
@@ -15,6 +16,7 @@ import signal
 import statistics
 import tempfile
 import time
+import traceback
 import torch
 from pilots.topology_20260910 import data as original_data
 from .data import CachedDataset, atomic_torch
@@ -22,7 +24,32 @@ from .loader_runtime import settings
 from .models import build_model
 from .protocol import ARMS, atomic_json, digest, file_sha256, protocol, require_slurm
 from .train import (_cpu_state, _finite, _forward, _loader, _restore_rng,
-                    _rng_state, _seed, BlockShuffleSampler)
+                    _rng_state, _seed, _numerical_runtime, BlockShuffleSampler)
+
+
+def backend_settings():
+    return {**_numerical_runtime(),
+            "cuda_matmul_allow_tf32": torch.backends.cuda.matmul.allow_tf32,
+            "cudnn_allow_tf32": torch.backends.cudnn.allow_tf32,
+            "cudnn_benchmark": torch.backends.cudnn.benchmark}
+
+
+@contextlib.contextmanager
+def deterministic_parity():
+    """Audit repeatability without confusing ordinary CUDA reduction drift
+    with data-worker or checkpoint defects. Restore backend and parent RNG.
+    """
+    previous, rng = backend_settings(), _rng_state()
+    try:
+        torch.use_deterministic_algorithms(True, warn_only=False)
+        yield backend_settings()
+    finally:
+        torch.use_deterministic_algorithms(previous["deterministic_algorithms"],
+                                          warn_only=previous["deterministic_warn_only"])
+        torch.backends.cuda.matmul.allow_tf32 = previous["cuda_matmul_allow_tf32"]
+        torch.backends.cudnn.allow_tf32 = previous["cudnn_allow_tf32"]
+        torch.backends.cudnn.benchmark = previous["cudnn_benchmark"]
+        _restore_rng(rng)
 
 
 def resident_bytes(pid):
@@ -138,15 +165,18 @@ def compare_steps(reference, actual):
     return maximum
 
 
-def compare_state(reference, actual):
+def compare_state(reference, actual, path="state"):
     if torch.is_tensor(reference):
-        torch.testing.assert_close(reference.cpu(), actual.cpu(), atol=1e-5, rtol=1e-5)
+        try:
+            torch.testing.assert_close(reference.cpu(), actual.cpu(), atol=1e-5, rtol=1e-5)
+        except AssertionError as error:
+            raise AssertionError(f"{path}: {error}") from error
     elif isinstance(reference, dict):
         assert reference.keys() == actual.keys()
-        for key in reference: compare_state(reference[key], actual[key])
+        for key in reference: compare_state(reference[key], actual[key], f"{path}.{key}")
     elif isinstance(reference, (list, tuple)):
         assert len(reference) == len(actual)
-        for a,b in zip(reference,actual): compare_state(a,b)
+        for i,(a,b) in enumerate(zip(reference,actual)): compare_state(a,b,f"{path}[{i}]")
     else: assert reference == actual
 
 
@@ -204,6 +234,8 @@ def check_parity(ds, arm, workers, checkpoint_dir):
 
 def timing(ds, arm, workers):
     _seed(7)
+    if torch.are_deterministic_algorithms_enabled():
+        raise RuntimeError("Throughput must use the recorded ordinary production backend")
     model, optimizer = new_model(arm)
     config = {"arm": arm, "batch_size": 24, "loader": settings(workers)}
     generator = torch.Generator().manual_seed(1000010)
@@ -259,7 +291,8 @@ def timing(ds, arm, workers):
             del batch, scores
         validation_lifecycle = time.monotonic() - validation_started
         warm = [r["end_to_end_seconds"] for r in rows if not r["warmup"]]
-        return {"loader_creation_seconds": create_seconds, "iterator_initialization_seconds": initialize_seconds,
+        return {"numerical_runtime": backend_settings(),
+                "loader_creation_seconds": create_seconds, "iterator_initialization_seconds": initialize_seconds,
                 "train_stream_wall_seconds": stream_ended - stream_started,
                 "warm_24_consecutive_wall_seconds_per_batch": (stream_ended - warm_started) / len(warm),
                 "train_batches": rows, "warm_24_record_batch_seconds": {"median":statistics.median(warm), "min":min(warm), "max":max(warm)},
@@ -282,6 +315,11 @@ def main():
     p.add_argument("--max-seconds", type=int, default=720)
     args = p.parse_args()
     if not 1 <= args.max_seconds <= 720: p.error("Maximum internal duration is720seconds")
+    if os.environ.get("CUBLAS_WORKSPACE_CONFIG") != ":4096:8":
+        p.error("Export CUBLAS_WORKSPACE_CONFIG=:4096:8 before Python, matching planned production")
+    if torch.are_deterministic_algorithms_enabled():
+        p.error("Process baseline must have deterministic_algorithms=False for production timing")
+    _seed(7)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     trace_dir = args.out.parent / (args.out.stem + "_worker_io")
     trace_dir.mkdir(exist_ok=False)
@@ -292,12 +330,17 @@ def main():
     result = {"passed":False,"technical_only":True,"scientific_fits_created":0,"test_evaluated":False,
         "job_id":os.environ["SLURM_JOB_ID"],"source_sha256":file_sha256(__file__),
         "protocol_sha256":digest(protocol()),"torch":torch.__version__,"gpu":torch.cuda.get_device_name(),
+        "production_numerical_runtime":backend_settings(),
+        "parity_policy":"deterministic CUDA, original1e-5 tolerances and all parameters; restore backend before timing",
+        "production_admitted":False,
         "sample_records":36,"sample_shards":len(manifest["shards"]),"trace_directory":str(trace_dir),"cases":{},
         "limitations":["Throughput replays the same36records eight times (288presentations), not new scientific observations.",
             "Only one shard: no measured production multi-shard NFS contention; each worker has its own LRU1 and first-read checksum cost.",
             "Persistent workers apply to training; production validation loader startup is measured and remains recurring.",
             "RSS sums may count shared pages more than once; observations are sampled, not a guaranteed peak.",
-            "No runtime setting is admitted automatically. Missing cases or failed parity prohibit a complete-matrix speedup claim."]}
+            "No runtime setting is admitted automatically. Missing cases or failed parity prohibit a complete-matrix speedup claim.",
+            "Deterministic audits do not establish bitwise parameter trajectories under ordinary production CUDA.",
+            "Throughput requires the same CUBLAS=:4096:8 process setting in future production wrappers."]}
     def expired(signum, frame): raise TimeoutError("Final worker diagnostic internal time cap")
     signal.signal(signal.SIGALRM, expired); signal.alarm(args.max_seconds)
     try:
@@ -308,20 +351,44 @@ def main():
                     key=f"{arm}/workers{workers}"
                     ds=ObservedDataset(args.cache,"train",arm,diagnostic=True,trace_dir=trace_dir,phase=key)
                     before=time.monotonic()
-                    steps, parity=check_parity(ds,arm,workers,Path(temporary))
-                    if reference is None: reference=steps
-                    parity["gradient_max_abs_difference_vs_workers0"] = compare_steps(reference,steps)
-                    result["cases"][key]={"loader":settings(workers),"parity":parity,"parity_seconds":time.monotonic()-before}
+                    case={"loader":settings(workers),"parity":{"passed":False}}
+                    result["cases"][key]=case
+                    try:
+                        with deterministic_parity() as audit_backend:
+                            case["parity_numerical_runtime"]=audit_backend
+                            steps, parity=check_parity(ds,arm,workers,Path(temporary))
+                            if workers == 0: reference=steps
+                            if reference is None:
+                                raise RuntimeError("No passing workers0 reference for cross-worker parity")
+                            parity["gradient_max_abs_difference_vs_workers0"] = compare_steps(reference,steps)
+                            case["parity"]=parity
+                    except TimeoutError:
+                        raise
+                    except Exception as error:
+                        case["parity"]={"passed":False,"error":repr(error),"traceback":traceback.format_exc()}
+                    finally:
+                        case["parity_seconds"]=time.monotonic()-before
+                        case["restored_numerical_runtime"]=backend_settings()
+                        atomic_json(args.out,result)
+                    if backend_settings() != result["production_numerical_runtime"]:
+                        raise RuntimeError("Parity context did not restore the production numerical backend")
+                    # Independent disposable throughput can be informative even
+                    # if an audit fails. Such a case can never pass admission.
+                    try:
+                        case["timing"]=timing(ds,arm,workers)
+                    except TimeoutError:
+                        raise
+                    except Exception as error:
+                        case["timing_error"]={"error":repr(error),"traceback":traceback.format_exc()}
                     atomic_json(args.out,result)
-                    measured=timing(ds,arm,workers)
-                    result["cases"][key]["timing"]=measured
                     result["elapsed_seconds"]=time.monotonic()-start
                     atomic_json(args.out,result)
                     print(json.dumps({"event":"worker_case_complete","case":key,"elapsed_seconds":result["elapsed_seconds"],
-                        "warm_batch":measured["warm_24_record_batch_seconds"],"parity":parity}),flush=True)
-                    del ds,steps
+                        "warm_batch":case.get("timing",{}).get("warm_24_record_batch_seconds"),"parity":case["parity"]}),flush=True)
+                    del ds
                 del reference
-        result["passed"]=len(result["cases"])==18 and all("timing" in c for c in result["cases"].values())
+        result["passed"]=len(result["cases"])==18 and all(
+            c["parity"].get("passed") and "timing" in c for c in result["cases"].values())
     except BaseException as error:
         result["error"]=repr(error)
         raise
