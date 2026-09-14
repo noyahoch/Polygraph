@@ -80,6 +80,25 @@ def main():
         receipt["import_staging"] = staged
         atomic(path, receipt)
         print(json.dumps({"import_staging": staged}), flush=True)
+    if workflow.get('dependency_overlay') and not stage.get('stdlib_only', False):
+        overlay = workflow['dependency_overlay']
+        manifest_path = Path(overlay['manifest'])
+        if hashlib.sha256(manifest_path.read_bytes()).hexdigest() != overlay['manifest_sha256']:
+            raise RuntimeError('Pinned dependency overlay manifest changed')
+        dependency = json.loads(manifest_path.read_text())
+        site = Path(dependency['site'])
+        if (dependency.get('complete') is not True or not site.resolve().is_relative_to((a.root/'dependencies').resolve())):
+            raise RuntimeError('Unexpected or incomplete dependency overlay')
+        for relative, wanted in dependency['files'].items():
+            installed = site/relative
+            if not installed.resolve().is_relative_to(site.resolve()) or hashlib.sha256(installed.read_bytes()).hexdigest() != wanted:
+                raise RuntimeError('Installed dependency changed: '+relative)
+        old_pythonpath = environment.get('PYTHONPATH')
+        environment['PYTHONPATH'] = str(site)+(os.pathsep+old_pythonpath if old_pythonpath else '')
+        receipt['dependency_overlay'] = {'manifest_sha256': overlay['manifest_sha256'],
+                                        'verification': dependency['verification']}
+        atomic(path, receipt)
+        print(json.dumps({'dependency_overlay': receipt['dependency_overlay']}), flush=True)
     child = subprocess.Popen(command, cwd=code_root, env=environment)
 
     def forward(signum, _frame):

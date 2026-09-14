@@ -23,6 +23,18 @@ export HF_TOKEN_PATH="$OLDROOT/private/huggingface/token"
 export TORCH_HOME="$OMRI_JOB_CACHE/torch"
 export TMPDIR="$OMRI_JOB_CACHE/tmp"
 mkdir -p "$TMPDIR"
+# CPU heads and their preflight use a small, experiment-local dependency
+# overlay.  It is installed by a separate Slurm job before the preflight and
+# is deliberately kept outside the reviewed base environment (Torch/NumPy).
+if [[ "$STAGE" != "guardian" && "$STAGE" != "dispatch" ]]; then
+  DEPENDENCY_SITE="$ROOT/dependencies/overlay/site"
+  DEPENDENCY_MANIFEST="$ROOT/dependencies/overlay/complete.json"
+  if [[ ! -f "$DEPENDENCY_MANIFEST" || ! -d "$DEPENDENCY_SITE" ]]; then
+    echo "Missing complete dependency overlay: $DEPENDENCY_MANIFEST" >&2
+    exit 2
+  fi
+  export PYTHONPATH="$DEPENDENCY_SITE${PYTHONPATH:+:$PYTHONPATH}"
+fi
 trap 'rm -rf -- "$OMRI_JOB_CACHE"' EXIT
 printf 'JobID=%s Host=%s Stage=%s Start=%s\n' "$SLURM_JOB_ID" "$(hostname)" "$STAGE" "$(date -Is)"
 printf 'Scratch snapshot (read-only):\n'
