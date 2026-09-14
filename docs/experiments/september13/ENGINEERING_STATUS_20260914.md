@@ -1,6 +1,6 @@
 # Layer screen: engineering status, September 14, 2026
 
-The new layer screen has **no completed scientific fits or scientific comparison results**. After the first worker diagnostic failed, the user authorized focused recovery. A new diagnostic localized the failure to ordinary CUDA numerical variation in one pooling bias: the no-save/load control also drifted, while deterministic CUDA passed every original check. The corrected worker audit and separately labeled production-mode timing passed static review and were submitted as job **892080 at 10:40:46 Israel**, initially pending. **No worker speedup or production admission is established yet.** This is a dated status snapshot, not a live scheduler view.
+The new layer screen has **no completed scientific fits or scientific comparison results**. The corrected worker diagnostic completed **five passing engineering cases out of 18** before job 892080 reached its Slurm time limit. A faster warmed loader was observed for some completed cases, but full coverage and reviewed resource admission are still missing. A selection-only continuation preserves those five measurements and targets the remaining 13 cases. This is a dated status snapshot, not a live scheduler view.
 
 ## What happened
 
@@ -114,6 +114,26 @@ python -m pilots.layer_screen_20260913.diagnose_resume \
   --max-seconds 600
 ```
 
-The corrected worker diagnostic uses the same pinned environment and a separate output, `manifests/profile_workers_recovery_20260914.json`, preserving all earlier failure evidence. Ops submitted job 892080 from reviewed immutable release `7702e1de15063208`, with one GPU, six CPUs and a 15-minute cap. The profiler SHA256 is `84c0b744c3d948876d66210a63063c9fe7971c23177f014dd0344705dec20030`; trainer SHA256 is `8e58cbade79bb545f6e1b2dd7796995a5d9da926f6a84ae1cb3e066e58089c17`. Its result will be recorded when available; submission is not completed validation.
+The corrected worker diagnostic used the same pinned environment and a separate output, `manifests/profile_workers_recovery_20260914.json`, preserving all earlier failure evidence. Ops submitted job 892080 from reviewed immutable release `7702e1de15063208`, with one GPU, six CPUs and a 15-minute cap. It ended **TIMEOUT at 10:55:48 Israel**, consuming 902 seconds of allocation. The last saved JSON recorded 701.84 seconds of profiling and five complete passing cases; there was no recorded mathematical/audit failure. The profiler SHA256 is `84c0b744c3d948876d66210a63063c9fe7971c23177f014dd0344705dec20030`; trainer SHA256 is `8e58cbade79bb545f6e1b2dd7796995a5d9da926f6a84ae1cb3e066e58089c17`. The terminal result SHA256 is `fee534900794bdef95f4f4c3c4ae0d4a93b21d42a8d1aab51d433f321395f3ca`.
+
+## Partial worker results and missing-case continuation
+
+These are native measurements from the five completed cases. Warm batch time is the recorded continuous wall time per 24-record batch, including waiting for the loader, transfer and optimizer work. Validation lifecycle includes its fresh workers and shutdown. No timings were recomputed locally.
+
+| Representation | Workers | Audit | Warm batch, seconds | Validation lifecycle, seconds |
+| --- | ---: | --- | ---: | ---: |
+| Final hidden + layer11 attention | 0 | Pass | 0.287754 | 0.400099 |
+| Final hidden + layer11 attention | 2 | Pass | 0.235556 | 60.156466 |
+| Final hidden + layer11 attention | 4 | Pass | 0.117599 | 14.329699 |
+| Final hidden + all12-layer union | 0 | Pass | 1.098223 | 1.533136 |
+| Final hidden + all12-layer union | 2 | Pass | 0.924913 | 38.460564 |
+
+The layer11 four-worker case has substantially lower warmed batch time, but process startup and validation-worker creation remain material costs. Their variability is visible even within this short run. These 36-record, single-shard measurements do not establish full-cohort or concurrent NFS throughput, and missing cases prevent a complete-matrix speedup claim. The overall JSON correctly remains `passed=false` because coverage is incomplete.
+
+After the job became terminal, Ops froze five completed and 13 missing cases in `ops/frozen_missing_cases_892080.json` (SHA256 `0df1e6e934cab5a6944523ecbc6dae125d485ef76aa4b29f014e841a509a45b7`). The missing list is workers 0/2/4 for each of block2, block5, block8 and union4, plus workers4 for union12. The prior five cases must not be replaced or retimed.
+
+The new `continue_workers.py` wraps the frozen profiler helpers with arm/worker selection and a per-job deadline. It verifies the parent result, all 11 core source hashes, cache/protocol identity, numerical runtime, Torch, GPU model and six-CPU allocation. Case files carry those bindings and can be reused on restart. If the missing case needs a workers0 gradient/input reference, that **audit alone** is regenerated and its cost reported, since the parent JSON does not store those tensors; earlier workers0 timing remains unchanged.
+
+Root authorized up to five per-arm continuation jobs, each capped at 20 minutes with an 840-second internal default, below the global eight-GPU concurrency limit. The existing scientific matrix, audit criteria and measurement helpers remain byte-identical. Independent review passed for wrapper SHA256 `ea332a9cbc628ceae841c343443f9d89e1f3f2eeea6c0d270fc7f525013b86a1`; Ops owns submissions. Merge acceptance requires the original five plus 13 disjoint compatible passing cases, with every original case covered exactly once and all startup/support allocations counted. Full production admission still requires the subsequent budget review; no validation-lifecycle optimization is part of this continuation.
 
 The [protocol source](../../../pilots/layer_screen_20260913/protocol.py) defines the six representations, 14 fits, fixed frozen classifier, train/validation-only cohort and checkpoint-selection policy. [STATE.md](../../../pilots/layer_screen_20260913/STATE.md) records operating constraints and the current restart boundary. Source and reports are being preserved through small local Git commits following the user's September 14 instruction; no remote Git push is authorized or claimed.
