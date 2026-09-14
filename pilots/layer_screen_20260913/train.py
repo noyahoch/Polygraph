@@ -26,6 +26,7 @@ from torch_geometric.loader import DataLoader as GraphLoader
 
 from .data import CachedDataset, atomic_torch, check_freeze
 from .models import build_model
+from .loader_runtime import build as build_graph_loader, settings as loader_settings
 from .protocol import ARMS, SEEDS, MATRIX, atomic_json, digest, file_sha256, protocol, require_slurm, implementation_identity
 
 SCHEMA_VERSION = 1
@@ -187,6 +188,12 @@ def _loader(dataset, config, *, sampler=None, batch_size=None, generator=None, i
     # training dropout RNG; the persistent training generator is checkpointed.
     if generator is None:
         generator = torch.Generator().manual_seed(0)
+    if config["arm"] != "logit":
+        # Small fixed restoration audits stay serial; full training/evaluation
+        # uses the explicit runtime setting without changing data or sampler.
+        workers = 0 if indices is not None else config.get("loader", {}).get("num_workers", 0)
+        return build_graph_loader(selected, batch_size=batch_size or config["batch_size"],
+                                  sampler=sampler, generator=generator, workers=workers)
     return loader_type(selected, batch_size=batch_size or config["batch_size"],
                        sampler=sampler, shuffle=False, num_workers=0, generator=generator)
 
@@ -293,7 +300,7 @@ def compare_scores(reference, restored, threshold=None):
     return result
 
 
-def _make_config(cache, dataset, arm, seed, device):
+def _make_config(cache, dataset, arm, seed, device, num_workers=0):
     labels = np.asarray(_value(dataset, "labels"))
     if not np.isin(labels, [0, 1]).all():
         raise ValueError("Training labels must indicate classifier errors")
@@ -320,6 +327,7 @@ def _make_config(cache, dataset, arm, seed, device):
               "versions": versions, "torch_cuda_version": torch.version.cuda,
               "device_type": device.type, "dtype": "float32", "initialization": "fresh_seeded_build_model",
               "sampler": "shuffle shard blocks then rows, every row once, independent Python Random(seed+epoch)",
+              "loader": loader_settings(num_workers),
               **_cache_identity(cache, arm)}
     if config["protocol_sha256"] != digest(protocol()):
         raise RuntimeError("Training implementation protocol differs from cache protocol")
@@ -410,11 +418,11 @@ def _request_stop(signum, frame):
     _STOP_REQUESTED = True
 
 
-def _fit(cache, run_dir, arm, seed, device):
+def _fit(cache, run_dir, arm, seed, device, num_workers=0):
     train_ds, val_ds = CachedDataset(cache, "train", arm), CachedDataset(cache, "val", arm)
     _check_labels(train_ds)
     _check_labels(val_ds)
-    config = _make_config(cache, train_ds, arm, seed, device)
+    config = _make_config(cache, train_ds, arm, seed, device, num_workers)
     config_path, latest_path = run_dir / "config.json", run_dir / "latest.pt"
     if config_path.exists():
         existing = json.loads(config_path.read_text())
@@ -580,6 +588,7 @@ def main():
     parser.add_argument("--arm", choices=tuple(ARMS), required=True)
     parser.add_argument("--seed", choices=SEEDS, type=int, required=True)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
+    parser.add_argument("--num-workers", type=int, choices=(0, 2, 4), default=0)
     args = parser.parse_args()
     if (args.arm, args.seed) not in MATRIX:
         parser.error("Run is outside the frozen 14-fit matrix")
@@ -590,7 +599,7 @@ def main():
     signal.signal(signal.SIGTERM, _request_stop)
     signal.signal(signal.SIGUSR1, _request_stop)
     with _run_lock(run_dir):
-        finished = _fit(args.cache, run_dir, args.arm, args.seed, torch.device(args.device))
+        finished = _fit(args.cache, run_dir, args.arm, args.seed, torch.device(args.device), args.num_workers)
     print(json.dumps({"arm": args.arm, "seed": args.seed, "complete": finished, "run_dir": str(run_dir)}), flush=True)
     if not finished:
         raise SystemExit(75)

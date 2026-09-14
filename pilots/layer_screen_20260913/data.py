@@ -62,6 +62,12 @@ class CachedDataset(torch.utils.data.Dataset):
         self.loaded = OrderedDict()
 
     def __len__(self): return len(self.entries)
+    def __getstate__(self):
+        # Spawn workers open/verify their own one-shard cache; never pickle a
+        # parent audit's large resident tensors into every child process.
+        state = self.__dict__.copy()
+        state["loaded"] = OrderedDict()
+        return state
     def _load(self, name):
         if name not in self.loaded:
             path = self.cache / "shards" / name

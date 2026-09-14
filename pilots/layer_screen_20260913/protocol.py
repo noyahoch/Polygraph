@@ -44,7 +44,7 @@ def cohort():
 
 def implementation_identity():
     root = Path(__file__).resolve().parents[2]
-    files = ["pilots/layer_screen_20260913/" + n + ".py" for n in ("protocol", "data", "models", "train")]
+    files = ["pilots/layer_screen_20260913/" + n + ".py" for n in ("protocol", "data", "models", "train", "loader_runtime")]
     files += ["polygraph/training/train.py", "polygraph/training/models.py", "polygraph/data/graphs.py",
               "pilots/topology_20260910/data.py", "pilots/topology_20260910/protocol.py"]
     return {name: file_sha256(root / name) for name in files}
