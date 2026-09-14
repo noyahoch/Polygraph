@@ -42,8 +42,8 @@ def main():
        'capture_job_id':'892193','capture_cap_minutes':710,'historical_diagnostic_cap_minutes':265,
        'historical_diagnostic_actual_seconds':4014,'budget_gpu_minutes':3000,'max_concurrent_fit_gpus':4,
        'postprocess_cap_breakdown_minutes':{'meta':140,'cpu_heads_gpu_reserved':15,'dev_eval_and_metrics':145},
-       'deadlines':{'base':'2026-09-14T23:00:00+03:00','predictions':'2026-09-15T04:00:00+03:00',
-                    'report_target':'2026-09-15T05:00:00+03:00','report_latest':'2026-09-15T07:00:00+03:00'},
+       'deadlines':{'base':'2026-09-15T03:30:00+03:00','predictions':'2026-09-15T07:00:00+03:00',
+                    'report_target':'2026-09-15T07:15:00+03:00','report_latest':'2026-09-15T08:00:00+03:00'},
        'deadline_policy':'Independent running CPU guardian writes complete or explicitly incomplete report; no truncated-model ranking or subset ensemble.',
        'stages':stages}
     workflow['planned_gpu_cap_minutes_including_historical_reserves']=975+sum(s['resources']['minutes'] for s in stages.values() if s['resources']['gpu'])

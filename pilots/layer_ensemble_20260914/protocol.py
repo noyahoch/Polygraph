@@ -14,8 +14,11 @@ SCOPE = "layer_ensemble_20260914_core_seed7"
 ARMS = ("block2", "block5", "block8", "block11")
 SEED = 7
 ROLES = ("base_train", "checkpoint", "meta", "dev_eval")
-DEADLINES={"base_complete_before":"2026-09-14T23:00:00+03:00",
-           "predictions_complete_before":"2026-09-15T04:00:00+03:00"}
+# Recovery window approved after the dependency preflight failure.  The data,
+# model matrix and fixed-epoch rule are unchanged; only the operational cutoff
+# is moved so a complete overnight run remains possible.
+DEADLINES={"base_complete_before":"2026-09-15T03:30:00+03:00",
+           "predictions_complete_before":"2026-09-15T07:00:00+03:00"}
 TRAINING = {"epochs":20,"minimum_epochs":20,"lr":0.002,"weight_decay":0.0001,
             "dropout":0.15,"batch_size":24,"gnn_layers":2,"width":64,
             "checkpoint_rule":"strictly greatest checkpoint-role AUROC; earliest tie",
