@@ -1,6 +1,6 @@
 # Layer screen: engineering status, September 14, 2026
 
-The new layer screen has **no completed scientific fits or scientific comparison results**. Six initial GPU checks and the warmed timing profile passed. The final worker diagnostic then **failed its serial checkpoint/resume comparison before measuring any worker speedup**. Production training is not admitted and no retry is scheduled. Ops verified an empty queue at **10:21 Israel on September 14**. This is a dated status snapshot, not a live scheduler view.
+The new layer screen has **no completed scientific fits or scientific comparison results**. After the first worker diagnostic failed, the user authorized focused recovery. A new diagnostic localized the failure to ordinary CUDA numerical variation in one pooling bias: the no-save/load control also drifted, while deterministic CUDA passed every original check. The corrected worker audit and separately labeled production-mode timing passed static review and were submitted as job **892080 at 10:40:46 Israel**, initially pending. **No worker speedup or production admission is established yet.** This is a dated status snapshot, not a live scheduler view.
 
 ## What happened
 
@@ -9,7 +9,8 @@ The new layer screen has **no completed scientific fits or scientific comparison
 - September 14: the separately reviewed timing profiler ran as Slurm job **891747**, from immutable source release **fa3df78e67cc5781**. It completed with exit **0:0** at **08:59:44 Israel**, after approximately four minutes of allocation. All six arms completed; the measured profiling phase took **51.4 seconds**. The source/data pipeline and model definitions were unchanged.
 - Ops' corrected estimate for all 14 fits at maximum 60 epochs was still above the 64 GPU-hour cap: **73.23 hours for training alone**, **96.52 hours including validation/audits before I/O, startup and capture**, and **196.5 hours with conservative allocation margins**. These are projections from diagnostic measurements, not consumed GPU-hours.
 - Root authorized one final 15-minute diagnostic for optional 2 and 4 loader workers, with one GPU and six CPUs. Job **891833**, immutable release **deb4869e24cc32e7**, ran **09:13:05–09:16:47 Israel**, using **222 seconds of allocation**. It failed before completing its first case; the diagnostic phase lasted **21.02 seconds**. No scientific fits were created and no test data was evaluated.
-- At 10:21 Israel, Ops verified an empty queue and no jobs since that failure. There is no evidence of a worker speedup and no approved production launch or further diagnostic retry.
+- At 10:21 Israel, Ops verified an empty queue and no jobs since that failure. At that point no further retry was scheduled.
+- The user then explicitly asked to fix and retry. Localization job **892060**, release **450b06809de915e8**, completed with exit **0:0** at **10:35:56 Israel**, using approximately **131 seconds of allocation**. Its measured diagnostic phase took **24.62 seconds**. It read only the same 36 development records and created disposable states, with no scientific fits or test evaluation.
 
 The completed September 10 experiment is separate: its [scientific results](../september10/RESULTS.md), [review](../september10/FINAL_SCIENTIFIC_REVIEW.md), and [35-model catalog](../../models/SEPTEMBER10_CATALOG.md) remain the current completed research evidence.
 
@@ -36,11 +37,29 @@ The first attempted case was `block11`, **workers=0**. After two disposable trai
 
 The preceding input-hash, loss and gradient comparisons returned successfully, as established by the traceback reaching the subsequent model-state assertion. Thus the resumed batch tensors/order matched exactly and losses/gradients were within those checks' tolerances. This is a control-flow inference, not a separately saved completed case. Final optimizer-state, sampler-state and RNG comparisons were not reached. The JSON contains `passed=false` and `cases={}`; **neither the 2-worker nor 4-worker configuration was tested**, and no throughput case completed.
 
-Engineering and independent review found no provable snapshot-aliasing or restore defect in the source. Snapshots clone model and optimizer tensors, and restoration covers the intended model, optimizer, order and random states. The log does not identify the failing parameter, so the exact cause remains **unknown**. CUDA reduction nondeterminism followed by AdamW sensitivity to a near-zero gradient is a plausible explanation, not an established diagnosis. The model has more than one one-element parameter; tensor shape alone cannot identify it.
+At the first read-only review, engineering and independent review found no provable snapshot-aliasing or restore defect. The original log lacked a parameter name, so that report correctly left the cause unknown. The subsequent named diagnostic below supplies new evidence; the original logs and failed source remain intact.
 
 This failure does not establish that multiprocessing or checkpoint serialization is broken. The diagnostic demands closely matching model parameters after resumed optimization; the completed September 10 study's restoration audit instead checks restored validation predictions. Its archived fits, results and immutable releases were not modified. The new opt-in worker path remains **unvalidated**. Its default is still 0 workers, using the ordinary graph loader and unchanged graph materialization. New runtime settings and implementation files are hash-bound, so existing checkpoints must retain their matching frozen source/configuration rather than silently using this changed release.
 
-No code fix, tolerance change, extra test or retry was made after the failure. Local commit `6cb00af` archives the executed source as an unsuccessful validation attempt. A later diagnosis would need the failing parameter name and model/optimizer values around save, load and replay to distinguish restoration error from numerical trajectory variation. That evidence has not been collected; another GPU run requires a separate decision. Current evidence does not justify admitting the unchanged matrix below the resource cap.
+Local commit `6cb00af` archives the first executed source as an unsuccessful validation attempt. No parameter exemption, tolerance relaxation, model change or scientific fit was introduced in the subsequent recovery. Current evidence still does not justify admitting the unchanged matrix below the resource cap.
+
+## Named localization and focused correction
+
+Job 892060 compared uninterrupted epoch2 with three continuations from the same epoch 1 model, optimizer, input order and random states: a GPU in-memory copy with no serialization, disk reload into the already-used pair (matching the failed fixture), and disk reload into a fresh pair. Every immediate starting-state comparison was exact. All inputs matched exactly and all original loss/gradient checks passed under ordinary CUDA. The **only final state leaf outside the original tolerance was `model.gate.2.bias`**:
+
+| Ordinary CUDA continuation | Absolute difference in that bias |
+| --- | ---: |
+| Same-checkpoint in-memory replay, no save/load | 0.0004491135 |
+| Disk resume into reused model/optimizer | 0.0003561489 |
+| Disk resume into fresh model/optimizer | 0.0002478436 |
+
+The maximum difference in fixed evaluation logits was **2.3841858e-7** in every continuation. The no-load control's bias gradients were on the order of 1e-9, differing across repeated CUDA execution. This evidence points to numerical repeatability, not checkpoint corruption, as the cause of the failed assertion. The source adds this scalar bias equally to all node scores before a graph-wise softmax; it cancels in exact arithmetic. Small floating-point gradient differences can nevertheless affect AdamW's parameter updates. The diagnostic does not identify an individual CUDA kernel or establish a universal numerical-error bound.
+
+With deterministic CUDA enabled, **all three continuation routes had exact final states, gradients and fixed evaluation logits**, and every original 1e-5 check passed. No CPU fallback was needed. These observations are limited to the recorded 36-row, block11, seed 7 diagnostic.
+
+The minimal correction scopes deterministic CUDA to the **parity/resume audit**, preserving all parameters and the same tolerances. The audit context restores the prior backend flags and parent RNG in `finally`. A separate freshly seeded disposable model measures **ordinary production-mode throughput**, with deterministic algorithms disabled. Both the benchmark and any future production wrapper must export `CUBLAS_WORKSPACE_CONFIG=:4096:8` before Python. This numerical runtime is recorded in new run configurations so resume cannot silently change it. The existing production saved-prediction restoration audit is unchanged; ordinary CUDA training is not claimed to have bitwise identical resumed parameter trajectories.
+
+Each worker case records its audit outcome even if it fails; independent timing can then remain informative without being treated as a passing case. All 18 audit/timing cases must pass before complete-matrix validation can be claimed, and resource admission remains a separate review. The optional worker implementation, architecture, data, graph materialization and scientific matrix are unchanged by this correction. No numerical work ran locally.
 
 ## Reproduction and evidence
 
@@ -82,5 +101,19 @@ Evidence under the remote experiment root:
 | `logs/workers_891833.out` | `1afd334017d97abd81c742abb0566cb3d2dd3796dc44f7d805b85bac5534faf3` |
 
 Raw files remain intact in the Ops archive. These checksums were read from the preserved files; no numerical analysis was run on the Mac.
+
+Localization evidence is in `manifests/resume_recovery_20260914/summary.json` (SHA256 `207ae55cb35654904cafcde5da44b98d3ea508151cec260803068d2fbf3db1a9`) and the adjacent phase directories with per-step tensor states and named comparison JSON. Frozen source `diagnose_resume.py` has SHA256 `4c057abb56e3eaccfc488d13844fc26fd266ed0425fbef989091782e1fc2b4f5`; local commit `6c10971` archives its source and recovery authorization. The full as-executed dependencies are preserved in release `450b06809de915e8`.
+
+The reviewed localization command was:
+
+```bash
+export CUBLAS_WORKSPACE_CONFIG=:4096:8
+python -m pilots.layer_screen_20260913.diagnose_resume \
+  --cache "$EXPERIMENT_ROOT/preflight_cache" \
+  --out-dir "$EXPERIMENT_ROOT/manifests/resume_recovery_20260914" \
+  --max-seconds 600
+```
+
+The corrected worker diagnostic uses the same pinned environment and a separate output, `manifests/profile_workers_recovery_20260914.json`, preserving all earlier failure evidence. Ops submitted job 892080 from reviewed immutable release `7702e1de15063208`, with one GPU, six CPUs and a 15-minute cap. The profiler SHA256 is `84c0b744c3d948876d66210a63063c9fe7971c23177f014dd0344705dec20030`; trainer SHA256 is `8e58cbade79bb545f6e1b2dd7796995a5d9da926f6a84ae1cb3e066e58089c17`. Its result will be recorded when available; submission is not completed validation.
 
 The [protocol source](../../../pilots/layer_screen_20260913/protocol.py) defines the six representations, 14 fits, fixed frozen classifier, train/validation-only cohort and checkpoint-selection policy. [STATE.md](../../../pilots/layer_screen_20260913/STATE.md) records operating constraints and the current restart boundary. Source and reports are being preserved through small local Git commits following the user's September 14 instruction; no remote Git push is authorized or claimed.
