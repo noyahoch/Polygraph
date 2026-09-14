@@ -8,6 +8,16 @@ The classifier under study is `edumunozsala/vit_base-224-in21k-ft-cifar100`, fro
 throughout. Each image induces one directed graph per ViT layer over its 197 tokens; only
 a small GNN detector is trained, to predict `y_err = 1[argmax f(x) != y]`.
 
+## September 10 experiment
+
+The [completed results and limits](docs/experiments/september10/RESULTS.md),
+[all 35 saved models and configurations](docs/models/SEPTEMBER10_CATALOG.md), and
+[reproduction guide](docs/models/README.md) provide the entry point for the fixed
+September 10 comparison. Checkpoints, final outputs and exact executed source are linked
+at immutable revisions in the private Hugging Face repository. This experiment uses
+held-out photographs from the registered corruption mixture; it does not test unseen
+corruption families. The catalog records the separate restoration-verification status.
+
 ## Layout
 
 ```
