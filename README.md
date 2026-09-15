@@ -18,6 +18,18 @@ at immutable revisions in the private Hugging Face repository. This experiment u
 held-out photographs from the registered corruption mixture; it does not test unseen
 corruption families. The catalog records the separate restoration-verification status.
 
+## Layer-stack replication
+
+The [fixed seed-17/27 replication protocol](docs/experiments/layer_ensemble_replication/PROTOCOL.md)
+specifies eight single-layer fits, unchanged data roles and a paired cross-seed
+comparison. The [Slurm operating guide](pilots/layer_ensemble_20260914/slurm/REPLICATION.md)
+keeps scientific submission behind explicit identity, deadline and resource
+authorization. This is development-data replication, not a GNN/topology-isolation
+experiment. The original seed-7 late diagnostic remains a separate historical result.
+The [implementation validation record](docs/experiments/layer_ensemble_replication/VALIDATION.md)
+documents the Slurm-only synthetic tests and their limits; it is not a new
+scientific result.
+
 ## Layout
 
 ```
