@@ -19,9 +19,11 @@ authoring, coordination and short inspections only.
 | 897260 / v1 | Compilation passed; 74 tests ran with 18 fixture errors | Aggregate artifact fixtures attempted to write inside the immutable source checkout |
 | 897260 / v2 | All 76 tests passed; compilation passed | Writable job-owned fixture root; corrected aggregate/guardian metadata checks |
 | 897317 / v1, separate corrective namespace | All 86 tests passed; compilation passed | Includes ten guardian allocation/terminal-provenance regressions |
+| 897383 / v1, subsequent concurrency follow-up | All 89 tests passed; compilation passed | Adds bounded terminal-lock waiting and three concurrent-publisher/timeout regressions |
 
-The final suite ran in **150.979 seconds**, with test/compilation receipt
-completion at **2026-09-16 00:51:46 Israel time**. Both allocations requested
+The final suite ran in **153.759 seconds**, with test/compilation receipt
+completion at **2026-09-16 01:16:02 Israel time**. The preceding 86-test suite
+ran in 150.979 seconds and completed at 00:51:46. All three allocations requested
 2 CPUs, 8000M memory and no GPUs. These observed test durations are not
 scientific-run throughput estimates.
 
@@ -30,6 +32,7 @@ Source inventories were unchanged during validation:
 - Initial namespace v1: `f366cb1cb7a7f5530be281cff9b6dd60a69f7513bf42b1119e5d4c9b39887f05`.
 - Initial namespace v2: `5cc4e7f978400c712fecde970dbdd5b2ab8b33b4c98454e88dbaf061800d7415`.
 - Corrective namespace v1: `9935b5ae0356efeae467efb612b32cff0261922466c214d57e7c1d656dea003a`.
+- Concurrency follow-up v1: `c9a6da4ff60d844b22b9c64014aba578765e36e6c9f8da03a9dde43a9f616db9`.
 
 The first failed run was retained, not overwritten or presented as a pass.
 The earlier passing v2 did **not** close the guardian audit issue; the separate
@@ -76,6 +79,14 @@ regressions cover wrong allocation and array invocation, acknowledgement
 race/timeout/lost receipt, immutable/idempotent terminal results, foreign
 terminal identity, and failed original-guardian accounting.
 
+A subsequent concurrency follow-up added a monotonic, bounded 35-second lock
+wait. Identical or conflicting concurrent publishers return the first bound
+terminal result without rewriting it or repeating cancellation; a lock timeout
+fails closed. Three additional tests exercise identical publishers, a conflicting
+attempt to upgrade incomplete to complete, and the timeout. The orchestrator
+reviewed this focused delta and reconciled its later-arriving validation into
+an additional local commit; the earlier snapshots and receipts remain intact.
+
 ## Persistent evidence
 
 Initial validation root:
@@ -96,6 +107,16 @@ unchanged-source check, and zero exit codes for unittest and compilation.
 Its logs include `logs/v1.unittest.log` and `logs/v1.compileall.log`.
 Neither namespace is a scientific experiment result or a replacement for the
 historical September 14 run.
+
+Concurrency follow-up root:
+
+`/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/verification/replication_guardian_concurrency_20260916_010507`
+
+It retains the unchanged source inventory, `v1.result.json`, `complete.json`
+and the unittest/compilation logs. Job 897383 completed with exit `0:0` at
+2026-09-16 01:18:02 Israel. The 01:19:44 scheduler reconciliation records all
+three validation jobs as completed and an empty user queue. Only completed
+scratch was cleaned; no scientific workload or prior release was changed.
 
 ### Repeating implementation tests
 

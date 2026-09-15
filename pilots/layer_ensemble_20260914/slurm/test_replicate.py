@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+from concurrent.futures import ThreadPoolExecutor
 import copy
 import datetime as dt
 import io
@@ -10,6 +11,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import threading
 import unittest
 from unittest.mock import patch
 import uuid
@@ -769,6 +771,76 @@ class ReplicationSlurmTests(unittest.TestCase):
         receipt = json.loads((ops._control(self.plan) / "manifests/terminal.json").read_text())
         self.assertEqual(receipt["reason"], "guardian_allocation_failed")
         self.assertFalse(receipt["complete"])
+
+    def assert_concurrent_terminal_publishers(self, second_decision):
+        result = self.submit()
+        terminal = ops._control(self.plan) / "manifests/terminal.json"
+        entered, release, contended = threading.Event(), threading.Event(), threading.Event()
+        first_scheduler, second_scheduler = FakeScheduler(), FakeScheduler()
+        original_cancel = first_scheduler.cancel
+        original_flock, original_atomic = ops.fcntl.flock, ops.atomic_json
+        writes = []
+
+        def blocking_cancel(ids):
+            original_cancel(ids)
+            entered.set()
+            if not release.wait(20):
+                raise RuntimeError("Synthetic publisher coordination timed out")
+
+        def observed_flock(fd, operation):
+            try:
+                return original_flock(fd, operation)
+            except BlockingIOError:
+                contended.set()
+                raise
+
+        def observed_atomic(path, value):
+            original_atomic(path, value)
+            if Path(path) == terminal:
+                writes.append(terminal.read_bytes())
+
+        first_scheduler.cancel = blocking_cancel
+        with (patch.dict(os.environ, {"SLURM_JOB_ID": result["job_ids"]["guardian"]}),
+              patch.object(ops.fcntl, "flock", side_effect=observed_flock),
+              patch.object(ops, "atomic_json", side_effect=observed_atomic),
+              ThreadPoolExecutor(max_workers=2) as pool):
+            first = pool.submit(ops._finish_guardian, self.plan,
+                                {"status": "incomplete", "reason": "immutable_failure"},
+                                result["job_ids"], first_scheduler, ops.digest(self.authorization))
+            try:
+                self.assertTrue(entered.wait(20), "First publisher did not acquire the terminal lock")
+                second = pool.submit(ops._finish_guardian, self.plan, second_decision,
+                                     result["job_ids"], second_scheduler, ops.digest(self.authorization))
+                self.assertTrue(contended.wait(20), "Second publisher did not contend for the lock")
+            finally:
+                release.set()
+            self.assertEqual(first.result(timeout=20), 2)
+            self.assertEqual(second.result(timeout=20), 2)
+        self.assertEqual(len(writes), 1)
+        self.assertEqual(terminal.read_bytes(), writes[0])
+        self.assertEqual(json.loads(writes[0])["reason"], "immutable_failure")
+        self.assertEqual(len(first_scheduler.cancellations), 1)
+        self.assertEqual(second_scheduler.cancellations, [])
+
+    def test_concurrent_identical_terminal_publishers_are_idempotent(self):
+        self.assert_concurrent_terminal_publishers({"status": "incomplete", "reason": "immutable_failure"})
+
+    def test_concurrent_conflicting_publisher_cannot_upgrade_incomplete(self):
+        self.assert_concurrent_terminal_publishers({"status": "complete", "reason": "attempted_upgrade"})
+
+    def test_terminal_publisher_lock_wait_is_bounded(self):
+        self.submit()
+        clock = [0.0]
+
+        def advance(seconds):
+            clock[0] += seconds
+
+        with patch.object(ops.fcntl, "flock", side_effect=BlockingIOError):
+            with self.assertRaisesRegex(ops.PlanError, "terminal publisher lock wait expired"):
+                with ops._terminal_lock(ops._control(self.plan) / "manifests/terminal.json",
+                                        clock=lambda: clock[0], sleep=advance):
+                    self.fail("An unavailable terminal lock must never permit publication")
+        self.assertLessEqual(clock[0], 35)
 
 
 if __name__ == "__main__":

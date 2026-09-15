@@ -244,6 +244,10 @@ bytes or repeating cancellation. An incomplete terminal receipt can never
 be upgraded to complete under the same identity (nor can completion be
 downgraded). Foreign or malformed terminal identities fail closed. Guardian
 allocation failure/unknown liveness cannot be ignored to manufacture success.
+Concurrent publishers wait at most35seconds for the first writer, then return
+its bound committed result unchanged; an unavailable lock fails closed.
+Synthetic tests exercise both identical and conflicting concurrent publishers,
+asserting exactly one terminal write and one cancellation attempt.
 
 `terminal.json` is successful only after **all required array elements** and
 singleton scientific stages complete and the guardian verifies:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import copy
 import datetime as dt
 import fcntl
@@ -986,11 +987,30 @@ def _terminal_receipt(plan, authorization_sha256, guardian_job_id):
     return receipt
 
 
+@contextmanager
+def _terminal_lock(path, *, clock=None, sleep=None):
+    clock, sleep = clock or time.monotonic, sleep or time.sleep
+    lock_path = path.with_suffix(".lock")
+    if lock_path.resolve() != lock_path:
+        raise PlanError("Terminal publisher lock is redirected")
+    until = clock() + 35
+    with lock_path.open("a") as lock:
+        while True:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                remaining = until - clock()
+                if remaining <= 0:
+                    raise PlanError("Bounded terminal publisher lock wait expired")
+                sleep(min(0.05, remaining))
+        yield
+
+
 def _finish_guardian(plan, decision, jobs, scheduler, authorization_sha256, states=None):
     actual = _guardian_job(plan, authorization_sha256)
     path = _control(plan) / "manifests/terminal.json"
-    with path.with_suffix(".lock").open("a") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    with _terminal_lock(path):
         previous = _terminal_receipt(plan, authorization_sha256, actual)
         if previous is not None:
             return 0 if previous["complete"] else 2
