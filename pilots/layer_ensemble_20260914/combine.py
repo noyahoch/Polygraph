@@ -16,8 +16,8 @@ ARMS = ("block2", "block5", "block8", "block11")
 COUNTS = {"base_train": 1600, "checkpoint": 400, "meta": 400, "dev_eval": 800}
 RECIPE = {"standardize_on": "meta", "penalty": "l2", "C": 1.0,
           "solver": "lbfgs", "max_iter": 1000, "tol": 1e-6, "class_weight": None}
-DEADLINES = {"base_complete_before": "2026-09-14T23:00:00+03:00",
-             "predictions_complete_before": "2026-09-15T04:00:00+03:00"}
+DEADLINES = {"base_complete_before": "2026-09-15T03:30:00+03:00",
+             "predictions_complete_before": "2026-09-15T07:00:00+03:00"}
 
 
 def require_slurm():
