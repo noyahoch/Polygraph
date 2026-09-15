@@ -22,18 +22,30 @@ def check_prediction_deadline():
         raise TimeoutError("Prediction cutoff reached; no incomplete role export is eligible")
 
 
+def check_execution_deadline(execution):
+    if execution["scope_id"] == SCOPE:
+        check_prediction_deadline()
+    elif time.time() >= deadline_unix("predictions_complete_before",execution):
+        raise TimeoutError("Replication prediction cutoff reached; no late export is eligible")
+
+
 def create_base_freeze(path,run_root,cache,execution_path,roles_path):
     execution,_=validate_inputs(cache,execution_path,roles_path)
+    seed=execution["seed"]
+    if execution["scope_id"] != SCOPE:
+        directory=Path(execution["replication_root"])/f"seed{seed}"
+        if Path(path).resolve()!=directory/"base_freeze.json" or Path(run_root).resolve()!=directory/"runs":
+            raise RuntimeError("Replication base freeze requires its canonical per-seed paths")
     runs={}
     for arm in ARMS:
-        directory=Path(run_root)/arm/"seed7"
+        directory=Path(run_root)/arm/f"seed{seed}"
         complete,config=verify_complete(directory,cache,execution_path,roles_path)
-        if complete["arm"]!=arm or config["seed"]!=7: raise RuntimeError("Base freeze identity mismatch")
+        if complete["arm"]!=arm or config["seed"]!=seed: raise RuntimeError("Base freeze identity mismatch")
         runs[arm]={"path":str(directory.resolve()),"completed_epochs":20,"selection_role":"checkpoint",
                    "config_sha256":file_sha256(directory/"config.json"),
                    "best_sha256":file_sha256(directory/"best.safetensors"),
                    "complete_sha256":file_sha256(directory/"complete.json")}
-    freeze={"schema_version":1,"scope_id":SCOPE,"complete":True,"seed":7,"arms":list(ARMS),
+    freeze={"schema_version":1,"scope_id":execution["scope_id"],"complete":True,"seed":seed,"arms":list(ARMS),
             "execution_sha256":file_sha256(execution_path),"roles_sha256":file_sha256(roles_path),
             "cache_manifest_sha256":execution["cache_manifest_sha256"],"runs":runs}
     Path(path).parent.mkdir(parents=True,exist_ok=True)
@@ -50,10 +62,12 @@ def validate_base_freeze(path,run_root,cache,execution_path,roles_path):
 
 def validate_heads(path,base_path,execution_path,roles_path,cache):
     path=Path(path); value=read(path)
+    execution,_=validate_inputs(cache,execution_path,roles_path)
     expected={"execution_sha256":file_sha256(execution_path),"roles_sha256":file_sha256(roles_path),
               "base_freeze_sha256":file_sha256(base_path),
               "cache_manifest_sha256":file_sha256(Path(cache)/"manifest.json")}
-    if value.get("complete") is not True or value.get("seed")!=7 or value.get("arms")!=list(ARMS):
+    if (value.get("complete") is not True or value.get("seed")!=execution["seed"]
+            or value.get("scope_id")!=execution["scope_id"] or value.get("arms")!=list(ARMS)):
         raise RuntimeError("Both stage1 heads must be frozen before dev_eval access")
     if any(value.get(k)!=v for k,v in expected.items()): raise RuntimeError("Head freeze uses other inputs")
     if set(value["files"])!={"heads/stack.json","heads/last_only.json"}:
@@ -66,19 +80,37 @@ def validate_heads(path,base_path,execution_path,roles_path,cache):
 
 
 def predict(args):
-    require_slurm(); check_prediction_deadline(); initialize()
+    require_slurm()
+    execution,_=validate_inputs(args.cache,args.execution,args.roles)
+    check_execution_deadline(execution); initialize()
     freeze=validate_base_freeze(args.base_freeze,args.run_root,args.cache,args.execution,args.roles)
+    joint_sha=None
+    if execution["scope_id"] != SCOPE:
+        replica_root=Path(execution["replication_root"])
+        directory=replica_root/f"seed{execution['seed']}"
+        if args.role not in ("meta","dev_eval") or args.out.resolve()!=directory/"predictions"/(args.role+".npz"):
+            raise RuntimeError("Replication exports require their canonical per-seed role paths")
     if args.role=="dev_eval":
         if args.heads_freeze is None: raise RuntimeError("dev_eval requires frozen heads")
         validate_heads(args.heads_freeze,args.base_freeze,args.execution,args.roles,args.cache)
+        if execution["scope_id"] != SCOPE:
+            from .replication import validate_joint_heads_freeze
+            if args.heads_freeze.resolve()!=directory/"heads_freeze.json":
+                raise RuntimeError("Replication heads path belongs to a different seed")
+            validate_joint_heads_freeze(replica_root)
+            joint_sha=file_sha256(replica_root/"joint_heads_freeze.json")
     elif args.role!="meta": raise ValueError("Only meta or dev_eval prediction is supported")
     # Dev role dataset construction happens only AFTER the head freeze gate.
     dataset=RoleDataset(args.cache,args.execution,args.roles,args.role,ARMS[0])
-    expected={"schema_version":1,"role":args.role,"arms":list(ARMS),"seed":7,"rows":len(dataset),
+    expected={"schema_version":1,"role":args.role,"arms":list(ARMS),"seed":execution["seed"],"rows":len(dataset),
               "execution_sha256":file_sha256(args.execution),"roles_sha256":file_sha256(args.roles),
               "cache_manifest_sha256":file_sha256(args.cache/"manifest.json"),
               "base_freeze_sha256":file_sha256(args.base_freeze)}
     if args.role=="dev_eval": expected["heads_freeze_sha256"]=file_sha256(args.heads_freeze)
+    if execution["scope_id"] != SCOPE:
+        expected["scope_id"]=execution["scope_id"]
+        expected["replication_manifest_sha256"]=execution["replication_manifest_sha256"]
+        if joint_sha is not None: expected["joint_heads_freeze_sha256"]=joint_sha
     sidecar=args.out.with_suffix(".json")
     if sidecar.exists():
         previous=read(sidecar)
@@ -92,14 +124,14 @@ def predict(args):
     predictions=[]; began=time.monotonic()
     with torch.inference_mode():
         for first in range(0,len(dataset),24):
-            check_prediction_deadline()
+            check_execution_deadline(execution)
             rows=dataset.entries[first:first+24]
             # Retain payload references across all four arm forwards. Adjacent
             # shards crossing this batch boundary do not force four NFS rereads.
             payloads={name:dataset._load(name) for name in dict.fromkeys(row["shard"] for row in rows)}
             columns=[]
             for arm in ARMS:
-                check_prediction_deadline()
+                check_execution_deadline(execution)
                 graphs=[]
                 for row in rows:
                     payload=payloads[row["shard"]]; offset=row["offset"]
@@ -124,7 +156,7 @@ def predict(args):
     arrays["logits"]=logits
     if any(len(v)!=len(dataset) for v in arrays.values()): raise RuntimeError("Prediction metadata length mismatch")
     _atomic_npz(args.out,arrays)
-    check_prediction_deadline()
+    check_execution_deadline(execution)
     expected.update(npz_sha256=file_sha256(args.out),elapsed_seconds=time.monotonic()-began,
                     numerical_runtime=runtime(),completed_unix=time.time(),job_id=os.environ["SLURM_JOB_ID"])
     atomic_json(sidecar,expected)

@@ -7,6 +7,7 @@ import fcntl
 import json
 import os
 from pathlib import Path
+import time
 
 import numpy as np
 
@@ -58,7 +59,7 @@ def sigmoid(values):
     return result
 
 
-def paired_bootstrap(labels, stack, last_only, image_ids):
+def paired_bootstrap(labels, stack, last_only, image_ids, seed=7):
     """Sample photographs once per draw; their nine variants share the weight."""
     groups, membership = np.unique(image_ids, return_inverse=True)
     counts = np.bincount(membership)
@@ -89,7 +90,7 @@ def paired_bootstrap(labels, stack, last_only, image_ids):
             "source_photographs": len(groups), "views_per_source": 9, "percentile_method": "linear",
             "undefined_draw_indices": undefined, "undefined_draw_policy": "no redraw; withhold interval if any draw is undefined",
             "bootstrap_values": samples,
-            "scope": "Image-sampling uncertainty conditional on four fitted seed7 base models and two fitted meta heads; not seed stability."}, groups, multiplicities
+            "scope": f"Image-sampling uncertainty conditional on four fitted seed{seed} base models and two fitted meta heads; not seed stability."}, groups, multiplicities
 
 
 def atomic_npz(path, arrays):
@@ -104,6 +105,7 @@ def atomic_npz(path, arrays):
 
 def write_report(path, result):
     primary = result["primary"]
+    seed = result["seed"]
     interval = primary["interval_95"]
     ci = "לא מוצג עקב דגימה ללא שתי המחלקות" if interval is None else f"[{interval[0]:.4f}, {interval[1]:.4f}]"
     rows = [("שילוב נלמד של ארבע שכבות", result["metrics"]["learned_stack"]["auroc"]),
@@ -112,7 +114,7 @@ def write_report(path, result):
     rows += [(f"שכבה {layer} לבדה, ציון גולמי — תיאורי", result["metrics"]["raw_" + arm]["auroc"])
              for arm, layer in zip(ARMS, (3, 6, 9, 12))]
     text = "# סבב לילה: שילוב נלמד לזיהוי טעויות ViT\n\n"
-    text += f"כל ארבעת גלאי השכבות השלימו 20 epochs בזרע 7. השילוב ובקרת השכבה האחרונה נלמדו בנפרד על אותן 400 תמונות מטה. ההערכה כוללת 800 תמונות מקור ו־7,200 גרסאות.\n\n"
+    text += f"כל ארבעת גלאי השכבות השלימו 20 epochs בזרע {seed}. השילוב ובקרת השכבה האחרונה נלמדו בנפרד על אותן 400 תמונות מטה. ההערכה כוללת 800 תמונות מקור ו־7,200 גרסאות.\n\n"
     text += f"**הפרש AUROC ראשי, שילוב פחות בקרת השכבה האחרונה: {primary['estimate']:.4f}.**\n\n"
     text += f"רווח bootstrap של 95%, מותנה במודלים שאומנו: `{ci}`.\n\n"
     text += "| שיטה | AUROC |\n|---|---:|\n"
@@ -121,6 +123,8 @@ def write_report(path, result):
     text += "זהו סבב חקירתי בזרע אחד ובתקציב של 20 epochs, ללא הבטחה להתכנסות מלאה. השכבות משתמשות באותו מסווג קפוא ובאותו hidden state סופי. לא נעשה שימוש בקבוצת המבחן המקורית. נתוני ההערכה באים מבנצ׳מרק שכבר שימש את הפרויקט, ולכן אין כאן אימות עצמאי לחלוטין.\n\n"
     text += "השילוב משתמש בארבעה גלאים מול גלאי אחד. יתרון אפשרי יכול לנבוע ממידע משלים וגם ממיצוע/שונות של מספר מודלים; אין זו הוכחה להכרחיות GNN או טופולוגיה. תוצאה שלילית או רווח רחב מדווחים באותו אופן. מודלי איחוד שכבות וזרעים נוספים אינם חלק מהסבב.\n\n"
     text += "המקדם של בקרת השכבה האחרונה נשמר כפי שנלמד, גם אם הוא שלילי; אין הנחה שכיול לוגיסטי בהכרח שומר על דירוג הציון הגולמי. לא שונו משקלי השילוב לאחר צפייה בהערכה.\n"
+    if result["scope_id"] != SCOPE:
+        text += "\nזהו דוח של זרע יחיד בשכפול הקבוע של זרעים 17 ו־27. ההשוואה הראשית בין הזרעים מופיעה בדוח המשותף; זרע 7 נשאר אבחון מאוחר ותיאורי בלבד. אין כאן קבוצת מבחן חדשה.\n"
     temporary = Path(path).with_name(Path(path).name + ".tmp." + str(os.getpid()))
     temporary.write_text(text, encoding="utf-8")
     temporary.replace(path)
@@ -133,6 +137,13 @@ def evaluate(root, predictions, heads, out):
     with (out / ".evaluate.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         models, frozen, bindings = validate_heads(root, heads)
+        execution = read(root / "execution.json")
+        replication_manifest = None
+        if execution["scope_id"] != SCOPE:
+            from .replication import check_deadline, validate_manifest
+            if out != root / "evaluation":
+                raise RuntimeError("Replication evaluation requires its canonical per-seed directory")
+            replication_manifest = validate_manifest(execution["replication_root"])
         data, sidecar, _ = load_predictions(root, predictions, "dev_eval")
         freeze_sha = sha256(root / "heads_freeze.json")
         if sidecar.get("heads_freeze_sha256") != freeze_sha:
@@ -140,45 +151,66 @@ def evaluate(root, predictions, heads, out):
         inputs = {**bindings, "heads_freeze_sha256": freeze_sha,
                   "dev_prediction_npz_sha256": sha256(predictions),
                   "dev_prediction_sidecar_sha256": sha256(Path(predictions).with_suffix(".json")),
-                  "implementation": code_identity()}
+                  "implementation": code_identity(execution)}
+        if replication_manifest is not None:
+            inputs["replication_manifest_sha256"] = execution["replication_manifest_sha256"]
+            inputs["joint_heads_freeze_sha256"] = sidecar["joint_heads_freeze_sha256"]
         if (out / "complete.json").exists():
             complete = read(out / "complete.json")
             if complete.get("inputs") != inputs:
                 raise RuntimeError("Completed evaluation cannot be replaced by a different comparison")
+            required = {"report.json", "REPORT.md", "bootstrap.json", "bootstrap_source_counts.npz", "scores.npz"}
+            if complete.get("complete") is not True or set(complete.get("files", {})) != required:
+                raise RuntimeError("Evaluation completion inventory is incomplete")
+            if replication_manifest is not None:
+                from .replication import timestamp
+                if (complete.get("seed") != execution["seed"] or complete.get("scope_id") != execution["scope_id"]
+                        or not replication_manifest["created_unix"] < complete.get("completed_unix", 0)
+                        < timestamp(replication_manifest["deadlines"]["evaluation_complete_before"])):
+                    raise RuntimeError("Completed replication missed its fixed identity or cutoff")
             for relative, wanted in complete["files"].items():
                 if sha256(inside(out, out / relative)) != wanted:
                     raise RuntimeError("Completed evaluation artifact changed")
             return read(out / "report.json")
+        if replication_manifest is not None:
+            check_deadline(replication_manifest, "evaluation_complete_before")
         scores = {"learned_stack": head_scores(models["stack"], data["logits"]),
                   "learned_last_only": head_scores(models["last_only"], data["logits"]),
                   "fixed_probability_mean": sigmoid(data["logits"]).mean(axis=1)}
         scores.update({"raw_" + arm: data["logits"][:, index] for index, arm in enumerate(ARMS)})
         metrics = {name: {"auroc": WeightedAUC(data["y"], value)()} for name, value in scores.items()}
         primary, image_ids, multiplicities = paired_bootstrap(data["y"], scores["learned_stack"],
-                                                             scores["learned_last_only"], data["image_id"])
+                                                             scores["learned_last_only"], data["image_id"],
+                                                             seed=execution["seed"])
         samples = primary.pop("bootstrap_values")
         atomic_json(out / "bootstrap.json", {**primary, "bootstrap_values": samples})
         atomic_npz(out / "bootstrap_source_counts.npz", {"image_id": image_ids, "multiplicity": multiplicities})
         atomic_npz(out / "scores.npz", {**{name: data[name] for name in data if name != "logits"}, **scores})
-        result = {"schema_version": 1, "scope_id": SCOPE, "status": "complete", "complete": True,
-                  "seed": 7, "base_models": list(ARMS), "base_epochs": 20,
+        result = {"schema_version": 1, "scope_id": execution["scope_id"], "status": "complete", "complete": True,
+                  "seed": execution["seed"], "base_models": list(ARMS), "base_epochs": 20,
                   "records": 7200, "source_photographs": 800, "positive_class": "frozen ViT error",
                   "errors": int(data["y"].sum()), "correct": int((data["y"] == 0).sum()),
                   "primary": primary, "metrics": metrics,
                   "last_only_learned_coefficient": models["last_only"]["model"]["coef"][0],
                   "roles": {"base_train": 1600, "checkpoint": 400, "meta": 400, "dev_eval": 800},
                   "inputs": inputs, "test_evaluated": False, "exploratory": True,
-                  "scope_of_uncertainty": "source-image sampling conditional on seed7; no training-seed uncertainty",
+                  "scope_of_uncertainty": f"source-image sampling conditional on seed{execution['seed']}; no training-seed uncertainty",
                   "interpretation_limits": ["20-epoch budget, not guaranteed architecture convergence",
                       "four detector models versus one; information and generic ensemble benefits are not isolated",
                       "all methods use GNN features/models; no proof of GNN/topology necessity",
                       "existing benchmark development split; original held-out800photos remain closed",
                       "secondary fixed mean and raw single-layer methods descriptive, without post-hoc selection"],
                   "completed_utc": dt.datetime.now(dt.timezone.utc).isoformat(), "job_id": os.environ["SLURM_JOB_ID"]}
+        if replication_manifest is not None:
+            check_deadline(replication_manifest, "evaluation_complete_before")
         atomic_json(out / "report.json", result)
         write_report(out / "REPORT.md", result)
         files = {name: sha256(out / name) for name in ("report.json", "REPORT.md", "bootstrap.json", "bootstrap_source_counts.npz", "scores.npz")}
-        atomic_json(out / "complete.json", {"complete": True, "scope_id": SCOPE, "inputs": inputs, "files": files})
+        complete = {"complete": True, "scope_id": execution["scope_id"], "inputs": inputs, "files": files}
+        if replication_manifest is not None:
+            check_deadline(replication_manifest, "evaluation_complete_before")
+            complete.update(seed=execution["seed"], completed_unix=time.time())
+        atomic_json(out / "complete.json", complete)
         return result
 
 
@@ -192,7 +224,7 @@ def main():
         result = evaluate(args.root, args.predictions, args.heads, args.out)
     except BaseException as error:
         args.out.mkdir(parents=True, exist_ok=True)
-        atomic_json(args.out / "failure.json", {"complete": False, "scope_id": SCOPE,
+        atomic_json(args.out / "failure.json", {"complete": False, "root": str(args.root),
                     "error": repr(error), "job_id": os.environ.get("SLURM_JOB_ID"),
                     "policy": "No subset ensemble, missing-fit substitution or outcome-based repair"})
         raise

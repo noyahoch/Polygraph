@@ -61,9 +61,12 @@ def inside(root, path):
     return path
 
 
-def code_identity():
+def code_identity(execution=None):
     directory = Path(__file__).resolve().parent
-    return {name: sha256(directory / name) for name in ("combine.py", "evaluate.py")}
+    names = ["combine.py", "evaluate.py"]
+    if execution is not None and execution["scope_id"] != SCOPE:
+        names += ["protocol.py", "replication.py"]
+    return {name: sha256(directory / name) for name in names}
 
 
 def context(root):
@@ -72,15 +75,24 @@ def context(root):
     root = Path(root).resolve()
     execution, roles, frozen = (read(root / name) for name in
                                 ("execution.json", "role_map.json", "base_freeze.json"))
-    if any(value.get("scope_id") != SCOPE for value in (execution, roles, frozen)):
+    if execution.get("scope_id") == SCOPE:
+        if execution.get("seed") != 7 or execution.get("matrix") != [[arm, 7] for arm in ARMS]:
+            raise RuntimeError("Only the four predeclared single-layer fits at seed7 are allowed")
+        deadlines = DEADLINES
+    else:
+        from .replication import SCOPE as REPLICATION_SCOPE, validate_seed_execution
+        if execution.get("scope_id") != REPLICATION_SCOPE:
+            raise RuntimeError("Unknown experiment scope")
+        validate_seed_execution(root / "execution.json", root / "role_map.json")
+        deadlines = execution["deadlines"]
+    seed, scope = execution["seed"], execution["scope_id"]
+    if roles.get("scope_id") != SCOPE or frozen.get("scope_id") != scope:
         raise RuntimeError("Unexpected experiment scope")
-    if execution.get("seed") != 7 or execution.get("matrix") != [[arm, 7] for arm in ARMS]:
-        raise RuntimeError("Only the four predeclared single-layer fits at seed7 are allowed")
     if execution["training"].get("epochs") != 20 or execution["training"].get("minimum_epochs") != 20:
         raise RuntimeError("All four base models require exactly20 epochs")
     if execution.get("head_recipe") != RECIPE:
         raise RuntimeError("The fixed meta-learning recipe changed")
-    if execution.get("deadlines") != DEADLINES:
+    if execution.get("deadlines") != deadlines:
         raise RuntimeError("The frozen base/prediction cutoffs changed")
     if execution.get("test_evaluated") is not False or roles.get("original_test_access") is not False:
         raise RuntimeError("Original held-out test must remain closed")
@@ -104,7 +116,7 @@ def context(root):
                 "cache_manifest_sha256": execution["cache_manifest_sha256"]}
     if execution["roles_sha256"] != bindings["roles_sha256"]:
         raise RuntimeError("Execution is not bound to the current role map")
-    if frozen.get("complete") is not True or frozen.get("seed") != 7 or frozen.get("arms") != list(ARMS):
+    if frozen.get("complete") is not True or frozen.get("seed") != seed or frozen.get("arms") != list(ARMS):
         raise RuntimeError("All four base models must be frozen before fitting either head")
     for name in ("execution_sha256", "roles_sha256", "cache_manifest_sha256"):
         if frozen.get(name) != bindings[name]:
@@ -124,10 +136,15 @@ def context(root):
         complete, config = read(directory / "complete.json"), read(directory / "config.json")
         if complete.get("complete") is not True or complete.get("completed_epochs") != 20:
             raise RuntimeError("Base fit did not complete all20 epochs")
-        if not 0 < complete.get("completed_unix", 0) < dt.datetime.fromisoformat(DEADLINES["base_complete_before"]).timestamp():
+        if not 0 < complete.get("completed_unix", 0) < dt.datetime.fromisoformat(deadlines["base_complete_before"]).timestamp():
             raise RuntimeError("Base fit did not complete before the frozen cutoff")
-        if complete.get("arm") != arm or complete.get("seed") != 7 or config.get("arm") != arm or config.get("seed") != 7:
+        if complete.get("arm") != arm or complete.get("seed") != seed or config.get("arm") != arm or config.get("seed") != seed:
             raise RuntimeError("Base run identity differs from frozen feature order")
+        if complete.get("scope_id") != scope or config.get("scope_id") != scope:
+            raise RuntimeError("Base run belongs to a different protocol")
+        for name in ("execution_sha256", "roles_sha256", "cache_manifest_sha256"):
+            if config.get(name) != bindings[name]:
+                raise RuntimeError("Base configuration provenance changed: " + name)
     return execution, roles, bindings
 
 
@@ -139,12 +156,24 @@ def load_predictions(root, path, role):
     execution, roles, bindings = context(root)
     path = inside(root, path)
     sidecar = read(path.with_suffix(".json"))
-    if sidecar.get("schema_version") != 1 or sidecar.get("role") != role or sidecar.get("arms") != list(ARMS) or sidecar.get("seed") != 7:
+    if sidecar.get("schema_version") != 1 or sidecar.get("role") != role or sidecar.get("arms") != list(ARMS) or sidecar.get("seed") != execution["seed"]:
         raise RuntimeError("Prediction role/feature-order identity mismatch")
     if sidecar.get("rows") != COUNTS[role] * 9 or sidecar.get("npz_sha256") != sha256(path):
         raise RuntimeError("Prediction size/checksum mismatch")
-    if not 0 < sidecar.get("completed_unix", 0) < dt.datetime.fromisoformat(DEADLINES["predictions_complete_before"]).timestamp():
+    if execution["scope_id"] != SCOPE and (
+            sidecar.get("scope_id") != execution["scope_id"]
+            or sidecar.get("replication_manifest_sha256") != execution["replication_manifest_sha256"]):
+        raise RuntimeError("Prediction belongs to a different replication protocol")
+    deadlines = DEADLINES if execution["scope_id"] == SCOPE else execution["deadlines"]
+    if not 0 < sidecar.get("completed_unix", 0) < dt.datetime.fromisoformat(deadlines["predictions_complete_before"]).timestamp():
         raise RuntimeError("Predictions did not complete before the frozen cutoff")
+    if role == "dev_eval" and execution["scope_id"] != SCOPE:
+        from .replication import validate_joint_heads_freeze
+        joint = validate_joint_heads_freeze(execution["replication_root"])
+        joint_path = Path(execution["replication_root"]) / "joint_heads_freeze.json"
+        if (sidecar.get("joint_heads_freeze_sha256") != sha256(joint_path)
+                or sidecar["completed_unix"] <= joint["frozen_unix"]):
+            raise RuntimeError("Development predictions require the prior joint seed freeze")
     for name, value in bindings.items():
         if sidecar.get(name) != value:
             raise RuntimeError("Prediction provenance mismatch: " + name)
@@ -191,9 +220,9 @@ def validate_heads(root, heads=None):
     root = Path(root).resolve()
     execution, roles, bindings = context(root)
     frozen = read(root / "heads_freeze.json")
-    if frozen.get("complete") is not True or frozen.get("scope_id") != SCOPE or frozen.get("seed") != 7 or frozen.get("arms") != list(ARMS):
+    if frozen.get("complete") is not True or frozen.get("scope_id") != execution["scope_id"] or frozen.get("seed") != execution["seed"] or frozen.get("arms") != list(ARMS):
         raise RuntimeError("Both heads must be frozen before final development evaluation")
-    if frozen.get("recipe") != RECIPE or frozen.get("implementation") != code_identity():
+    if frozen.get("recipe") != RECIPE or frozen.get("implementation") != code_identity(execution):
         raise RuntimeError("Head recipe/evaluation implementation changed after freeze")
     for name, value in bindings.items():
         if frozen.get(name) != value:
@@ -214,6 +243,10 @@ def validate_heads(root, heads=None):
             raise RuntimeError("Head feature order/training role changed")
         if head.get("converged") is not True or head["model"].get("classes") != [0, 1]:
             raise RuntimeError("A meta head did not converge or has the wrong class direction")
+        if head.get("scope_id") != execution["scope_id"] or head.get("seed") != execution["seed"]:
+            raise RuntimeError("A head belongs to a different training seed or protocol")
+        if head.get("recipe") != RECIPE or head.get("serialization_audit", {}).get("passed") is not True:
+            raise RuntimeError("A head lacks the frozen recipe or passing serialization audit")
         result[name] = head
     return result, frozen, bindings
 
@@ -232,6 +265,7 @@ def fit_heads(root, predictions, out):
     with (out / ".fit.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         data, sidecar, bindings = load_predictions(root, predictions, "meta")
+        execution = read(root / "execution.json")
         if (root / "heads_freeze.json").exists():
             _, frozen, _ = validate_heads(root, out)
             if frozen.get("meta_prediction_npz_sha256") != sha256(predictions) or frozen.get("meta_prediction_sidecar_sha256") != sha256(Path(predictions).with_suffix(".json")):
@@ -239,6 +273,13 @@ def fit_heads(root, predictions, out):
             return frozen
         if (root / "predictions/dev_eval.npz").exists() or (root / "evaluation/report.json").exists():
             raise RuntimeError("Refusing to fit heads after final development outcomes exist")
+        if execution["scope_id"] != SCOPE:
+            from .replication import SEEDS, check_deadline, validate_manifest
+            replica_root = Path(execution["replication_root"])
+            check_deadline(validate_manifest(replica_root), "predictions_complete_before")
+            if (replica_root / "joint_heads_freeze.json").exists() or any(
+                    (replica_root / f"seed{s}" / "predictions/dev_eval.npz").exists() for s in SEEDS):
+                raise RuntimeError("No head fitting after either replication's dev evaluation")
         for name, columns in (("stack", [0, 1, 2, 3]), ("last_only", [3])):
             values = data["logits"][:, columns].astype(np.float64)
             scaler = StandardScaler()
@@ -252,7 +293,7 @@ def fit_heads(root, predictions, out):
             converged = not any(issubclass(item.category, ConvergenceWarning) for item in captured)
             if int(np.max(model.n_iter_)) >= 1000:
                 converged = False
-            head = {"schema_version": 1, "name": name, "scope_id": SCOPE, "seed": 7,
+            head = {"schema_version": 1, "name": name, "scope_id": execution["scope_id"], "seed": execution["seed"],
                     "training_role": "meta", "rows": 3600, "source_photos": 400,
                     "columns": columns, "features": [ARMS[column] for column in columns],
                     "recipe": RECIPE, "converged": converged, "warnings": warning_rows,
@@ -268,12 +309,14 @@ def fit_heads(root, predictions, out):
             atomic_json(out / (name + ".json"), head)
             if not converged or not head["serialization_audit"]["passed"]:
                 raise RuntimeError("Meta fit/serialization failed; no changed recipe or tolerance retry: " + name)
-        frozen = {"schema_version": 1, "scope_id": SCOPE, "complete": True, "seed": 7,
+        if execution["scope_id"] != SCOPE:
+            check_deadline(validate_manifest(replica_root), "predictions_complete_before")
+        frozen = {"schema_version": 1, "scope_id": execution["scope_id"], "complete": True, "seed": execution["seed"],
                   "arms": list(ARMS), "recipe": RECIPE, **bindings,
                   "files": {str(path.relative_to(root)): sha256(path) for path in (out / "stack.json", out / "last_only.json")},
                   "meta_prediction_npz_sha256": sha256(predictions),
                   "meta_prediction_sidecar_sha256": sha256(Path(predictions).with_suffix(".json")),
-                  "implementation": code_identity(), "versions": {name: importlib.metadata.version(name) for name in ("numpy", "scipy", "scikit-learn")},
+                  "implementation": code_identity(execution), "versions": {name: importlib.metadata.version(name) for name in ("numpy", "scipy", "scikit-learn")},
                   "frozen_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
                   "job_id": os.environ["SLURM_JOB_ID"], "dev_eval_used_for_fit": False, "original_test_access": False}
         atomic_json(root / "heads_freeze.json", frozen)

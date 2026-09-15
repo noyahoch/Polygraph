@@ -127,6 +127,8 @@ def main():
     start=time.monotonic()
     try:
         execution,roles=validate_inputs(args.cache,args.execution,args.roles)
+        seed=execution["seed"]
+        result.update(scope_id=execution["scope_id"],seed=seed)
         role_sets=[set(roles["roles"][r]["photo_ids"]) for r in roles["roles"]]
         assert sum(map(len,role_sets))==len(set.union(*role_sets))==3200
         result["cpu_checks"]=cpu_checks(); atomic_json(args.out,result)
@@ -139,23 +141,23 @@ def main():
             result["two_loader_probes"]=list(pool.map(io_probe,specs))
         result["two_loader_total_wall_seconds"]=time.monotonic()-io_start
         atomic_json(args.out,result)
-        initialize(); device=torch.device("cuda")
+        initialize(seed); device=torch.device("cuda")
         result["gpu"]=torch.cuda.get_device_name(); result["torch"]=torch.__version__
         result["ordinary_runtime"]=runtime()
         reference=None
         with tempfile.TemporaryDirectory(prefix="smoke_",dir=args.out.parent) as temporary:
             for arm in ARMS:
                 ds=RoleDataset(args.cache,args.execution,args.roles,"base_train",arm)
-                config=make_config(args.cache,args.execution,args.roles,ds,arm,7)
-                sampler=BlockShuffleSampler(ds,7)
-                first=list(sampler); state=sampler.state_dict(); other=BlockShuffleSampler(ds,7); other.load_state_dict(state)
+                config=make_config(args.cache,args.execution,args.roles,ds,arm,seed)
+                sampler=BlockShuffleSampler(ds,seed)
+                first=list(sampler); state=sampler.state_dict(); other=BlockShuffleSampler(ds,seed); other.load_state_dict(state)
                 assert sorted(first)==list(range(len(ds))) and list(sampler)==list(other)
-                batch=next(iter(_loader(ds,config,generator=torch.Generator().manual_seed(1000010))))
+                batch=next(iter(_loader(ds,config,generator=torch.Generator().manual_seed(seed+1000003))))
                 signature=(batch.record_id.clone(),batch.y.clone(),batch.x[:,-768:].clone(),batch.output_logits.clone())
                 if reference is None: reference=signature
                 else: assert all(torch.equal(a,b) for a,b in zip(reference,signature))
                 assert batch.x.shape==(24*197,784) and batch.edge_attr.shape[1]==12
-                _seed(7); model=build_model(arm).to(device)
+                _seed(seed); model=build_model(arm).to(device)
                 optimizer=torch.optim.AdamW(model.parameters(),lr=.002,weight_decay=.0001)
                 torch.cuda.reset_peak_memory_stats(); began=time.monotonic()
                 # Audit uses deterministic CUDA only, with the original1e-5

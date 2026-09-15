@@ -31,8 +31,8 @@ def stop_handler(signum, frame):
     STOP=True
 
 
-def check_base_deadline():
-    if time.time()>=deadline_unix("base_complete_before"):
+def check_base_deadline(execution=None):
+    if time.time()>=deadline_unix("base_complete_before",execution):
         raise TimeoutError("Base completion cutoff reached; no partial fit comparison")
 
 
@@ -54,13 +54,13 @@ def runtime():
 
 def make_config(cache,execution_path,roles_path,dataset,arm,seed):
     execution,_=validate_inputs(cache,execution_path,roles_path)
-    if dataset.role!="base_train" or arm not in ARMS or seed!=SEED:
+    if dataset.role!="base_train" or arm not in ARMS or seed!=execution["seed"]:
         raise RuntimeError("Only fresh authorized base-role stage1 fits are allowed")
     labels=dataset.labels(); positive=int((labels==1).sum()); negative=int((labels==0).sum())
     if not positive or not negative or positive+negative!=len(labels):
         raise RuntimeError("Base training requires both binary outcomes; no resampling allowed")
     implementation=implementation_identity()
-    return {"schema_version":1,"scope_id":SCOPE,"arm":arm,"seed":seed,
+    return {"schema_version":1,"scope_id":execution["scope_id"],"arm":arm,"seed":seed,
             "training":TRAINING,"batch_size":24,"pos_weight":negative/positive,
             "preprocessing":{"kind":"none"},"selection_role":"checkpoint",
             "training_role":"base_train","fresh_initialization":True,
@@ -75,11 +75,11 @@ def make_config(cache,execution_path,roles_path,dataset,arm,seed):
 
 
 @torch.no_grad()
-def collect_checkpoint(model,dataset,config,device,indices=None,batch_size=None):
+def collect_checkpoint(model,dataset,config,device,indices=None,batch_size=None,execution=None):
     if dataset.role!="checkpoint": raise RuntimeError("Training evaluation is checkpoint-role only")
     model.eval(); values=[]
     for batch in _loader(dataset,config,indices=indices,batch_size=batch_size):
-        check_base_deadline()
+        check_base_deadline(execution)
         values.append(_forward(model,batch,config["arm"],device)[0].detach().cpu().numpy())
     result=np.concatenate(values).astype(np.float32)
     _finite(result,"checkpoint scores")
@@ -92,9 +92,9 @@ def verify_complete(directory,cache,execution_path,roles_path):
     complete=read(directory/"complete.json"); config=read(directory/"config.json")
     if complete.get("complete") is not True or complete.get("completed_epochs")!=20 or complete.get("selection_role")!="checkpoint":
         raise RuntimeError("Only complete fixed20 checkpoint-selected fits are eligible")
-    if not 0<complete.get("completed_unix",0)<deadline_unix("base_complete_before"):
+    if not 0<complete.get("completed_unix",0)<deadline_unix("base_complete_before",execution):
         raise RuntimeError("Base fit did not complete before the frozen cutoff")
-    if config.get("scope_id")!=SCOPE or config.get("arm") not in ARMS or config.get("seed")!=SEED:
+    if config.get("scope_id")!=execution["scope_id"] or config.get("arm") not in ARMS or config.get("seed")!=execution["seed"]:
         raise RuntimeError("Foreign fit identity")
     for key,value in (("execution_sha256",file_sha256(execution_path)),("roles_sha256",file_sha256(roles_path)),
                       ("cache_manifest_sha256",execution["cache_manifest_sha256"]),
@@ -110,6 +110,12 @@ def verify_complete(directory,cache,execution_path,roles_path):
     history=read(directory/"history.json")
     if [r["epoch"] for r in history]!=list(range(1,21)):
         raise RuntimeError("Complete history must contain exactly epochs1..20")
+    scores=np.asarray([r["checkpoint_auroc"] for r in history],dtype=np.float64)
+    if not np.isfinite(scores).all() or ((scores<0)|(scores>1)).any():
+        raise RuntimeError("Checkpoint selection requires finite AUROC values")
+    selected=int(np.argmax(scores))+1
+    if complete.get("best_epoch")!=selected or read(directory/"checkpoint.json").get("best_epoch")!=selected:
+        raise RuntimeError("Selected checkpoint must be the earliest greatest checkpoint-role AUROC")
     return complete,config
 
 
@@ -123,7 +129,15 @@ def load_run(directory,cache,execution_path,roles_path,device):
 
 
 def fit(args):
-    require_slurm(); check_base_deadline(); initialize(args.seed)
+    require_slurm()
+    execution,_=validate_inputs(args.cache,args.execution,args.roles)
+    if args.seed != execution["seed"]:
+        raise RuntimeError("Training seed does not match the frozen execution")
+    if execution["scope_id"] != SCOPE:
+        expected_root=Path(execution["replication_root"])/f"seed{execution['seed']}"/"runs"
+        if args.run_root.resolve()!=expected_root:
+            raise RuntimeError("Replication training requires its own canonical seed run directory")
+    check_base_deadline(execution); initialize(args.seed)
     device=torch.device("cuda")
     train=RoleDataset(args.cache,args.execution,args.roles,"base_train",args.arm)
     checkpoint=RoleDataset(args.cache,args.execution,args.roles,"checkpoint",args.arm)
@@ -155,7 +169,7 @@ def fit(args):
         attempts.append(attempt); atomic_json(directory/"attempts.json",attempts)
         if latest.exists():
             state=torch.load(latest,map_location="cpu",weights_only=False)
-            if state.get("scope_id")!=SCOPE or state.get("config_sha256")!=file_sha256(path):
+            if state.get("scope_id")!=execution["scope_id"] or state.get("config_sha256")!=file_sha256(path):
                 raise RuntimeError("Foreign resume state")
             model.load_state_dict(state["model"],strict=True); optimizer.load_state_dict(state["optimizer"])
             sampler.load_state_dict(state["sampler"]); loader_rng.set_state(state["loader_rng"])
@@ -164,9 +178,9 @@ def fit(args):
                 raise RuntimeError("Resume completed epoch/sampler/history disagree")
             best_state,best_scores,best_auc,best_epoch=(state[k] for k in ("best_state","best_scores","best_auc","best_epoch"))
             if state["audit"]["indices"]!=audit_ids: raise RuntimeError("Resume audit membership changed")
-            restored=collect_checkpoint(model,checkpoint,config,device,indices=audit_ids)
+            restored=collect_checkpoint(model,checkpoint,config,device,indices=audit_ids,execution=execution)
             audit=compare_scores(state["audit"]["scores"],restored)
-            audit["alternative_partition"]=compare_scores(restored,collect_checkpoint(model,checkpoint,config,device,indices=audit_ids,batch_size=12))
+            audit["alternative_partition"]=compare_scores(restored,collect_checkpoint(model,checkpoint,config,device,indices=audit_ids,batch_size=12,execution=execution))
             atomic_json(directory/"resume_audit.json",audit)
             _restore_rng(state["rng"])
             _atomic_safetensors(directory/"best.safetensors",best_state)
@@ -177,7 +191,7 @@ def fit(args):
             for epoch in range(start_epoch,20):
                 epoch_start=time.monotonic(); model.train(); total_loss=0.0; count=0
                 for batch in loader:
-                    check_base_deadline()
+                    check_base_deadline(execution)
                     optimizer.zero_grad(set_to_none=True)
                     score,y=_forward(model,batch,args.arm,device)
                     loss=criterion(score,y); _finite(loss,"training loss"); loss.backward()
@@ -185,7 +199,7 @@ def fit(args):
                         if p.grad is not None: _finite(p.grad,"gradient "+name)
                     optimizer.step(); total_loss+=float(loss.detach())*len(y); count+=len(y)
                 if count!=len(train): raise RuntimeError("Training epoch did not visit every base record once")
-                scores=collect_checkpoint(model,checkpoint,config,device)
+                scores=collect_checkpoint(model,checkpoint,config,device,execution=execution)
                 auc=auroc(checkpoint.labels(),scores)
                 if auc>best_auc:
                     best_auc,best_epoch,best_state,best_scores=auc,epoch+1,_cpu_state(model),scores.copy()
@@ -193,8 +207,8 @@ def fit(args):
                 history.append({"epoch":epoch+1,"training_loss":total_loss/count,
                                 "checkpoint_auroc":auc,"best_epoch":best_epoch,
                                 "best_checkpoint_auroc":best_auc,"training_checkpoint_seconds":time.monotonic()-epoch_start})
-                audit_scores=collect_checkpoint(model,checkpoint,config,device,indices=audit_ids)
-                state={"scope_id":SCOPE,"config_sha256":file_sha256(path),
+                audit_scores=collect_checkpoint(model,checkpoint,config,device,indices=audit_ids,execution=execution)
+                state={"scope_id":execution["scope_id"],"config_sha256":file_sha256(path),
                        "model":_cpu_state(model),"optimizer":optimizer.state_dict(),
                        "completed_epochs":epoch+1,"history":history,"sampler":sampler.state_dict(),
                        "loader_rng":loader_rng.get_state(),"rng":_rng_state(),
@@ -210,21 +224,21 @@ def fit(args):
             if len(history)!=20 or best_state is None: raise RuntimeError("Incomplete fits cannot produce scientific completion")
             _atomic_safetensors(directory/"best.safetensors",best_state)
             model.load_state_dict(load_file(str(directory/"best.safetensors"),device="cpu"),strict=True)
-            restored=collect_checkpoint(model,checkpoint,config,device)
+            restored=collect_checkpoint(model,checkpoint,config,device,execution=execution)
             if not np.allclose(best_scores,restored,atol=1e-5,rtol=1e-5):
                 raise RuntimeError("Full checkpoint-role score restoration failed")
             reference=restored[audit_ids]
-            audit=compare_scores(reference,collect_checkpoint(model,checkpoint,config,device,indices=audit_ids))
-            audit["alternative_partition"]=compare_scores(reference,collect_checkpoint(model,checkpoint,config,device,indices=audit_ids,batch_size=12))
+            audit=compare_scores(reference,collect_checkpoint(model,checkpoint,config,device,indices=audit_ids,execution=execution))
+            audit["alternative_partition"]=compare_scores(reference,collect_checkpoint(model,checkpoint,config,device,indices=audit_ids,batch_size=12,execution=execution))
             _atomic_npz(directory/"checkpoint.npz",{**checkpoint.metadata(),"score":restored,"logit":restored})
             atomic_json(directory/"checkpoint.json",{"selection_role":"checkpoint","best_epoch":best_epoch,
                 "checkpoint_auroc":auroc(checkpoint.labels(),restored),"restoration_audit":audit,
                 "threshold_fitted":False,"dev_eval_accessed":False})
-            complete={"schema_version":1,"scope_id":SCOPE,"complete":True,"arm":args.arm,"seed":args.seed,
+            complete={"schema_version":1,"scope_id":execution["scope_id"],"complete":True,"arm":args.arm,"seed":args.seed,
                       "completed_epochs":20,"best_epoch":best_epoch,"selection_role":"checkpoint",
                       "artifacts":{name:file_sha256(directory/name) for name in ARTIFACTS},
                       "test_evaluated":False,"dev_eval_accessed":False,"completed_unix":time.time()}
-            check_base_deadline()
+            check_base_deadline(execution)
             atomic_json(directory/"complete.json",complete)
             verify_complete(directory,args.cache,args.execution,args.roles)
             attempt.update(status="complete",completed_epochs=20,ended_unix=time.time())
@@ -239,7 +253,7 @@ def main():
     require_slurm()
     p=argparse.ArgumentParser(description=__doc__)
     for name in ("cache","execution","roles","run-root"): p.add_argument("--"+name,type=Path,required=True)
-    p.add_argument("--arm",choices=ARMS,required=True); p.add_argument("--seed",type=int,choices=(7,),default=7)
+    p.add_argument("--arm",choices=ARMS,required=True); p.add_argument("--seed",type=int,choices=(7,17,27),default=7)
     p.add_argument("--device",choices=("cuda",),default="cuda")
     p.add_argument("--num-workers",type=int,choices=(0,),default=0)
     args=p.parse_args()

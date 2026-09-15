@@ -29,8 +29,9 @@ def read(path):
     return json.loads(Path(path).read_text())
 
 
-def deadline_unix(name):
-    return dt.datetime.fromisoformat(DEADLINES[name]).timestamp()
+def deadline_unix(name, execution=None):
+    deadlines = DEADLINES if execution is None else execution["deadlines"]
+    return dt.datetime.fromisoformat(deadlines[name]).timestamp()
 
 
 def make_roles(group):
@@ -86,7 +87,18 @@ def validate_inputs(cache, execution_path, roles_path):
     roles=read(roles_path)
     if roles!=make_roles(group): raise RuntimeError("Execution role map changed")
     execution=read(execution_path)
-    if execution!=make_execution(cache,roles_path): raise RuntimeError("Execution plan changed")
+    if execution.get("scope_id") == SCOPE:
+        if execution!=make_execution(cache,roles_path): raise RuntimeError("Execution plan changed")
+    else:
+        from .replication import SCOPE as REPLICATION_SCOPE, validate_seed_execution
+        if execution.get("scope_id") != REPLICATION_SCOPE:
+            raise RuntimeError("Unknown execution scope")
+        validate_seed_execution(execution_path, roles_path)
+        for key, expected in (("cache_manifest_sha256",file_sha256(cache/"manifest.json")),
+                              ("cache_protocol_sha256",manifest["protocol_sha256"]),
+                              ("cache_cohort_sha256",manifest["cohort_sha256"])):
+            if execution.get(key) != expected:
+                raise RuntimeError("Replication input cache changed: " + key)
     return execution,roles
 
 
@@ -96,6 +108,8 @@ def implementation_identity():
     names += ["pilots/layer_screen_20260913/"+n+".py" for n in ("protocol","data","models","train","loader_runtime")]
     names += ["pilots/topology_20260910/"+n+".py" for n in ("protocol","data")]
     names += ["polygraph/training/models.py","polygraph/training/train.py","polygraph/data/graphs.py"]
+    names += ["pilots/layer_ensemble_20260914/"+n+".py"
+              for n in ("replication","combine","evaluate","aggregate_replications")]
     return {name:file_sha256(root/name) for name in names}
 
 
