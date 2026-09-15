@@ -40,17 +40,11 @@ def main() -> None:
     # already present; the protocol constants are restored below for combine's
     # provenance checks and are not rewritten on disk.
     predict = importlib.import_module("pilots.layer_ensemble_20260914.predict")
-    protocol = importlib.import_module("pilots.layer_ensemble_20260914.protocol")
     predict.check_prediction_deadline = lambda: None
 
     invoke("predict", [*common, "--run-root", root / "runs", "--base-freeze", root / "base_freeze.json",
                         "--freeze-base", "--role", "meta", "--out", root / "predictions/meta.npz"])
     invoke("combine", ["--root", root, "--predictions", root / "predictions/meta.npz", "--out", root / "heads"])
-
-    # Only the development export is late.  Keep the original constants while
-    # validating the execution plan and on-time meta export above, then relax
-    # the in-memory guard for the diagnostic development pass.
-    protocol.DEADLINES["predictions_complete_before"] = "2099-01-01T00:00:00+00:00"
 
     # ``evaluate`` imports ``load_predictions`` from ``combine``.  Temporarily
     # relax only that function's timestamp check while retaining all identity,
