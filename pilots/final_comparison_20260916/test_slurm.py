@@ -507,6 +507,28 @@ class FinalSlurmTests(unittest.TestCase):
             ops._freeze_phases(self.plan, self.authorization, jobs, statuses)
         self.assertEqual((phases / "bases.json").read_bytes(), before)
 
+    def test_frozen_sorted_workflow_keeps_canonical_phase_order(self):
+        # Benchmark prepare 901198 failed: the sorted-key frozen workflow listed
+        # "preparation" last, so prepare waited for a "predictions" phase freeze.
+        frozen = json.loads(ops.json_bytes(self.plan))
+        self.assertEqual(list(frozen["phases"])[-1], "preparation")
+        self.assertEqual([name for name, _ in ops._phase_items(frozen)], list(ops.PHASES))
+        jobs = self.submit()["job_ids"]
+        heartbeat = {"status": "watching", "workflow_sha256": ops.digest(frozen),
+                     "authorization_sha256": ops.digest(self.authorization), "job_id": jobs["guardian"],
+                     "checked_utc": ops.utc_now().isoformat()}
+        ops.atomic_json(ops._control(frozen) / "manifests/guardian.json", heartbeat)
+        with patch.object(ops.time, "sleep", side_effect=AssertionError("prepare must not wait")):
+            ops._await_guardian_phase(frozen, self.authorization, jobs, "prepare", ops.time.time() + 600)
+            with self.assertRaisesRegex(AssertionError, "must not wait"):
+                ops._await_guardian_phase(frozen, self.authorization, jobs, "gpu_fits", ops.time.time() + 600)
+        self.populate_task_receipts(jobs)
+        statuses = ops.stage_states(frozen, jobs, self.successful_states(jobs))
+        statuses["hidden_full"] = "RUNNING"
+        ops._freeze_phases(frozen, self.authorization, jobs, statuses)
+        self.assertFalse((ops._control(frozen) / "manifests/phases").exists()
+                         and any((ops._control(frozen) / "manifests/phases").glob("*.json")))
+
     def test_guardian_needs_all_25_outputs_not_a_bare_success_marker(self):
         statuses = {name: "COMPLETED" for name in ops.ORDER if name not in ops.GUARDS}
         evidence = self.evidence()

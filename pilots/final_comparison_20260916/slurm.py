@@ -917,9 +917,19 @@ def _verify_execution_receipts(plan, authorization, jobs, stages=None):
     return files
 
 
+def _phase_items(plan):
+    """Phases in canonical DAG order. Frozen workflows are sorted-key JSON, so the
+    loaded plan["phases"] dict is alphabetical (bases, ..., preparation); its
+    iteration order must never define phase predecessors (benchmark 901198)."""
+    phases = plan["phases"]
+    if set(phases) - set(PHASES):
+        raise PlanError("Undeclared global phase")
+    return [(name, phases[name]) for name in PHASES if name in phases]
+
+
 def _freeze_phases(plan, authorization, jobs, statuses):
     previous = None
-    for phase, stages in plan["phases"].items():
+    for phase, stages in _phase_items(plan):
         if not all(statuses.get(name) == "COMPLETED" for name in stages):
             break
         files = _verify_execution_receipts(plan, authorization, jobs, stages)
@@ -1316,7 +1326,7 @@ def _live_guardian(plan, authorization, jobs):
 
 def _await_guardian_phase(plan, authorization, jobs, stage, stop_at):
     predecessor = None
-    for phase, stages in plan["phases"].items():
+    for phase, stages in _phase_items(plan):
         if stage in stages:
             break
         predecessor = phase
