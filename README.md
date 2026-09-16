@@ -35,9 +35,10 @@ Slurm job IDs.
 The run completed on time: [technical results](docs/experiments/layer_ensemble_replication/RESULTS_20260916.md)
 and a [Hebrew summary](docs/experiments/layer_ensemble_replication/REPORT_HE_20260916.md)
 report the positive paired effect in both added seeds and the limits of that finding.
-The [offline results explorer](docs/experiments/results_explorer_20260916/index.html)
-visualizes the current and historical comparisons in separate panels, with
-clearly labeled results-only exploratory analysis and downloadable plot data.
+The [one-page results journey](docs/experiments/results_explorer_20260916/index.html)
+summarizes the questions and outcomes. A separate
+[details and EDA page](docs/experiments/results_explorer_20260916/details.html)
+retains the full comparisons, explanations and downloadable plot data.
 
 ## Layout
 

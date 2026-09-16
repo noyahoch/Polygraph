@@ -1,8 +1,9 @@
 # Results explorer: existing experiments, not new model runs
 
-Open [the offline visual report](index.html). It embeds its small plotted data,
-requires no server or internet connection, and has JSON/CSV download controls.
-The overview is followed by optional, explicitly post-hoc exploratory panels.
+Open [the one-page journey and main results](index.html) for the concise view:
+what came before, what each experiment asked, and what it found.
+[Details and EDA](details.html) retains the full charts, explanations, sources
+and JSON/CSV download controls. Both pages work offline and link to each other.
 
 ## What is comparable
 
@@ -84,11 +85,12 @@ python3 -B -m unittest \
   pilots.results_20260916.test_data pilots.results_20260916.test_render
 ```
 
-Keep the raw bundle outside Git; the small, self-contained HTML snapshot can
+The renderer writes both `index.html` and `details.html`; keep them together.
+Keep the raw bundle outside Git; the small, self-contained HTML snapshots can
 be versioned with documentation. No web fonts, chart CDNs, analytics or
 third-party requests are needed.
 
-The 25 results-only tests pass, including tie handling, undefined slices,
+The 27 results-only tests pass, including two-page navigation, tie handling, undefined slices,
 source-image grouping, input checksum/size gates, and safe offline JSON
 embedding. Browser checks covered seed switching, condition/ROC controls,
 responsive layout, and the generated JSON/CSV download payloads, with no

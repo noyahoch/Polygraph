@@ -6,7 +6,7 @@ import re
 import tempfile
 import unittest
 
-from .render import render
+from .render import render, render_site
 
 
 class OfflineRenderTests(unittest.TestCase):
@@ -16,7 +16,7 @@ class OfflineRenderTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         self.data = {"schema_version": 1, "title": "Test result", "studies": {
             "layers": {"seeds": [], "primary": {}, "all3": {}},
-            "topology": {"baselines": [], "contrasts": []}},
+            "topology": {"primary": {}, "baselines": [], "contrasts": []}},
             "insights": [], "analysis_notes": [], "csv_rows": [], "provenance": {}}
 
     def test_render_is_self_contained_and_preserves_json(self):
@@ -46,6 +46,26 @@ class OfflineRenderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             render(self.data, self.root / "invalid.html")
         self.assertFalse((self.root / "invalid.html").exists())
+
+    def test_site_separates_journey_and_full_explanation(self):
+        self.data["studies"]["layers"]["seeds"] = [
+            {"seed": seed, "status": "complete_late_diagnostic" if seed == 7 else "complete",
+             "metrics": {"learned_stack": .89, "learned_last_only": .88}, "delta": .01,
+             "eda": {"large_descriptive_section": [1, 2, 3]}} for seed in (7, 17, 27)]
+        render_site(self.data, self.root / "index.html")
+        summary = (self.root / "index.html").read_text()
+        details = (self.root / "details.html").read_text()
+        self.assertIn('href="details.html"', summary)
+        self.assertIn('href="index.html"', details)
+        self.assertIn("The journey", summary)
+        self.assertNotIn("large_descriptive_section", summary)
+        self.assertIn("large_descriptive_section", details)
+        self.assertIn("Download CSV", details)
+
+    def test_site_rejects_broken_navigation_filename(self):
+        with self.assertRaisesRegex(ValueError, "index.html"):
+            render_site(self.data, self.root / "different.html")
+        self.assertFalse((self.root / "different.html").exists())
 
 
 if __name__ == "__main__":
