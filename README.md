@@ -32,6 +32,9 @@ scientific result.
 The [September 16 scientific launch record](docs/experiments/layer_ensemble_replication/RUN_20260916.md)
 records the separately authorized seed-17/27 run, frozen limits and durable
 Slurm job IDs.
+The run completed on time: [technical results](docs/experiments/layer_ensemble_replication/RESULTS_20260916.md)
+and a [Hebrew summary](docs/experiments/layer_ensemble_replication/REPORT_HE_20260916.md)
+report the positive paired effect in both added seeds and the limits of that finding.
 
 ## Layout
 
