@@ -712,6 +712,35 @@ class FinalSlurmTests(unittest.TestCase):
         self.assertFalse(result["laptop_close_ready"])
         self.assertFalse((Path(self.config["root"]) / "execution.json").exists())
 
+    def test_accounting_ignores_reused_foreign_job_ids(self):
+        # Replays preflight 898775: before slurmdbd recorded the new jobs, sacct returned
+        # another user's 2025 FAILED rows that share the reused job IDs.
+        calls = []
+        rows = ("898776|FAILED|1:0|126|boazlavon\n"
+                "898777|FAILED|1:0|63|boazlavon\n"
+                "898775|RUNNING|0:0|3|omri\n"
+                "898778_0|PENDING|0:0|0|omri\n"
+                "898778_0.batch|FAILED|1:0|1|omri\n")
+
+        def fake_run(command):
+            calls.append(command)
+            return rows
+
+        scheduler = ops.Scheduler()
+        with patch.object(ops.getpass, "getuser", return_value="omri"), \
+                patch.object(scheduler, "_run", side_effect=fake_run):
+            states = scheduler.states(["898775", "898776", "898777", "898778"])
+        self.assertIn("--user=omri", calls[0])
+        self.assertTrue(any(arg.startswith("--starttime=") for arg in calls[0]))
+        self.assertEqual(set(states), {"898775", "898778_0"})
+        jobs = {"guardian": "898775", "failure_guard": "898776",
+                "cpu_validation": "898777", "gpu_preflight": "898778"}
+        order = ("cpu_validation", "gpu_preflight")
+        plan = {"stages": {name: {"tasks": [{}]} for name in order}}
+        statuses = ops.stage_states(plan, jobs, states)
+        self.assertFalse(any(value in ops.FAILED for value in statuses.values()))
+        self.assertEqual(scheduler.states([]), {})
+
 
 if __name__ == "__main__":
     unittest.main()

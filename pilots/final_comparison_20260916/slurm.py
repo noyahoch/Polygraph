@@ -581,6 +581,29 @@ def sbatch_command(plan, stage, jobs, authorization_sha256):
 class Scheduler(legacy.Scheduler):
     """Reuse finite submission/accounting calls; add conservative external-GPU admission."""
 
+    # Slurm job IDs on this cluster are reused (e.g. 898776-898778 also name another user's
+    # 2025 FAILED jobs). Before slurmdbd records a fresh job, an unfiltered `sacct --jobs`
+    # returns that historical row, which falsely failed preflight 898775. Accounting is
+    # therefore restricted to this user and a bounded recent window, and foreign rows ignored.
+    ACCOUNTING_WINDOW = "now-8days"
+
+    def states(self, ids):
+        if not ids:
+            return {}
+        user = getpass.getuser()
+        output = self._run(["sacct", "--noheader", "--parsable2", "--allocations", "--array",
+                            "--user=" + user, "--starttime=" + self.ACCOUNTING_WINDOW,
+                            "--jobs=" + ",".join(ids),
+                            "--format=JobID%64,State%32,ExitCode,ElapsedRaw,User%64"])
+        result = {}
+        for line in output.splitlines():
+            row = line.split("|")
+            if (len(row) >= 5 and "." not in row[0] and row[0].split("_")[0] in ids
+                    and row[4].strip() == user):
+                result[row[0]] = {"state": row[1].split()[0].rstrip("+"),
+                                  "exit_code": row[2], "elapsed_seconds": row[3]}
+        return result
+
     def external_gpu_count(self, owned):
         output = self._run(["squeue", "--noheader", "--array", "--user=" + getpass.getuser(), "--format=%F|%b"])
         count = 0
