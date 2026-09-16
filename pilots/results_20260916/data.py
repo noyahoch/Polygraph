@@ -308,11 +308,12 @@ def build(raw):
         "population": "Same 800 development photographs / 7,200 records across seeds; not a new test.",
         "protocol_status": "Seeds 17/27 complete on time; seed 7 remains a historical late diagnostic.",
         "primary": {"estimate": report["primary"]["estimate"], "interval_95": report["primary"]["interval_95"],
-                    "sample_sd": report["primary"]["statistics"]["delta_auroc"]["sample_sd"], "seeds": [17, 27]},
+                    "sample_sd": report["primary"]["statistics"]["delta_auroc"]["sample_sd"], "seeds": [17, 27],
+                    "statistics": report["primary"]["statistics"]},
         "all3": {"estimate": report["all3_descriptive"]["estimate"],
                  "interval_95": report["all3_descriptive"]["interval_95"],
                  "sample_sd": report["all3_descriptive"]["statistics"]["delta_auroc"]["sample_sd"],
-                 "seeds": [7, 17, 27]},
+                 "seeds": [7, 17, 27], "statistics": report["all3_descriptive"]["statistics"]},
         "seeds": seeds, "roles": {"base_train": 1600, "checkpoint": 400, "meta": 400, "dev_eval": 800},
         "records": 7200, "photos": 800, "errors": int(reference["y"].sum()),
         "correct": int((reference["y"] == 0).sum()),
@@ -321,6 +322,12 @@ def build(raw):
     selected_deltas = [row["delta"] for row in seeds if row["seed"] in (17, 27)]
     assert_close(float(np.mean(selected_deltas)), layers["primary"]["estimate"], "new primary mean")
     assert_close(float(np.std(selected_deltas, ddof=1)), layers["primary"]["sample_sd"], "new sample SD")
+    for group in ("primary", "all3"):
+        for method in METHODS:
+            values = [row["metrics"][method] for row in seeds if row["seed"] in layers[group]["seeds"]]
+            recorded = layers[group]["statistics"][method]
+            assert_close(float(np.mean(values)), recorded["mean"], f"{group}/{method}/mean")
+            assert_close(float(np.std(values, ddof=1)), recorded["sample_sd"], f"{group}/{method}/SD")
     topology = topology_data(raw)
     off_diagonal = [row["eda"]["correlation"]["matrix"][i][j]
                     for row in seeds for i in range(4) for j in range(i + 1, 4)]

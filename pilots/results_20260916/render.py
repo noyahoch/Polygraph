@@ -58,10 +58,11 @@ def render_site(data: dict, output: Path) -> None:
         "studies": {
             "layers": {
                 "primary": layers["primary"],
+                "all3": layers["all3"],
                 "seeds": [{key: seed[key] for key in ("seed", "status", "metrics", "delta")}
                           for seed in layers["seeds"]],
             },
-            "topology": {"primary": data["studies"]["topology"]["primary"]},
+            "topology": {key: data["studies"]["topology"][key] for key in ("primary", "baselines")},
         },
     }
     # Validate serialization before either page is written.

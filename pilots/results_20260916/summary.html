@@ -1,108 +1,167 @@
 <!doctype html>
-<html lang="en">
+<html lang="he" dir="rtl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Polygraph · the journey &amp; main results</title>
+  <title>Polygraph · הדרך, השיטות והתוצאות</title>
   <style>
-    *{box-sizing:border-box}body{margin:0;background:#f5f7fa;color:#172735;font:15px/1.45 system-ui,-apple-system,sans-serif}
-    main{max-width:1160px;margin:auto;padding:30px 28px 18px}header{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px}
-    .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:750;color:#637580}h1{font-size:30px;line-height:1.15;margin:6px 0}
-    h2{font-size:18px;margin:0 0 16px}p{margin:0}.muted{color:#5b6b75}a{color:#126e75}header a{background:#fff;padding:10px 15px;border:1px solid #cbd7dc;border-radius:9px;text-decoration:none;white-space:nowrap;font-weight:650}
-    .layout{display:grid;grid-template-columns:1.13fr 1fr;gap:24px}.panel{background:#fff;border:1px solid #dce4e8;border-radius:12px;padding:22px}
-    .step{display:grid;grid-template-columns:27px 1fr;gap:12px;position:relative;padding:0 0 19px}.step:last-child{padding-bottom:0}
-    .number{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#e7f1f1;color:#17676b;font-size:12px;font-weight:750}
-    .step:not(:last-child):before{content:"";position:absolute;left:12px;top:28px;bottom:4px;border-left:1px solid #dbe5e7}
-    .when{font-size:11px;font-weight:750;letter-spacing:.04em;color:#667986;text-transform:uppercase}.step h3{font-size:15px;margin:3px 0 4px}
-    .step p{font-size:13px}.result{margin-top:5px!important;color:#156b63;font-weight:650}.late{color:#946112}
-    .metric{font-size:39px;line-height:1.2;font-weight:750;letter-spacing:-.025em;color:#166e71}.unit{font-size:13px;font-weight:500;letter-spacing:0}
-    .metric-label{font-size:13px;margin-top:3px}.interval{font-size:12px;color:#5b6b75;margin:7px 0 17px}
-    .key{display:flex;gap:18px;font-size:11px;color:#50636e;margin:13px 0 0}.dot{display:inline-block;width:9px;height:9px;background:#16818a;border-radius:50%;margin-right:5px}.square{background:#fff;border:2px solid #657687;border-radius:0}
-    svg{width:100%;height:auto;display:block}.caption{font-size:11px;color:#61747f;margin-top:6px}.takeaway{margin-top:20px;padding:15px 18px;background:#eaf3f2;border-left:3px solid #27867f;border-radius:5px;font-size:14px}
-    .takeaway strong{color:#165d58}.takeaway p+p{margin-top:5px}footer{font-size:11px;color:#61717b;margin-top:13px}
-    @media(max-width:790px){main{padding:20px 16px}.layout{grid-template-columns:1fr}.panel{padding:18px}header{align-items:flex-start}h1{font-size:25px}header a{font-size:12px;padding:8px 10px}.step p{font-size:14px}}
-    @media print{body{background:white}main{padding:0;max-width:none}header a{display:none}.layout{grid-template-columns:1.13fr 1fr}.panel,.takeaway{break-inside:avoid}h1{font-size:25px}}
+    *{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172d40;font:15px/1.5 system-ui,-apple-system,sans-serif}
+    main{max-width:1180px;margin:auto;padding:26px 24px}header{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:22px}
+    h1{font-size:31px;line-height:1.2;margin:4px 0 7px}h2{font-size:21px;margin:0 0 8px}h3{font-size:15px;margin:4px 0}
+    p{margin:0}.muted,.caption{color:#647888}.eyebrow{font-size:11px;letter-spacing:.08em;color:#6b7b89;font-weight:750}
+    a{color:#176e7a}header a,.link-button{border:1px solid #cbd9df;background:white;border-radius:9px;padding:9px 14px;text-decoration:none;font-weight:650;white-space:nowrap}
+    .journey{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}.step{padding:14px;background:#fff;border-top:3px solid #9eafbd;border-radius:9px;position:relative}
+    .step:last-child{border-color:#168278}.when{font-size:11px;font-weight:750;color:#677d8b}.step p{font-size:12px;color:#526a7a}.step strong{color:#1a6b66}.late{color:#936312}
+    .panel{background:#fff;border:1px solid #dce5ec;border-radius:13px;padding:21px;margin-bottom:20px}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+    .tag{font-size:11px;background:#edf4f7;border-radius:20px;padding:4px 10px;color:#476275}.section-num{font-size:11px;color:#738999;margin-bottom:3px}
+    .flow{display:grid;grid-template-columns:1fr 50px 1.4fr;align-items:center;gap:14px;margin:16px 0}.detectors{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+    .detector{text-align:center;border:1px solid #cbdce8;background:#f1f6fb;border-radius:8px;padding:9px}.detector b{display:block;font-size:19px;color:#426589}.detector span{font-size:11px;color:#637b8e}
+    .arrow{font-size:28px;color:#93a8b8;text-align:center}.routes{display:grid;grid-template-columns:1fr 1fr;gap:12px}.route{padding:13px;border-radius:9px;border:1px solid #c5e2dc;background:#edf8f4}
+    .route.mean{background:#fff6ea;border-color:#eddbbb}.route h3{color:#146c62}.route.mean h3{color:#9b6c28}.route p{font-size:12px}.route small{display:block;margin-top:7px;color:#658073;font-size:11px}
+    .definition{padding:9px 13px;border-radius:7px;background:#f3f5f8;font-size:12px}.definition b{color:#526675}
+    select{font:inherit;font-size:13px;padding:8px 10px;border:1px solid #b8ccd8;border-radius:7px;color:#18384b;background:white;max-width:100%}
+    .comparison-layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(225px,1fr);gap:22px;align-items:start;margin-top:15px}
+    svg{display:block;width:100%;height:auto;direction:ltr}bdi,.number{direction:ltr;unicode-bidi:isolate}.caption{font-size:11px;margin-top:6px}
+    .legend{display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#617784;margin-bottom:5px}.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px}
+    .result-card{background:#eef7f5;border-radius:10px;padding:19px}.big{font-size:37px;line-height:1.2;letter-spacing:-.025em;font-weight:780;color:#13786d;margin:6px 0}.result-card p{font-size:13px}.result-card .caption{font-size:11px}
+    .findings{margin:15px 0 0;padding-right:17px;font-size:13px}.findings li{margin-bottom:9px}.key-line{height:1px;background:#dae6e4;margin:14px 0}
+    .prior{display:grid;grid-template-columns:1.5fr 1fr;gap:25px;align-items:center}.prior-note{font-size:13px}.prior-note p{margin:9px 0}.warning{color:#8e692c;background:#fff8ea;padding:9px 12px;border-radius:6px;font-size:12px}
+    .bottom{display:grid;grid-template-columns:1fr 1fr;gap:16px}.bottom>div{padding:13px 17px;border-radius:8px;background:#e7f1f1;font-size:13px}.bottom>div:last-child{background:#eceff4}
+    footer{font-size:11px;color:#6b7e8c;margin-top:16px}summary{cursor:pointer;font-size:12px;color:#1b6b79;margin:12px 0}
+    table{border-collapse:collapse;width:100%;font-size:12px}th,td{border-bottom:1px solid #e3eaf0;padding:7px 10px;text-align:right}td.number{text-align:center}caption{text-align:right;font-weight:600;margin-bottom:5px}
+    @media(max-width:800px){main{padding:18px 14px}header{align-items:flex-start}h1{font-size:25px}header a{font-size:12px}.journey{grid-template-columns:1fr 1fr}.comparison-layout,.prior{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.arrow{transform:rotate(-90deg)}.panel{padding:16px}.bottom{grid-template-columns:1fr}.big{font-size:32px}}
+    @media(max-width:420px){.routes{grid-template-columns:1fr}header{flex-wrap:wrap}.journey{gap:8px}.step{padding:10px}h2{font-size:19px}}
+    @media print{body{background:white}main{padding:0}header a,select,details{display:none}.panel,.journey,.bottom{break-inside:avoid}}
   </style>
 </head>
 <body>
 <main>
   <header>
-    <div><div class="eyebrow">Polygraph · completed through September 16</div><h1>What we tried. What we learned.</h1><p class="muted">Detecting when a frozen ViT classifier is wrong—not improving the classifier itself.</p></div>
-    <a href="details.html">Details &amp; EDA →</a>
+    <div><div class="eyebrow">POLYGRAPH · תוצאות עד 16 בספטמבר</div><h1>מה ניסינו, ומה באמת השתפר?</h1><p class="muted">גלאי שמתריע כשמסווג התמונות טועה — בלי לשנות את ה־ViT עצמו.</p></div>
+    <a href="details.html">כל הפרטים ו־EDA ↗</a>
   </header>
-  <div class="layout">
-    <section class="panel" aria-labelledby="journey-title">
-      <h2 id="journey-title">The journey</h2>
-      <article class="step"><span class="number">0</span><div>
-        <div class="when">Before · colleagues’ work</div>
-        <h3>Can internal signals help detect errors?</h3>
-        <p>Tested GNNs, graph-free baselines and merged graphs from the last four layers.</p>
-        <p class="result">Useful detectors; graph necessity unproven. The layer-union attempt did not help.</p>
-      </div></article>
-      <article class="step"><span class="number">1</span><div>
-        <div class="when">Our study · September 10–11</div>
-        <h3>Does message passing add value?</h3>
-        <p>Compared graphs with non-message-passing models receiving the same information, across five seeds.</p>
-        <p class="result"><span id="topology-gap"></span> AUROC versus the full-feature set control; practical benefit unresolved.</p>
-      </div></article>
-      <article class="step"><span class="number">2</span><div>
-        <div class="when">Our pilot · September 14–15</div>
-        <h3>Combine scores, rather than merge graphs?</h3>
-        <p>Four separate detectors at layers 3, 6, 9 and 12; compare their stack with the final-layer detector.</p>
-        <p class="result"><span id="pilot-gap"></span> AUROC in seed 7. <span class="late">Late diagnostic.</span></p>
-      </div></article>
-      <article class="step"><span class="number">3</span><div>
-        <div class="when">Our replication · September 16</div>
-        <h3>Does that gain repeat?</h3>
-        <p>Repeated the exact split, architecture and 20-epoch budget with seeds 17 and 27.</p>
-        <p class="result">Yes: the stack beat the final-layer control in both new seeds.</p>
-      </div></article>
-    </section>
-    <section class="panel" aria-labelledby="current-title">
-      <h2 id="current-title">Our main result now</h2>
-      <div class="metric"><span id="primary-gap"></span> <span class="unit">AUROC</span></div>
-      <p class="metric-label">Mean gain over the final-layer GNN, seeds 17 + 27.</p>
-      <p class="interval" id="primary-interval"></p>
-      <p style="font-size:13px">Four GNN scores + logistic stack<br><strong>versus</strong> the final-layer GNN score + the same type of logistic learner.</p>
-      <div class="key"><span><i class="dot"></i>Four-layer stack</span><span><i class="dot square"></i>Final-layer control</span></div>
-      <svg id="comparison" viewBox="0 0 450 215" role="img" aria-label="Matched error-detection AUROC in each seed"></svg>
-      <p class="caption">Same 800 development photographs, nine views each. Seed 7 is descriptive only. AUROC axis is zoomed.</p>
-    </section>
-  </div>
-  <section class="takeaway" aria-label="Bottom line">
-    <p><strong>What we can say:</strong> combining these layer detectors gives a small, repeatable gain over the final-layer detector alone.</p>
-    <p><strong>What we cannot say:</strong> graphs are necessary, or this beats the best graph-free method. Simple averaging was slightly better than the learned stack.</p>
+  <section class="journey" aria-label="הדרך שעברנו">
+    <article class="step"><div class="when">קודם · הקולגות</div><h3>האם יש אות פנימי מועיל?</h3><p>גרפים, ציוני המסווג ובקרות ללא גרף. <strong>נמצאו גלאים מועילים; נחיצות הגרף לא הוכחה.</strong></p></article>
+    <article class="step"><div class="when">10–11 בספטמבר · הבקרות שלנו</div><h3>האם הגרף מוסיף מעבר למידע?</h3><p>גרף מול מודל קבוצות עם אותו מידע, בחמישה זרעים. <strong>יתרון קטן; לא הכרעה על נחיצות.</strong></p></article>
+    <article class="step"><div class="when">14–15 בספטמבר · שילוב שכבות</div><h3>לאחד ציונים, במקום גרפים?</h3><p>ארבעה גלאים נפרדים ושילוב ציוניהם. <strong>יתרון מול שכבה אחרונה.</strong> <span class="late">פיילוט זרע 7 — מאוחר.</span></p></article>
+    <article class="step"><div class="when">16 בספטמבר · שכפול</div><h3>האם היתרון חוזר?</h3><p>אותן הגדרות ו־20 epochs בזרעים 17 ו־27. <strong>כן, בשניהם; כל ההרצות הושלמו.</strong></p></article>
   </section>
-  <footer>Each experiment has its own comparator and evaluation setup; their absolute scores are not a shared leaderboard. The interval above resamples photographs, conditional on the fitted models—not a guarantee across new training seeds.</footer>
+
+  <section class="panel" aria-labelledby="ensemble-title">
+    <div class="panel-head"><div><div class="section-num">01 / מהן השיטות שאנחנו משווים?</div><h2 id="ensemble-title">ארבע שכבות. שתי דרכים לשלב אותן.</h2></div><span class="tag">Ensemble = שילוב של כמה מודלים</span></div>
+    <div class="flow">
+      <div><div class="detectors">
+        <div class="detector"><b>שכבה 3</b><span>גלאי GNN נפרד</span></div><div class="detector"><b>שכבה 6</b><span>גלאי GNN נפרד</span></div>
+        <div class="detector"><b>שכבה 9</b><span>גלאי GNN נפרד</span></div><div class="detector"><b>שכבה 12</b><span>גלאי השכבה האחרונה</span></div>
+      </div><p class="caption">כל גלאי מחזיר ציון סיכון לשגיאת סיווג.</p></div>
+      <div class="arrow" aria-hidden="true">←</div>
+      <div class="routes">
+        <div class="route mean"><h3>ממוצע פשוט</h3><p>מפעילים sigmoid על כל ציון ומחשבים ממוצע שווה של ארבעתם.</p><small>אנסמבל ללא לומד שילוב נוסף</small></div>
+        <div class="route"><h3>שילוב נלמד · Layer stack</h3><p>מודל לוגיסטי לומד לשלב את ארבעת הציונים הגולמיים.</p><small>גם זה אנסמבל — מסוג stacking</small></div>
+      </div>
+    </div>
+    <div class="definition"><b>ומהו ״ממוצע בין זרעים״?</b> סיכום של מדדי AUROC מכמה אימונים. <strong>זה לא מודל חדש ולא שילוב תחזיות.</strong> זרע משנה את אקראיות האימון, לא את פיצול התמונות.</div>
+  </section>
+
+  <section class="panel" aria-labelledby="methods-title">
+    <div class="panel-head"><div><div class="section-num">02 / ההשוואה הישירה · אותו ניסוי, אותן תמונות</div><h2 id="methods-title">כל השכבות וכל השילובים, זה לצד זה</h2></div>
+      <label>תצוגה <select id="view" aria-label="תצוגת השוואת השיטות"><option value="primary">ממוצע 17/27 — השכפול הראשי</option><option value="17">זרע 17</option><option value="27">זרע 27</option><option value="7">זרע 7 — אבחון מאוחר</option><option value="all3">ממוצע 7/17/27 — תיאורי</option></select></label>
+    </div>
+    <div class="comparison-layout">
+      <div>
+        <div class="legend"><span><i style="background:#245a75"></i>תוצאת התצוגה הנבחרת</span><span><i style="background:#178679"></i>זרע 17</span><span><i style="background:#8059a4"></i>זרע 27</span><span><i style="background:#b0822c"></i>זרע 7 (מאוחר)</span></div>
+        <svg id="methods-chart" viewBox="0 0 800 385" role="img" aria-label="השוואת AUROC לכל שבע השיטות"></svg>
+        <p class="caption" id="view-caption" aria-live="polite"></p>
+        <p class="caption">AUROC גבוה יותר = הפרדה טובה יותר בין טעויות לסיווגים נכונים. הציר מוגדל כדי להראות הבדלים קטנים; אין כאן שיפור בדיוק המסווג.</p>
+      </div>
+      <div>
+        <div class="result-card"><div class="eyebrow">ההשוואה הראשית שנקבעה מראש</div><div class="big"><bdi id="primary-gap"></bdi></div><p>שילוב נלמד פחות בקרת השכבה האחרונה;<br>ממוצע זרעים 17 ו־27.</p><div class="key-line"></div><p class="caption">רווח bootstrap של 95% לפי תמונה:</p><p><bdi id="primary-interval"></bdi></p></div>
+        <ul class="findings">
+          <li><strong>מול מה השיפור?</strong> שכבה 12 עם אותו סוג של לומד לוגיסטי — לא מול כל שיטה אפשרית.</li>
+          <li><strong>ממוצע פשוט מעט גבוה מה־stack</strong> בכל שלושת הזרעים; זו תוצאה תיאורית, לא מבחן עליונות.</li>
+          <li>ה־stack אינו מנצח כל שכבה בכל זרע. למשל, בזרע 27 שכבה 6 מעט גבוהה ממנו.</li>
+        </ul>
+      </div>
+    </div>
+    <details><summary>המספרים המדויקים לכל השיטות והזרעים</summary><div style="overflow-x:auto"><table id="metrics-table"><caption>AUROC על אותן 800 תמונות פיתוח, תשע גרסאות לתמונה</caption></table></div></details>
+    <p class="caption">״שכבה 12 גולמית״ ו״בקרת שכבה 12״ הן שיטות נפרדות, אך התקבל להן אותו AUROC בכל הזרעים כאן. הבקרה מוסיפה לומד לוגיסטי כדי להתאים את שלב המטה להשוואה הראשית.</p>
+  </section>
+
+  <section class="panel" aria-labelledby="earlier-title">
+    <div class="panel-head"><div><div class="section-num">03 / הניסוי הקודם שלנו · ספטמבר 10</div><h2 id="earlier-title">וכשמשווים גם לשיטות בלי גרף?</h2></div><span class="tag">תוצאות קודמות · חמשת הזרעים</span></div>
+    <div class="prior">
+      <div><svg id="earlier-chart" viewBox="0 0 800 405" role="img" aria-label="השוואת הבסיסים בניסוי ספטמבר 10 בלבד"></svg><p class="caption">נקודה גדולה: ממוצע AUROC. נקודות קטנות: אימונים נפרדים. הקו מציג טווח תוצאות, לא רווח סמך. ל־MSP ולאנטרופיה אין זרע אימון.</p></div>
+      <div class="prior-note">
+        <p><strong>מה ניסינו?</strong> להפריד בין תועלת המידע לבין תועלת העברת ההודעות בגרף.</p>
+        <p>גרף עם תכונות מלאות מול מודל קבוצות ללא העברת הודעות: <strong><bdi id="topology-gap"></bdi> AUROC</strong>.</p>
+        <p>זהו פער חיובי קטן; גודל התועלת המעשי נותר לא מוכרע. במידע attention בלבד לא הוכח יתרון לגרף.</p>
+        <div class="warning">זו קבוצת הערכה ופרוטוקול אחרים. אין להשוות את המספרים כאן ישירות ל־stack למעלה — ולא הוכחנו שהוא טוב יותר מה־MLP.</div>
+        <p class="caption">בקרת החיווט שינתה רק חלק מהקשתות; היא אינה הוכחה להסרת טופולוגיה.</p>
+      </div>
+    </div>
+  </section>
+  <div class="bottom">
+    <div><strong>הממצא:</strong> שילוב גלאי שכבות מועיל מעט מול גלאי השכבה האחרונה, בשלושת הזרעים שנבדקו. השילוב הנלמד לא הראה יתרון על הממוצע הפשוט.</div>
+    <div><strong>השאלה שעוד פתוחה:</strong> האם הגרף הכרחי, והאם שילוב רב־שכבתי ללא העברת הודעות יספיק? הניסוי הנוכחי לא מבודד זאת.</div>
+  </div>
+  <footer>התוצאות כבר הושלמו ונשמרו. רווחי הדגימה מותנים במודלים שאומנו; הם אינם מלוא אי־הוודאות בין אימונים. זרע 7 נשאר אבחון מאוחר. לא נפתחה קבוצת המבחן במסגרת סבב השכבות. <a href="details.html">לפירוט, מקורות ו־EDA (באנגלית) ←</a></footer>
 </main>
-<noscript>This offline summary needs JavaScript to display the saved results.</noscript>
+<noscript>עמוד התוצאות המקומי דורש JavaScript; אין צורך בחיבור לאינטרנט.</noscript>
 <script id="results-data" type="application/json">__RESULTS_JSON__</script>
 <script>
   "use strict";
-  const data=JSON.parse(document.getElementById("results-data").textContent);
-  const layers=data.studies.layers;
+  const data=JSON.parse(document.getElementById("results-data").textContent), layers=data.studies.layers, old=data.studies.topology;
+  const $=id=>document.getElementById(id), ns="http://www.w3.org/2000/svg";
   const signed=n=>(n>=0?"+":"−")+Math.abs(n).toFixed(5);
-  document.getElementById("topology-gap").textContent=signed(data.studies.topology.primary.estimate);
-  document.getElementById("pilot-gap").textContent=signed(layers.seeds.find(s=>s.seed===7).delta);
-  document.getElementById("primary-gap").textContent=signed(layers.primary.estimate);
-  document.getElementById("primary-interval").textContent="95% paired image-bootstrap interval: ["+layers.primary.interval_95.map(signed).join(", ")+"]";
-  const svg=document.getElementById("comparison"), ns="http://www.w3.org/2000/svg";
-  const seeds=[17,27,7].map(id=>layers.seeds.find(s=>s.seed===id));
-  const values=seeds.flatMap(s=>[s.metrics.learned_stack,s.metrics.learned_last_only]);
-  const low=Math.floor((Math.min(...values)-.001)*1000)/1000, high=Math.ceil((Math.max(...values)+.001)*1000)/1000;
-  const x=v=>95+(v-low)/(high-low)*260;
-  function add(tag,attributes,text){const node=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attributes))node.setAttribute(k,v);if(text!==undefined)node.textContent=text;svg.append(node);return node;}
-  for(let i=0;i<=3;i++){const v=low+(high-low)*i/3;add("line",{x1:x(v),x2:x(v),y1:18,y2:163,stroke:"#e3e9ed"});add("text",{x:x(v),y:184,"text-anchor":"middle",fill:"#687984","font-size":10},v.toFixed(3));}
-  add("text",{x:224,y:207,"text-anchor":"middle",fill:"#687984","font-size":10},"Error-detection AUROC · higher is better");
-  seeds.forEach((seed,i)=>{const y=43+i*49,c=seed.seed===7?"#9a6b19":seed.seed===17?"#187d7a":"#77549b";
-    add("text",{x:4,y:y+4,fill:c,"font-size":12,"font-weight":650},"Seed "+seed.seed+(seed.seed===7?" (late)":""));
-    add("line",{x1:x(seed.metrics.learned_last_only),x2:x(seed.metrics.learned_stack),y1:y,y2:y,stroke:c,"stroke-width":2,opacity:.5});
-    const last=add("rect",{x:x(seed.metrics.learned_last_only)-4,y:y-4,width:8,height:8,fill:"white",stroke:c,"stroke-width":1.5});
-    const stack=add("circle",{cx:x(seed.metrics.learned_stack),cy:y,r:4,fill:c});
-    for(const [node,name,value]of [[last,"Final-layer control",seed.metrics.learned_last_only],[stack,"Four-layer stack",seed.metrics.learned_stack]]){const title=document.createElementNS(ns,"title");title.textContent=name+": "+value.toFixed(6);node.append(title);}
-    add("text",{x:446,y:y+4,"text-anchor":"end",fill:"#425863","font-size":11},signed(seed.delta));
-  });
-  add("text",{x:446,y:13,"text-anchor":"end",fill:"#687984","font-size":10},"Gain");
+  const seedColor={7:"#b0822c",17:"#178679",27:"#8059a4",1:"#8da6b6",2:"#b4c0cc"};
+  const methods=[
+    ["raw_block2","שכבה 3 — גלאי יחיד","#597e9c"],
+    ["raw_block5","שכבה 6 — גלאי יחיד","#597e9c"],
+    ["raw_block8","שכבה 9 — גלאי יחיד","#597e9c"],
+    ["raw_block11","שכבה 12 — ציון גולמי","#597e9c"],
+    ["fixed_probability_mean","ממוצע פשוט — ensemble","#ad792d"],
+    ["learned_stack","שילוב נלמד — layer stack","#117f70"],
+    ["learned_last_only","בקרת שכבה 12 — לוגיסטי","#79609d"]
+  ];
+  const oldLabels={full_graph:"גרף עם תכונות מלאות",full_set:"מודל קבוצות — צמתים וקשתות",full_endpoint:"מודל קבוצות — קצוות",full_rewired:"גרף בחיווט חלקי — תיאורי",raw_graph:"גרף attention בלבד",raw_set:"מודל קבוצות — attention בלבד",logit:"MLP על פלט המסווג",msp:"ביטחון המסווג — MSP",entropy:"אנטרופיית פלט המסווג"};
+  function add(svg,tag,attrs,text){const node=document.createElementNS(ns,tag);for(const[k,v]of Object.entries(attrs))node.setAttribute(k,v);if(text!==undefined)node.textContent=text;svg.append(node);return node;}
+  function title(node,text){const t=document.createElementNS(ns,"title");t.textContent=text;node.append(t);}
+  function plot(svg,rows,lo,hi,spacing){
+    svg.replaceChildren();const x=v=>95+(v-lo)/(hi-lo)*435, end=rows.length*spacing+13;
+    for(let i=0;i<=4;i++){const value=lo+(hi-lo)*i/4;add(svg,"line",{x1:x(value),x2:x(value),y1:12,y2:end,stroke:"#e7edf2"});add(svg,"text",{x:x(value),y:end+21,"text-anchor":"middle",fill:"#7c8f9d","font-size":11},value.toFixed(3));}
+    add(svg,"text",{x:312,y:end+41,"text-anchor":"middle",fill:"#6f8391","font-size":11},"AUROC →");
+    rows.forEach((row,i)=>{const y=30+i*spacing;
+      if(row.highlight)add(svg,"rect",{x:2,y:y-18,width:796,height:spacing-3,fill:"#f0f8f5",rx:6});
+      add(svg,"text",{x:788,y:y+4,"text-anchor":"start",direction:"rtl",fill:row.color,"font-size":15,"font-weight":row.highlight?750:500},row.label);
+      const points=row.points||[];
+      if(points.length>1){const range=points.map(p=>x(p.value));add(svg,"line",{x1:Math.min(...range),x2:Math.max(...range),y1:y,y2:y,stroke:"#b8c8d4","stroke-width":1.5});}
+      for(const point of points){const c=add(svg,"circle",{cx:x(point.value),cy:y,r:3.4,fill:seedColor[point.seed]||"#a7b8c4",opacity:.8});title(c,"זרע "+point.seed+": "+point.value.toFixed(6));}
+      const dot=add(svg,"circle",{cx:x(row.value),cy:y,r:6,fill:row.color,stroke:"white","stroke-width":1.5});title(dot,row.label+": "+row.value.toFixed(6));
+      add(svg,"text",{x:75,y:y+4,"text-anchor":"end",fill:row.color,"font-size":15,"font-weight":650},row.value.toFixed(5));
+    });
+  }
+  function update(){
+    const selection=$("view").value, aggregate=selection==="primary"||selection==="all3";
+    const group=aggregate?layers[selection]:null, seed=aggregate?null:layers.seeds.find(s=>s.seed===Number(selection));
+    const rows=methods.map(([key,label,color])=>({label,color,highlight:key==="learned_stack",
+      value:aggregate?group.statistics[key].mean:seed.metrics[key],
+      points:aggregate?layers.seeds.filter(s=>group.seeds.includes(s.seed)).map(s=>({seed:s.seed,value:s.metrics[key]})):[]}));
+    plot($("methods-chart"),rows,.873,.894,43);
+    $("view-caption").textContent=aggregate
+      ? (selection==="primary"?"זרעים 17 ו־27 בלבד. ":"כולל זרע 7 המאוחר — תיאורי בלבד. ")+"הנקודה הגדולה היא ממוצע מדדים; היא אינה מודל חדש. הקו הדק מחבר את ערכי הזרעים, ואינו רווח סמך."
+      : "אימון יחיד בזרע "+selection+(selection==="7"?" — אבחון מאוחר.":".")+" כל שבע השיטות נמדדו על אותן תמונות.";
+  }
+  $("primary-gap").textContent=signed(layers.primary.estimate);
+  $("primary-interval").textContent="["+layers.primary.interval_95.map(signed).join(", ")+"]";
+  $("topology-gap").textContent=signed(old.primary.estimate);
+  $("view").addEventListener("change",update);update();
+  plot($("earlier-chart"),old.baselines.map(b=>({label:oldLabels[b.method],value:b.mean_auroc,points:b.per_seed.filter(p=>p.seed!==null).map(p=>({seed:p.seed,value:p.auroc})),color:b.family==="graph"?"#567d9b":b.family==="no-message-passing"?"#ac7952":"#78649b"})),.856,.902,38);
+  const table=$("metrics-table"), head=document.createElement("thead"), header=document.createElement("tr");
+  for(const label of ["שיטה","זרע 17","זרע 27","זרע 7 (מאוחר)","ממוצע 17/27","ממוצע שלושתם (תיאורי)"]){const th=document.createElement("th");th.textContent=label;header.append(th);}head.append(header);table.append(head);
+  const tbody=document.createElement("tbody");
+  for(const[key,label]of methods){const row=document.createElement("tr"), name=document.createElement("th");name.textContent=label;row.append(name);
+    const values=[17,27,7].map(id=>layers.seeds.find(s=>s.seed===id).metrics[key]).concat([layers.primary.statistics[key].mean,layers.all3.statistics[key].mean]);
+    for(const value of values){const cell=document.createElement("td");cell.className="number";cell.textContent=value.toFixed(6);row.append(cell);}tbody.append(row);}table.append(tbody);
 </script>
 </body>
 </html>

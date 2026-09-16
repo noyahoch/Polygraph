@@ -1,7 +1,9 @@
 # Results explorer: existing experiments, not new model runs
 
-Open [the one-page journey and main results](index.html) for the concise view:
-what came before, what each experiment asked, and what it found.
+Open [the Hebrew visual summary](index.html): a short experiment journey,
+a diagram explaining ensemble versus layer stacking, all seven current
+methods with per-seed and recorded mean-AUROC views, and the historical
+non-graph baselines in a clearly separate experiment panel.
 [Details and EDA](details.html) retains the full charts, explanations, sources
 and JSON/CSV download controls. Both pages work offline and link to each other.
 
@@ -86,6 +88,9 @@ python3 -B -m unittest \
 ```
 
 The renderer writes both `index.html` and `details.html`; keep them together.
+The summary's 17/27 and 7/17/27 mean-AUROC values are copied from the completed
+Slurm report's method statistics. They are summaries, not additional ensemble
+models. No new predictions, confidence intervals or model fits are generated.
 Keep the raw bundle outside Git; the small, self-contained HTML snapshots can
 be versioned with documentation. No web fonts, chart CDNs, analytics or
 third-party requests are needed.
