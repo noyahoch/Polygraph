@@ -6,6 +6,7 @@ Scratch files are confined to a named working-directory artifact root.
 """
 from __future__ import annotations
 
+import ast
 import contextlib
 from concurrent.futures import ThreadPoolExecutor
 import copy
@@ -50,6 +51,10 @@ class MockScheduler:
         return self.external
 
 
+class GuardianPaused(BaseException):
+    """Stops a real guard/stage loop at its first sleep without being caught as an Exception."""
+
+
 class FinalSlurmTests(unittest.TestCase):
     def setUp(self):
         parent = Path(os.environ.get("POLYGRAPH_TEST_ARTIFACT_ROOT", "work/final-comparison-ops-tests")).resolve()
@@ -82,9 +87,8 @@ class FinalSlurmTests(unittest.TestCase):
             "gpu_budget_minutes": 1000, "cpu_budget_minutes": 10000,
             "external_gpu_minutes": 0, "external_cpu_minutes": 0,
             "submission_grace_minutes": 5, "guardian_grace_minutes": 5,
-            "test_selectors": [], "evaluation_files": [
-                "complete.json", "report.json", "scores.npz", "bootstrap.json", "REPORT.md", "REPORT.he.md",
-            ], "campaign_binding": None, "preflight": None,
+            "test_selectors": [], "evaluation_files": sorted(ops.EVALUATION_FILES),
+            "campaign_binding": None, "preflight": None,
         }
         root = Path(self.config["root"])
         ops.atomic_json(root / "role_map.json", {"original_test_access": False, "roles": "synthetic identity only"})
@@ -528,6 +532,119 @@ class FinalSlurmTests(unittest.TestCase):
         ops._freeze_phases(frozen, self.authorization, jobs, statuses)
         self.assertFalse((ops._control(frozen) / "manifests/phases").exists()
                          and any((ops._control(frozen) / "manifests/phases").glob("*.json")))
+
+    def test_evaluation_inventory_matches_what_evaluate_writes(self):
+        tree = ast.parse((Path(ops.__file__).parent / "evaluate.py").read_text())
+        written = next(ast.literal_eval(node.value) for node in tree.body if isinstance(node, ast.Assign)
+                       and any(getattr(target, "id", None) == "ARTIFACTS" for target in node.targets))
+        self.assertEqual(set(ops.EVALUATION_FILES), written | {"complete.json"})
+        for files in (["complete.json", "report.json", "scores.npz"],
+                      sorted(ops.EVALUATION_FILES - {"REPORT_HE.md"}) + ["REPORT.he.md"]):
+            with self.subTest(files=files), self.assertRaisesRegex(ops.PlanError, "evaluation inventory"):
+                ops.build_plan({**self.config, "evaluation_files": files}, now=self.now)
+
+    def test_frozen_workflow_reports_the_earliest_missed_cutoff(self):
+        frozen = json.loads(ops.json_bytes(self.plan))
+        self.assertEqual(list(frozen["config"]["deadlines"]), ["base", "evaluation", "predictions"])
+        states = {name: "PENDING" for name in ops.ORDER if name not in ops.GUARDS}
+        result = ops.guardian_decision(frozen, states, now=self.now + dt.timedelta(minutes=120),
+                                      launch={"status": "submitted"})
+        self.assertEqual(result["reason"], "base_deadline")
+
+    def test_full_benchmark_lifecycle_through_the_frozen_sorted_workflow(self):
+        # Every guard/stage process loads control/workflow.json (sorted keys), so the whole
+        # benchmark DAG is driven through the real CLI entry point with that frozen plan.
+        jobs = self.submit()["job_ids"]
+        control = ops._control(self.plan)
+        workflow, approval = control / "workflow.json", control / "authorization.json"
+        frozen = json.loads(workflow.read_text())
+        self.assertEqual(frozen, self.plan)
+        self.assertNotEqual(list(frozen["stages"]), list(frozen["order"]))
+        self.assertEqual(ops.digest(frozen), ops.digest(self.plan))
+        self.assertEqual(ops.recorded_jobs(frozen, ops.digest(self.authorization)), jobs)
+        for name in ops.ORDER:
+            self.assertEqual(ops.sbatch_command(frozen, name, jobs, ops.digest(self.authorization)),
+                             self.scheduler.submissions[list(ops.ORDER).index(name)])
+        argv = ["run-stage", "--workflow", str(workflow), "--sha256", ops.digest(self.plan),
+                "--authorization", str(approval), "--authorization-sha256", ops.digest(self.authorization)]
+        snapshot = self.scheduler.snapshot
+        snapshot[jobs["guardian"]] = {"state": "RUNNING", "exit_code": "0:0"}
+        snapshot[jobs["failure_guard"]] = {"state": "PENDING", "exit_code": "0:0"}
+        executed = []
+        evidence = self.evidence(frozen)
+        original_verify = ops.verify_release
+
+        def run_command(command, cwd, environment, stop_at):
+            executed.append(command)
+            return 0
+
+        def pause(_seconds):
+            raise GuardianPaused()
+
+        def main(stage, job, **extra):
+            with self.env(job, **extra):
+                return ops.main([*argv, "--stage", stage], scheduler=self.scheduler)
+
+        def guardian_cycle():
+            with self.assertRaises(GuardianPaused):
+                main("guardian", jobs["guardian"])
+            beat = json.loads((control / "manifests/guardian.json").read_text())
+            self.assertEqual(beat["status"], "watching")
+
+        def run_task(stage, index):
+            row, job = frozen["stages"][stage], jobs[stage]
+            extra = {"SLURM_GPUS": "1"} if row["gpu"] else {}
+            if len(row["tasks"]) > 1:
+                extra.update(SLURM_ARRAY_JOB_ID=job, SLURM_ARRAY_TASK_ID=str(index))
+                return main(stage, str(int(job) + 1000 + index), **extra), f"{job}_{index}"
+            return main(stage, job, **extra), job
+
+        phase_of = {name: phase for phase, group in ops.PHASES.items() for name in group}
+        with (patch.object(ops, "verify_release", lambda plan, executing=False: original_verify(plan)),
+              patch.object(ops, "_stage_environment", return_value=({}, {})),
+              patch.object(ops, "_run_command", side_effect=run_command),
+              patch.object(ops, "_allocated_audit", return_value=evidence),
+              patch.object(ops.time, "sleep", side_effect=pause)):
+            guardian_cycle()
+            previous = None
+            for stage in [name for name in ops.ORDER if name not in ops.GUARDS]:
+                phase = phase_of[stage]
+                if phase != previous and previous is not None:
+                    # The first stage of a new phase must wait until the guardian freezes the last one.
+                    with self.subTest(blocked=stage), self.assertRaises(GuardianPaused):
+                        run_task(stage, 0)
+                    self.assertFalse(any((control / "job_work").glob(stage + "_*")))
+                    guardian_cycle()
+                    self.assertTrue((control / "manifests/phases" / (previous + ".json")).is_file())
+                previous = phase
+                for index, task in enumerate(frozen["stages"][stage]["tasks"]):
+                    before = len(executed)
+                    code, key = run_task(stage, index)
+                    self.assertEqual(code, 0)
+                    self.assertEqual(executed[before:], task["commands"])
+                    self.assertEqual(task, self.plan["stages"][stage]["tasks"][index])
+                    for field in ("family", "seed", "arm"):
+                        if field in task:
+                            self.assertIn(str(task[field]), task["commands"][0])
+                    snapshot[key] = {"state": "COMPLETED", "exit_code": "0:0"}
+            self.assertEqual(len(executed), sum(len(task["commands"]) for row in self.plan["stages"].values()
+                                                for task in row["tasks"]))
+            self.assertEqual(main("guardian", jobs["guardian"]), 0)
+            phases = control / "manifests/phases"
+            self.assertEqual({path.stem for path in phases.glob("*.json")}, set(ops.PHASES))
+            chain = None
+            for phase in ops.PHASES:
+                value = json.loads((phases / (phase + ".json")).read_text())
+                self.assertEqual(value["predecessor_sha256"], chain)
+                chain = ops.file_sha256(phases / (phase + ".json"))
+            snapshot[jobs["guardian"]] = {"state": "COMPLETED", "exit_code": "0:0"}
+            snapshot[jobs["failure_guard"]] = {"state": "RUNNING", "exit_code": "0:0"}
+            self.assertEqual(main("failure_guard", jobs["failure_guard"]), 0)
+        terminal = json.loads((control / "manifests/terminal.json").read_text())
+        self.assertTrue(terminal["complete"])
+        self.assertEqual(terminal["publisher"], "failure_guard")
+        self.assertEqual(self.scheduler.cancellations, [])
+        self.assertEqual(len(self.scheduler.submissions), len(ops.ORDER))
 
     def test_guardian_needs_all_25_outputs_not_a_bare_success_marker(self):
         statuses = {name: "COMPLETED" for name in ops.ORDER if name not in ops.GUARDS}

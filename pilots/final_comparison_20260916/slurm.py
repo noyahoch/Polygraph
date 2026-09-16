@@ -80,6 +80,13 @@ REQUIRED_SOURCE = {
     "pilots/topology_20260910/slurm/imports.py",
 }
 MINIMUM_EVALUATION_FILES = {"complete.json", "report.json", "scores.npz"}
+# Mirrors evaluate.ARTIFACTS | {"complete.json"} (import-light). evaluate's complete.json binds exactly
+# these names, so any other declared inventory could only fail at the final allocated audit.
+EVALUATION_FILES = frozenset({
+    "scores.npz", "risk_coverage.npz", "bootstrap_source_counts.npz", "bootstrap_draws.npz",
+    "bootstrap.json", "per_seed_metrics.csv", "method_summary.csv", "primary_contrasts.csv",
+    "secondary_contrasts.csv", "conditions.csv", "inference_cost.csv",
+    "report.json", "REPORT.md", "REPORT_HE.md", "complete.json"})
 RESOURCE_CLASS = {
     "account": "gpu-students", "gpu_partition": "studentbatch",
     "cpu_partition": "cpu-killable", "gpu_constraint": "geforce_rtx_2080",
@@ -214,7 +221,7 @@ def _config(config):
                 or value["caps"]["failure_guard"] > 30):
             raise PlanError("Preflight is bounded: one GPU <=30min, CPU validation <=60min, guards <=180/30min")
     else:
-        if selectors or not MINIMUM_EVALUATION_FILES <= set(files):
+        if selectors or not MINIMUM_EVALUATION_FILES <= set(files) or set(files) != EVALUATION_FILES:
             raise PlanError("Scientific launch requires the full declared evaluation inventory, not more tests")
         binding = value["campaign_binding"]
         if not isinstance(binding, dict) or set(binding) != {"campaign_sha256", "roles_sha256", "reuse_sha256"}:
@@ -885,7 +892,8 @@ def guardian_decision(plan, states, evidence=None, *, now=None, launch=None):
         if launch.get("status") == "submitted" and evidence_is_complete(plan, evidence):
             return {"status": "complete", "reason": "all_bound_outputs_complete", "evidence": evidence}
         return {"status": "incomplete", "reason": "outputs_unverified"}
-    for deadline, cutoff in plan["config"]["deadlines"].items():
+    # Frozen workflows list deadlines alphabetically; report the earliest missed cutoff.
+    for deadline, cutoff in sorted(plan["config"]["deadlines"].items(), key=lambda item: timestamp(item[1])):
         required = [name for name, row in plan["stages"].items() if row["cutoff"] == deadline and name not in GUARDS]
         if now >= timestamp(cutoff) and any(states.get(name) != "COMPLETED" for name in required):
             return {"status": "incomplete", "reason": deadline + "_deadline"}
