@@ -29,6 +29,9 @@ experiment. The original seed-7 late diagnostic remains a separate historical re
 The [implementation validation record](docs/experiments/layer_ensemble_replication/VALIDATION.md)
 documents the Slurm-only synthetic tests and their limits; it is not a new
 scientific result.
+The [September 16 scientific launch record](docs/experiments/layer_ensemble_replication/RUN_20260916.md)
+records the separately authorized seed-17/27 run, frozen limits and durable
+Slurm job IDs.
 
 ## Layout
 
