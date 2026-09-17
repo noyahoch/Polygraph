@@ -49,6 +49,12 @@ RESUME_KEYS = {"parent_control_root", "parent_workflow_sha256", "parent_authoriz
                "parent_terminal_sha256", "parent_receipts_sha256", "parent_phases", "execution_sha256",
                "evaluation_gate_sha256", "reason"}
 FROZEN_PARENT_PHASES = ("preparation", "bases", "meta", "gate")
+# certify: CPU-only certification of a resume whose science finished but whose guard audit failed.
+SCIENCE_STAGES = ("cpu_validation", "dev_gpu", "analysis")
+CERTIFY_ORDER = (*base.GUARDS, "output_check")
+CERTIFY_PHASES = {"evaluation": ["output_check"]}
+CERTIFY_KEYS = {"resume_control_root", "resume_workflow_sha256", "resume_authorization_sha256",
+                "resume_terminal_sha256", "resume_receipts_sha256", "science_jobs", "reason"}
 SHARED = ("run_id", "root", "pilot_root", "replication_root", "cache", "data_root", "python",
           "environment", "resources", "campaign_binding", "preflight", "evaluation_files",
           "submission_grace_minutes", "guardian_grace_minutes")
@@ -69,6 +75,13 @@ def _comment(plan, stage):
 
 
 def _config(config):
+    mode = config.get("mode") if isinstance(config, dict) else None
+    if mode == "certify":
+        return _certify_config(config)
+    return _resume_config(config)
+
+
+def _resume_config(config):
     fields = {
         "mode", "approval_id", "run_id", "root", "control_root", "code_root", "pilot_root",
         "replication_root", "cache", "data_root", "python", "source_sha256", "environment",
@@ -80,6 +93,58 @@ def _config(config):
     if not isinstance(config, dict) or set(config) != fields or config.get("mode") != "resume":
         raise PlanError("Resume configuration fields must exactly match the resume contract")
     value = copy.deepcopy(config)
+    _validate_common(value, RESUME_ORDER)
+    integer(value["max_concurrent_gpus"], "max_concurrent_gpus", maximum=6)
+    if value["caps"]["dev_gpu"] > 180 or value["caps"]["cpu_validation"] > 60:
+        raise PlanError("Resume caps are bounded: dev_gpu <=180min, CPU validation <=60min")
+    selectors = value["test_selectors"]
+    if (not isinstance(selectors, list) or len(selectors) != len(set(selectors))
+            or SCIENCE + "test_resume_slurm" not in selectors or SCIENCE + "test_slurm" not in selectors):
+        raise PlanError("Resume validation must run the slurm and resume test modules")
+    for selector in selectors:
+        if (not isinstance(selector, str) or not selector.startswith(SCIENCE + "test_")
+                or selector.replace(".", "/") + ".py" not in value["source_sha256"]):
+            raise PlanError("Synthetic validation selectors must be source-bound test modules")
+    return value
+
+
+def _certify_config(config):
+    fields = {
+        "mode", "approval_id", "run_id", "root", "control_root", "code_root", "pilot_root",
+        "replication_root", "cache", "data_root", "python", "source_sha256", "environment",
+        "resources", "caps", "deadlines", "max_concurrent_gpus", "external_reserved_gpus",
+        "gpu_budget_minutes", "cpu_budget_minutes", "external_gpu_minutes", "external_cpu_minutes",
+        "submission_grace_minutes", "guardian_grace_minutes", "campaign_binding", "preflight",
+        "test_selectors", "evaluation_files", "resume", "certify",
+    }
+    if not isinstance(config, dict) or set(config) != fields or config.get("mode") != "certify":
+        raise PlanError("Certify configuration fields must exactly match the certify contract")
+    value = copy.deepcopy(config)
+    _validate_common(value, CERTIFY_ORDER)
+    if value["test_selectors"] != [] or value["max_concurrent_gpus"] != 1 or value["external_reserved_gpus"] != 0:
+        raise PlanError("Certification runs no tests and reserves no GPU")
+    if value["caps"]["output_check"] > 240:
+        raise PlanError("Certification output check is bounded to 240 minutes")
+    certify = value["certify"]
+    if not isinstance(certify, dict) or set(certify) != CERTIFY_KEYS:
+        raise PlanError("Bind the resumed workflow, authorization, terminal, receipts and science jobs")
+    absolute(certify["resume_control_root"], "resume control root")
+    for other in (certify["resume_control_root"], value["resume"]["parent_control_root"]):
+        if not legacy._separate(Path(other), Path(value["control_root"])):
+            raise PlanError("Certification needs its own control namespace")
+    for name in ("resume_workflow_sha256", "resume_authorization_sha256", "resume_terminal_sha256",
+                 "resume_receipts_sha256"):
+        _sha(certify[name], name)
+    jobs = certify["science_jobs"]
+    if (not isinstance(jobs, dict) or set(jobs) != set(SCIENCE_STAGES)
+            or any(not isinstance(job, str) or not job.isdigit() for job in jobs.values())):
+        raise PlanError("Name the resumed allocations that produced the science outputs")
+    if not isinstance(certify["reason"], str) or not 10 <= len(certify["reason"]) <= 1000:
+        raise PlanError("A disclosed certification reason is required")
+    return value
+
+
+def _validate_common(value, order):
     for name in ("approval_id", "run_id"):
         if not isinstance(value[name], str) or not SAFE.fullmatch(value[name]):
             raise PlanError("An explicit safe and unique " + name + " is required")
@@ -125,25 +190,15 @@ def _config(config):
         integer(value[name], name, minimum=0, maximum=10**9)
     integer(value["submission_grace_minutes"], "submission_grace_minutes", maximum=10)
     integer(value["guardian_grace_minutes"], "guardian_grace_minutes", maximum=30)
-    if not isinstance(value["caps"], dict) or set(value["caps"]) != set(RESUME_ORDER):
-        raise PlanError("Every declared resume stage needs its own explicit allocation cap")
+    if not isinstance(value["caps"], dict) or set(value["caps"]) != set(order):
+        raise PlanError("Every declared stage needs its own explicit allocation cap")
     for name, minutes in value["caps"].items():
         integer(minutes, name + " minutes", maximum=7200 if name in GUARDS else 4320)
-    if value["caps"]["dev_gpu"] > 180 or value["caps"]["cpu_validation"] > 60:
-        raise PlanError("Resume caps are bounded: dev_gpu <=180min, CPU validation <=60min")
     deadlines = value["deadlines"]
     if not isinstance(deadlines, dict) or set(deadlines) != {"predictions", "evaluation"}:
         raise PlanError("Resume keeps exactly the parent's prediction/evaluation cutoffs")
     if timestamp(deadlines["predictions"]) >= timestamp(deadlines["evaluation"]):
         raise PlanError("Cutoffs must be strictly ordered")
-    selectors = value["test_selectors"]
-    if (not isinstance(selectors, list) or len(selectors) != len(set(selectors))
-            or SCIENCE + "test_resume_slurm" not in selectors or SCIENCE + "test_slurm" not in selectors):
-        raise PlanError("Resume validation must run the slurm and resume test modules")
-    for selector in selectors:
-        if (not isinstance(selector, str) or not selector.startswith(SCIENCE + "test_")
-                or selector.replace(".", "/") + ".py" not in inventory):
-            raise PlanError("Synthetic validation selectors must be source-bound test modules")
     if (not isinstance(value["evaluation_files"], list)
             or len(value["evaluation_files"]) != len(set(value["evaluation_files"]))
             or set(value["evaluation_files"]) != EVALUATION_FILES):
@@ -170,7 +225,6 @@ def _config(config):
         _sha(sha, name)
     if not isinstance(resume["reason"], str) or not 10 <= len(resume["reason"]) <= 1000:
         raise PlanError("A disclosed resume reason is required")
-    return value
 
 
 def _stages(config):
@@ -186,10 +240,24 @@ def _stages(config):
                 "cpus": resources["gpu_cpus"] if gpu else resources["cpu_cpus"],
                 "memory_mb": resources["gpu_memory_mb"] if gpu else resources["cpu_memory_mb"]}
 
-    stages = {
+    guards = {
         "guardian": stage([{"key": "guardian", "commands": []}], cutoff="evaluation"),
         "failure_guard": stage([{"key": "failure_guard", "commands": []}], cutoff="evaluation",
                                dependencies=("guardian",), dependency_type="afterany"),
+    }
+    for name in GUARDS:
+        guards[name]["cpus"] = 1
+    if config["mode"] == "certify":
+        # CPU-only: evaluate() on a completed root re-collects every input and re-derives the
+        # stored scores; it never rewrites outputs. The guards run the full completion audit.
+        stages = {**guards, "output_check": stage([{"key": "output_check", "commands": [
+            command("evaluate", "--root", root, "--out", root + "/evaluation")]}],
+            cutoff="evaluation", dependencies=("guardian",), dependency_type="after")}
+        for name in CERTIFY_ORDER:
+            stages[name]["minutes"] = config["caps"][name]
+        return {name: stages[name] for name in CERTIFY_ORDER}
+    stages = {
+        **guards,
         "cpu_validation": stage([{"key": "cpu_validation", "commands": [
             [python, "-B", "-u", "-m", "unittest", *config["test_selectors"]]]}],
             cutoff="predictions", dependencies=("guardian",), dependency_type="after"),
@@ -206,8 +274,6 @@ def _stages(config):
             command("evaluate", "--root", root, "--out", root + "/evaluation")]}],
             cutoff="evaluation", dependencies=("dev_gpu",)),
     }
-    for name in GUARDS:
-        stages[name]["cpus"] = 1
     for name in RESUME_ORDER:
         stages[name]["minutes"] = config["caps"][name]
     return {name: stages[name] for name in RESUME_ORDER}
@@ -215,6 +281,11 @@ def _stages(config):
 
 def build_plan(config, *, now=None, check_time=True):
     plan = _base_build_plan(config, now=now, check_time=check_time)
+    if plan["mode"] == "certify":
+        plan["phases"] = copy.deepcopy(CERTIFY_PHASES)
+        plan["certify"] = {"certified_resume": plan["config"]["certify"], "parent": plan["config"]["resume"],
+                           "new_gpu_minutes": 0, "refits": 0, "new_predictions": 0}
+        return plan
     plan["phases"] = copy.deepcopy(RESUME_PHASES)
     plan["resume"] = {"rerun_stages": list(RERUN), "parent": plan["config"]["resume"],
                       "refits": 0, "new_meta_heads": 0}
@@ -333,7 +404,53 @@ def resume_record(plan, authorization):
     }
 
 
-def verify_launch_inputs(plan):
+def _certified(plan):
+    """Load and re-validate the resume whose outputs are being certified."""
+    certify = plan["config"]["certify"]
+    control = Path(certify["resume_control_root"])
+    resumed = _bound_json(control / "workflow.json", certify["resume_workflow_sha256"])
+    approval = _bound_json(control / "authorization.json", certify["resume_authorization_sha256"])
+    if resumed.get("mode") != "resume" or _control(resumed) != control:
+        raise PlanError("Only a resume workflow in its own control root can be certified")
+    validate_plan(resumed, check_time=False)
+    validate_authorization(resumed, approval, current=False)
+    if resumed["config"]["resume"] != plan["config"]["resume"]:
+        raise PlanError("Certification must bind the same parent as the certified resume")
+    terminal = _bound_json(control / "manifests/terminal.json", certify["resume_terminal_sha256"])
+    if (terminal.get("complete") is not False or terminal.get("run_id") != resumed["run_id"]
+            or terminal.get("workflow_sha256") != certify["resume_workflow_sha256"]
+            or terminal.get("authorization_sha256") != certify["resume_authorization_sha256"]):
+        raise PlanError("Only a terminally incomplete resume of this workflow can be certified")
+    jobs = recorded_jobs(resumed, digest(approval))
+    if (set(jobs) != set(resumed["order"])
+            or {name: jobs[name] for name in SCIENCE_STAGES} != certify["science_jobs"]):
+        raise PlanError("The certified resume did not bind the declared science allocations")
+    files = _verify_execution_receipts(resumed, approval, jobs, list(SCIENCE_STAGES))
+    if digest(files) != certify["resume_receipts_sha256"]:
+        raise PlanError("Completed resume task receipts changed")
+    record = Path(resumed["config"]["root"]) / "resumes" / (resumed["config"]["approval_id"] + ".json")
+    if json.loads(record.read_text()) != resume_record(resumed, approval):
+        raise PlanError("The resume disclosure record changed")
+    return resumed, approval, terminal, files
+
+
+def certify_binding(resume_control_root, reason):
+    """Compute the certification binding for a failed-audit resume (metadata/hash reads only)."""
+    control = Path(resume_control_root)
+    resumed = json.loads((control / "workflow.json").read_text())
+    approval = json.loads((control / "authorization.json").read_text())
+    jobs = recorded_jobs(resumed, digest(approval))
+    probe = {"config": {"resume": resumed["config"]["resume"], "certify": {
+        "resume_control_root": str(control), "resume_workflow_sha256": file_sha256(control / "workflow.json"),
+        "resume_authorization_sha256": file_sha256(control / "authorization.json"),
+        "resume_terminal_sha256": file_sha256(control / "manifests/terminal.json"),
+        "resume_receipts_sha256": digest(_verify_execution_receipts(resumed, approval, jobs, list(SCIENCE_STAGES))),
+        "science_jobs": {name: jobs[name] for name in SCIENCE_STAGES}, "reason": reason}}}
+    _certified(probe)
+    return probe["config"]["certify"]
+
+
+def _verify_parent_bindings(plan):
     config = plan["config"]
     resume = config["resume"]
     parent, approval, _ = _parent(plan)
@@ -343,16 +460,6 @@ def verify_launch_inputs(plan):
         raise PlanError("A resume must keep the parent's scientific identity and resources")
     if config["deadlines"] != {name: parent_config["deadlines"][name] for name in ("predictions", "evaluation")}:
         raise PlanError("A resume can never extend or change the parent's cutoffs")
-    if (config["external_gpu_minutes"] != parent["resource_claims"]["workflow_gpu_minutes"]
-            or config["external_cpu_minutes"] != parent["resource_claims"]["workflow_cpu_minutes"]):
-        raise PlanError("The parent's full reservation must count against the resume budget")
-    inventory, parent_inventory = config["source_sha256"], parent_config["source_sha256"]
-    if (any(inventory.get(name) != sha for name, sha in parent_inventory.items())
-            or not set(inventory) - set(parent_inventory) <= RESUME_FILES):
-        raise PlanError("A resume may only add its own orchestration files to the parent release")
-    for name in RERUN:
-        if plan["stages"][name]["tasks"] != parent["stages"][name]["tasks"]:
-            raise PlanError("Resumed tasks must be exactly the parent's declared tasks: " + name)
     root = Path(config["root"])
     if (file_sha256(root / "execution.json") != resume["execution_sha256"]
             or json.loads((root / "execution.json").read_text()) != base.execution_record(parent, approval)):
@@ -365,6 +472,35 @@ def verify_launch_inputs(plan):
         raise PlanError("Completed parent task receipts changed")
     if _parent_phases(parent) != resume["parent_phases"]:
         raise PlanError("Parent phase freezes changed")
+    return parent, approval
+
+
+def verify_launch_inputs(plan):
+    config = plan["config"]
+    if config["mode"] == "certify":
+        parent, _ = _verify_parent_bindings(plan)
+        resumed, _, _, _ = _certified(plan)
+        claims = resumed["resource_claims"]
+        if (config["external_gpu_minutes"] != claims["workflow_gpu_minutes"] + claims["external_gpu_minutes"]
+                or config["external_cpu_minutes"] != claims["workflow_cpu_minutes"] + claims["external_cpu_minutes"]):
+            raise PlanError("The parent and resume reservations must count against the certification budget")
+        inventory, previous = config["source_sha256"], resumed["config"]["source_sha256"]
+        if (set(inventory) != set(previous)
+                or any(inventory[name] != sha for name, sha in previous.items() if name not in RESUME_FILES)
+                or any(inventory[name] != sha for name, sha in parent["config"]["source_sha256"].items())):
+            raise PlanError("Certification may only change the resume orchestration files")
+        return
+    parent, _ = _verify_parent_bindings(plan)
+    if (config["external_gpu_minutes"] != parent["resource_claims"]["workflow_gpu_minutes"]
+            or config["external_cpu_minutes"] != parent["resource_claims"]["workflow_cpu_minutes"]):
+        raise PlanError("The parent's full reservation must count against the resume budget")
+    inventory, parent_inventory = config["source_sha256"], parent["config"]["source_sha256"]
+    if (any(inventory.get(name) != sha for name, sha in parent_inventory.items())
+            or not set(inventory) - set(parent_inventory) <= RESUME_FILES):
+        raise PlanError("A resume may only add its own orchestration files to the parent release")
+    for name in RERUN:
+        if plan["stages"][name]["tasks"] != parent["stages"][name]["tasks"]:
+            raise PlanError("Resumed tasks must be exactly the parent's declared tasks: " + name)
 
 
 def _refuse_existing_results(plan):
@@ -378,12 +514,35 @@ def submit_plan(plan, authorization, scheduler=None, *, now=None):
     validate_plan(plan, authorization, now=now)
     verify_release(plan)
     verify_launch_inputs(plan)
+    if plan["mode"] == "certify":
+        _frozen_json(_control(plan) / "certification.json", certification_record(plan, authorization))
+        return _base_submit_plan(plan, authorization, scheduler, now=now)
     _refuse_existing_results(plan)
     _frozen_json(_record_path(plan), resume_record(plan, authorization))
     return _base_submit_plan(plan, authorization, scheduler, now=now)
 
 
+def certification_record(plan, authorization):
+    certify = plan["config"]["certify"]
+    return {
+        "schema_version": 1, "scope_id": SCOPE, "run_id": plan["run_id"], "mode": "certify",
+        "approval_id": plan["approval_id"], "workflow_sha256": digest(plan),
+        "authorization_sha256": digest(authorization), "release_sha256": plan["release_sha256"],
+        "certified_resume": certify, "parent": plan["config"]["resume"],
+        "science_outputs_produced_by": certify["science_jobs"],
+        "new_gpu_minutes": 0, "refits": 0, "new_predictions": 0, "outputs_rewritten": False,
+        "statement": ("The evaluation outputs were produced by resume jobs "
+                      + ", ".join(certify["science_jobs"][name] for name in SCIENCE_STAGES)
+                      + "; that resume's guard audit failed on an orchestration bug, so this CPU-only "
+                        "workflow re-ran the full completion audit without rewriting any result."),
+    }
+
+
 def required_evidence_paths(plan):
+    if plan["mode"] == "certify":
+        resumed = json.loads((Path(plan["config"]["certify"]["resume_control_root"]) / "workflow.json").read_text())
+        return _base_required_evidence_paths(plan) | {
+            "resumes/" + resumed["config"]["approval_id"] + ".json"}
     return _base_required_evidence_paths(plan) | {
         str(_record_path(plan).relative_to(plan["config"]["root"]))}
 
@@ -392,12 +551,28 @@ def evidence_is_complete(plan, evidence):
     return (_base_evidence_is_complete(plan, evidence)
             and isinstance(evidence.get("resume_parent"), dict)
             and evidence["resume_parent"].get("receipts_sha256") == plan["config"]["resume"]["parent_receipts_sha256"]
-            and evidence["resume_parent"].get("phases") == plan["config"]["resume"]["parent_phases"])
+            and evidence["resume_parent"].get("phases") == plan["config"]["resume"]["parent_phases"]
+            and (plan["mode"] != "certify" or (
+                isinstance(evidence.get("certified_resume"), dict)
+                and evidence["certified_resume"].get("receipts_sha256")
+                == plan["config"]["certify"]["resume_receipts_sha256"]
+                and evidence["certified_resume"].get("science_jobs")
+                == plan["config"]["certify"]["science_jobs"])))
 
 
 def completion_evidence(plan, authorization):
     parent, approval, _ = _parent(plan)
-    if json.loads(_record_path(plan).read_text()) != resume_record(plan, authorization):
+    certified = None
+    if plan["mode"] == "certify":
+        if json.loads((_control(plan) / "certification.json").read_text()) != certification_record(plan, authorization):
+            raise PlanError("The certification record changed")
+        resumed, _, terminal, files = _certified(plan)
+        certified = {"workflow_sha256": plan["config"]["certify"]["resume_workflow_sha256"],
+                     "terminal_sha256": plan["config"]["certify"]["resume_terminal_sha256"],
+                     "terminal_reason": terminal.get("reason"),
+                     "science_jobs": plan["config"]["certify"]["science_jobs"],
+                     "receipt_files": files, "receipts_sha256": digest(files)}
+    elif json.loads(_record_path(plan).read_text()) != resume_record(plan, authorization):
         raise PlanError("The disclosed resume record changed")
     receipts = _parent_receipts(parent, approval)
     evidence = dict(_base_completion_evidence_unchecked(plan, authorization))
@@ -407,6 +582,8 @@ def completion_evidence(plan, authorization):
         "reused_stages": receipts["reused_stages"], "receipt_files": receipts["files"],
         "receipts_sha256": receipts["sha256"], "phases": _parent_phases(parent),
     }
+    if certified is not None:
+        evidence["certified_resume"] = certified
     if not evidence_is_complete(plan, evidence):
         raise PlanError("Independent resume completion evidence is insufficient")
     return evidence
