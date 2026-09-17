@@ -100,7 +100,12 @@ class ResumeTests(unittest.TestCase):
         command = rs.sbatch_command(self.rplan, "dev_gpu", {"cpu_validation": "5"}, "f" * 64)
         self.assertIn("pilots.final_comparison_20260916.resume_slurm", command[-1])
         self.assertIn("--array=0-5%6", command)
-        self.assertEqual(ops.sbatch_command(self.plan, "guardian", {}, "f" * 64)[-1].count("resume"), 0)
+        # Test artifact paths may themselves contain "resume" (e.g. a resume control job_work dir),
+        # so check the runner module, not the whole command string.
+        parent_runner = ops.sbatch_command(self.plan, "guardian", {}, "f" * 64)[-1]
+        self.assertIn("-m pilots.final_comparison_20260916.slurm run-stage", parent_runner)
+        self.assertNotIn("resume_slurm", parent_runner)
+        self.assertIn("-m pilots.final_comparison_20260916.resume_slurm run-stage", command[-1])
 
     def test_budget_counts_the_parent_reservation(self):
         config = dict(self.rconfig, gpu_budget_minutes=self.rplan["resource_claims"]["reserved_gpu_minutes"] - 1)
