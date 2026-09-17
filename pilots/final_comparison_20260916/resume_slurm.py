@@ -365,6 +365,11 @@ def verify_launch_inputs(plan):
         raise PlanError("Completed parent task receipts changed")
     if _parent_phases(parent) != resume["parent_phases"]:
         raise PlanError("Parent phase freezes changed")
+
+
+def _refuse_existing_results(plan):
+    """Submit-time only: completion evidence re-runs verify_launch_inputs after analysis wrote results."""
+    root = Path(plan["config"]["root"])
     if (root / "evaluation/report.json").exists() or (root / "evaluation/complete.json").exists():
         raise PlanError("Evaluation outputs already exist; a resume cannot overwrite results")
 
@@ -373,6 +378,7 @@ def submit_plan(plan, authorization, scheduler=None, *, now=None):
     validate_plan(plan, authorization, now=now)
     verify_release(plan)
     verify_launch_inputs(plan)
+    _refuse_existing_results(plan)
     _frozen_json(_record_path(plan), resume_record(plan, authorization))
     return _base_submit_plan(plan, authorization, scheduler, now=now)
 

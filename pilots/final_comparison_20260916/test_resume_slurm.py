@@ -123,7 +123,6 @@ class ResumeTests(unittest.TestCase):
             "evaluation gate": lambda: ops.atomic_json(root / "evaluation_gate.json", {"other": 1}),
             "receipts": lambda: ops._receipt_path(self.plan, "heads", self.parent_jobs["heads"], 0).write_text("{}"),
             "phase freezes": lambda: (self.parent_control / "manifests/phases/gate.json").unlink(),
-            "cannot overwrite": lambda: ops.atomic_json(root / "evaluation/report.json", {}),
         }
         for label, mutate in cases.items():
             with self.subTest(label=label):
@@ -137,6 +136,19 @@ class ResumeTests(unittest.TestCase):
                 for path, data in snapshot.items():
                     path.write_bytes(data)
                 rs.verify_launch_inputs(self.rplan)
+
+    def test_existing_results_block_submission_but_not_completion_audit(self):
+        # Resume2 guardian 904070 failed its completion audit: verify_launch_inputs (also run by
+        # completion_evidence) refused the evaluation outputs the resumed analysis had just written.
+        root = Path(self.config["root"])
+        ops.atomic_json(root / "evaluation/report.json", {"synthetic": True})
+        frozen = json.loads(ops.json_bytes(self.rplan))
+        rs.verify_launch_inputs(frozen)
+        with self.assertRaisesRegex(ops.PlanError, "cannot overwrite"):
+            rs.submit_plan(frozen, self.rauth, self.scheduler, now=self.now)
+        self.assertEqual(self.scheduler.submissions, [])
+        self.assertFalse(rs._record_path(self.rplan).exists())
+        self.assertFalse((rs._control(self.rplan) / "manifests").exists())
 
     def test_resume_cannot_change_cutoffs_science_source_or_tasks(self):
         later = dict(self.rconfig, deadlines={
