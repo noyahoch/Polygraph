@@ -76,7 +76,9 @@ photographs.
 Use training seeds **7, 17, 27**, with a fully separate auxiliary-head/probe
 pipeline per seed and common source allocation. Each pipeline uses all its
 training rows each epoch, including the final incomplete batch, with shuffled
-training batches and no resampling to balance labels. Use FP32 computation,
+training batches and no resampling to balance labels. Use FP32 model computation
+(feature statistics and normalization may accumulate in FP64 before returning
+FP32 features),
 no dropout, no augmentation beyond the nine frozen views, no learning-rate
 schedule and no early termination based on performance. Record initialization,
 sampler/RNG state and package versions. The backbone stays in evaluation mode
@@ -132,8 +134,10 @@ only, separately for each seed's trained heads. Replace an exactly zero
 standard deviation by one. Apply this scaler unchanged to probe_val and
 evaluation. Neither class-head fitting nor normalization sees probe_val or
 evaluation labels. Keep raw feature construction separate from standardization;
-dynamics are calculated from raw logits. Scores are error probabilities from
-the selected probe; increasing score always means greater predicted error.
+dynamics are calculated from raw logits. Rank using the selected probe's raw
+error logits, which are monotonic in sigmoid probability and avoid saturation
+ties from a finite-precision sigmoid. Increasing score means greater predicted
+error; weighted training does not establish probability calibration.
 
 ## Compatibility gates and completion
 
