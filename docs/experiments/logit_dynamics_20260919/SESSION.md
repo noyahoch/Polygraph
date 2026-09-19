@@ -136,6 +136,46 @@ plus 8,100 for the three recovery reservations, total **21,933 seconds
 (6:05:33)**. This remains below the unchanged 12 cumulative GPU-hour ceiling.
 No scientific result has been used to choose this operational recovery.
 
+### Recovery submitted — September 19, 15:31:26 Israel
+
+Original predictions 910063 reached TIMEOUT at 15:24:56, using 1,819 allocated
+seconds including termination grace. Seed 7 had completed all 7,200 prediction
+records and its valid completion receipt is preserved. Original downstream
+analysis/backup 910064/910065 were cancelled. CPU-only diagnostic 910564
+confirmed that original prediction processes were gone on s-004; it ran for
+one allocated second and used no GPU.
+
+The first recovery submission was rejected before any job ID was returned:
+`allocation failure: Job dependency problem`. The old completed freeze job
+910062 was no longer a valid scheduler dependency, although accounting and the
+sealed gate confirmed its success. The rejected `predict7_retry1` intent is
+preserved. Scheduler validation succeeded after removing only that obsolete
+dependency. The replacement submit helper verifies the complete frozen gate
+and its hash; unchanged prediction commands verify it again in Slurm. Analysis
+still waits for all three new successes. No scientific setting changed.
+
+Root approved recovery configuration SHA-256
+`eae1ca980507606b495fa2aeb03f794dfd87820ca169abe1bab4c7d0d3adb7bc`
+and helper SHA-256
+`3a23fda0ba088fe585998c1e80ea5542dd8f0a41f51b23e782d1cbe2cb948d25`.
+This **supersedes the prepared v1 configuration**. Do not submit v1 or duplicate
+the following jobs, submitted at 15:31:26:
+
+| Stage | Slurm job |
+| --- | --- |
+| Seed 7 prediction verification / skip completed output | 910571 |
+| Seed 17 predictions | 910572 |
+| Seed 27 predictions | 910573 |
+| Analysis after all three succeed | 910574 |
+| Private backup after analysis succeeds | 910575 |
+
+Each prediction job retains its 45-minute cap, same scientific command and
+immutable release, with s-004 excluded. The actual-plus-reserved worst-case
+GPU budget is **21,952 seconds (6:05:52)** after including termination grace,
+within the unchanged 12-hour ceiling. Read live states and submission receipts
+from the ops folder; these IDs record submission, not completion. Completed
+models and seed-7 predictions must not be retrained or needlessly recomputed.
+
 ## Execution and completion
 
 Prepare reviewed code and a frozen source snapshot; run correctness/parity checks on Slurm; then use durable dependencies for full CLS extraction, three-seed fitting, frozen prediction, paired analysis and preservation. Failed correctness checks block dependent fitting/evaluation. Mechanical fixes may be made within the approved method; scientific changes must be documented and reconsidered before evaluation.

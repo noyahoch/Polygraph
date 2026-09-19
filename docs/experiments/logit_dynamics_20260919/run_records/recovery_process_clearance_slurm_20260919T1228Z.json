@@ -1,0 +1,24 @@
+{
+  "started_utc": "2026-09-19T12:27:18.908472+00:00",
+  "authorization": "Root approved one CPU-only one-minute Slurm process diagnostic on s-004",
+  "command": [
+    "srun",
+    "--account=gpu-students",
+    "--partition=studentbatch",
+    "--job-name=ld0919-114500-process-clearance",
+    "--nodelist=s-004",
+    "--nodes=1",
+    "--ntasks=1",
+    "--cpus-per-task=1",
+    "--mem=512",
+    "--gres=none",
+    "--immediate=5",
+    "--time=1",
+    "/usr/bin/python3",
+    "-"
+  ],
+  "returncode": 0,
+  "stdout": "{\"checked_utc\": \"2026-09-19T12:27:19.075460+00:00\", \"diagnostic_job_id\": \"910564\", \"hostname\": \"s-004\", \"original_job_id\": \"910063\", \"matching_processes\": [], \"scientific_computation\": false, \"requested_gpus\": 0}\n",
+  "stderr": "srun: You are NOT allow to srun in this partition partition was changed to studentrun\n",
+  "finished_utc": "2026-09-19T12:27:19.121065+00:00"
+}

@@ -1,0 +1,44 @@
+{
+  "checked_utc": "2026-09-19T12:28:42.277548+00:00",
+  "read_only_or_scheduler_validation_only": true,
+  "accounting": {
+    "returncode": 0,
+    "stdout": "910039|omrifahn|gpu-students|ld0919-114500-preflight|2026-09-19T11:49:58|COMPLETED|339\n910041|omrifahn|gpu-students|ld0919-114500-validation|2026-09-19T11:52:36|FAILED|52\n910046|omrifahn|gpu-students|ld0919-114500-validation_v2|2026-09-19T11:54:28|COMPLETED|24\n910058|omrifahn|gpu-students|ld0919-114500-extract|2026-09-19T11:58:38|COMPLETED|9242\n910059|omrifahn|gpu-students|ld0919-114500-fit7|2026-09-19T11:58:38|COMPLETED|1306\n910060|omrifahn|gpu-students|ld0919-114500-fit17|2026-09-19T11:58:38|COMPLETED|573\n910061|omrifahn|gpu-students|ld0919-114500-fit27|2026-09-19T11:58:38|COMPLETED|573\n910062|omrifahn|gpu-students|ld0919-114500-freeze|2026-09-19T11:58:38|COMPLETED|8\n910063|omrifahn|gpu-students|ld0919-114500-predictions|2026-09-19T11:58:38|TIMEOUT|1819\n910564|omrifahn|gpu-students|ld0919-114500-process-clearance|2026-09-19T15:27:18|COMPLETED|1",
+    "stderr": ""
+  },
+  "queue": {
+    "returncode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "validation_only": {
+    "command": [
+      "sbatch",
+      "--test-only",
+      "--account=gpu-students",
+      "--partition=studentbatch",
+      "--job-name=ld0919-114500-predict7_retry1",
+      "--time=45",
+      "--nodes=1",
+      "--ntasks=1",
+      "--cpus-per-task=6",
+      "--mem=32000",
+      "--output=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/predict7_retry1_%j.out",
+      "--error=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/predict7_retry1_%j.err",
+      "--chdir=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370",
+      "--kill-on-invalid-dep=yes",
+      "--gpus=1",
+      "--constraint=geforce_rtx_2080",
+      "--exclude=s-004",
+      "--dependency=afterok:910062",
+      "--wrap",
+      "exec /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python -B /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370/ops/stage_runner.py --config /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/config_prediction_recovery_v1.json --config-sha256 9d28852754f236f3820a015d6478e94bf1eb682a41e89fc19c42c8965080d181 --stage predict7_retry1"
+    ],
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "allocation failure: Job dependency problem\n"
+  },
+  "retry_files": [
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/submissions/predict7_retry1.intent.json"
+  ]
+}

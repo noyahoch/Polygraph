@@ -1,0 +1,11 @@
+{
+  "prepared_utc": "2026-09-19T12:29:34.635136+00:00",
+  "configuration_path": "work/logit-dynamics-20260919/ops/config_prediction_recovery_v2.json",
+  "configuration_sha256": "eae1ca980507606b495fa2aeb03f794dfd87820ca169abe1bab4c7d0d3adb7bc",
+  "submit_helper_path": "work/logit-dynamics-20260919/ops/submit_recovery_v2.py",
+  "submit_helper_sha256": "3a23fda0ba088fe585998c1e80ea5542dd8f0a41f51b23e782d1cbe2cb948d25",
+  "status": "prepared_not_submitted_pending_root_hash_approval",
+  "prior_scheduler_rejection": "allocation failure: Job dependency problem",
+  "scientific_release_and_commands_unchanged": true,
+  "worst_case_aggregate_gpu_seconds": 21952
+}
