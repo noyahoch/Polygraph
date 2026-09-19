@@ -1,0 +1,121 @@
+{
+  "checked_utc": "2026-09-19T12:44:05.734070+00:00",
+  "all_original_and_recovery_gpu_jobs": {
+    "extract": {
+      "job_id": "910058",
+      "allocation": "billing=14,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1",
+      "elapsed_seconds": "9242",
+      "end": "2026-09-19T14:32:40",
+      "exit_code": "0:0",
+      "name": "ld0919-114500-extract",
+      "start": "2026-09-19T11:58:38",
+      "state": "COMPLETED",
+      "user": "omrifahn"
+    },
+    "fit17": {
+      "job_id": "910060",
+      "allocation": "billing=14,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1",
+      "elapsed_seconds": "573",
+      "end": "2026-09-19T14:42:13",
+      "exit_code": "0:0",
+      "name": "ld0919-114500-fit17",
+      "start": "2026-09-19T14:32:40",
+      "state": "COMPLETED",
+      "user": "omrifahn"
+    },
+    "fit27": {
+      "job_id": "910061",
+      "allocation": "billing=14,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1",
+      "elapsed_seconds": "573",
+      "end": "2026-09-19T14:42:13",
+      "exit_code": "0:0",
+      "name": "ld0919-114500-fit27",
+      "start": "2026-09-19T14:32:40",
+      "state": "COMPLETED",
+      "user": "omrifahn"
+    },
+    "fit7": {
+      "job_id": "910059",
+      "allocation": "billing=14,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1",
+      "elapsed_seconds": "1306",
+      "end": "2026-09-19T14:54:26",
+      "exit_code": "0:0",
+      "name": "ld0919-114500-fit7",
+      "start": "2026-09-19T14:32:40",
+      "state": "COMPLETED",
+      "user": "omrifahn"
+    },
+    "predict17_retry2": {
+      "job_id": "910572",
+      "allocation": "billing=14,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1",
+      "elapsed_seconds": "179",
+      "end": "2026-09-19T15:34:26",
+      "exit_code": "0:0",
+      "name": "ld0919-114500-predict17_retry2",
+      "start": "2026-09-19T15:31:27",
+      "state": "COMPLETED",
+      "user": "omrifahn"
+    },
+    "predict27_retry2": {
+      "job_id": "910573",
+      "allocation": "billing=14,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1",
+      "elapsed_seconds": "179",
+      "end": "2026-09-19T15:34:26",
+      "exit_code": "0:0",
+      "name": "ld0919-114500-predict27_retry2",
+      "start": "2026-09-19T15:31:27",
+      "state": "COMPLETED",
+      "user": "omrifahn"
+    },
+    "predict7_retry2": {
+      "job_id": "910571",
+      "allocation": "billing=14,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1",
+      "elapsed_seconds": "166",
+      "end": "2026-09-19T15:34:13",
+      "exit_code": "0:0",
+      "name": "ld0919-114500-predict7_retry2",
+      "start": "2026-09-19T15:31:27",
+      "state": "COMPLETED",
+      "user": "omrifahn"
+    },
+    "predictions": {
+      "job_id": "910063",
+      "allocation": "billing=14,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1",
+      "elapsed_seconds": "1819",
+      "end": "2026-09-19T15:24:56",
+      "exit_code": "0:0",
+      "name": "ld0919-114500-predictions",
+      "start": "2026-09-19T14:54:37",
+      "state": "TIMEOUT",
+      "user": "omrifahn"
+    },
+    "preflight": {
+      "job_id": "910039",
+      "allocation": "billing=14,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1",
+      "elapsed_seconds": "339",
+      "end": "2026-09-19T11:55:37",
+      "exit_code": "0:0",
+      "name": "ld0919-114500-preflight",
+      "start": "2026-09-19T11:49:58",
+      "state": "COMPLETED",
+      "user": "omrifahn"
+    }
+  },
+  "total_allocated_gpu_seconds": 14376,
+  "total_allocated_gpu_hms": "3:59:36",
+  "aggregate_gpu_ceiling_seconds": 43200,
+  "active_queue_empty": true,
+  "all_recovery_stages_complete": true,
+  "cpu_diagnostic": {
+    "job_id": "910564",
+    "elapsed_seconds": 1,
+    "gpus": 0
+  },
+  "historical_attempts_preserved": [
+    "910041 CPU selector failure",
+    "910063 original prediction timeout",
+    "910064/910065 invalid-dependency cancellations",
+    "retry1 scheduler rejection with intent but no allocated job",
+    "Denied original TimeLimit increase"
+  ]
+}

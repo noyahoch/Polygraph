@@ -1,0 +1,18 @@
+{
+  "complete": true,
+  "files": {
+    "REPORT.md": "c977e0629d364a8249e0a84a7c495ee9c4fa5a7338d44402508ea928b889de6b",
+    "bootstrap.npz": "05c34965ce00ddef29abbd6af92022acdf4ef8a44c33e9833a7fd1658f920e46",
+    "report.json": "d8daf3374f3fb2bb5279b6383a48a933ce26a1126d7efe66bddb2b9a2ff79112",
+    "scores.npz": "8b17c6a55c26beb0dc9ac54c574849b61d93c8feedd576677f5e96c20f6dff75"
+  },
+  "inputs": {
+    "LogitDynamics/seed17": "40e991f4e2ed00ceb2a6a7b9b93db4fde459f8630c4e24df9583ec42a73d1963",
+    "LogitDynamics/seed27": "fdd8b2a53895a46eb3b4010aa92c65b1290c2969f8ac1cd89427c99fe1f65679",
+    "LogitDynamics/seed7": "5fbc2fe334546a84a49efd6e753d1615854fde4abd0dc228e876846dbc06d738",
+    "baseline_sha256": "98a5e716d6123006ec222110df02096660d0f09d9a6d97072e1b014714790f92",
+    "campaign_sha256": "f133671b92871129a0e859e47188c316e8ef535634a1fda33a9efa287dfa094f",
+    "gate_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0"
+  },
+  "job_id": "910574"
+}
