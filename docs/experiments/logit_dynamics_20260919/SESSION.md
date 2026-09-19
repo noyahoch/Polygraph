@@ -1,10 +1,10 @@
 # LogitDynamics follow-up — September 19, 2026
 
-## Latest checkpoint — September 19, final scientific review
+## Completed — September 19, 16:15 Israel
 
-**The scientific comparison and independent saved-result review are complete.
-No further numerical jobs are planned. Private review-document preservation
-and final local commits are being completed.**
+**The scientific comparison, independent saved-result review, private model and
+review preservation are complete. No further numerical jobs are planned.
+The continuation heartbeat has been paused.**
 
 - Recovery predictions 910571/910572/910573 completed; analysis 910574 finished
   at 15:34:44 and backup 910575 at 15:35:05 Israel. GPU allocations total
@@ -42,10 +42,22 @@ and final local commits are being completed.**
 - Original results/private-backup/accounting receipts are locally committed as
   `93b9341`. Preserve two unrelated untracked results directories. No push or
   merge. Ops remains the sole remote operator for final documentation backup.
-- Remaining administrative work: private review addendum with immutable hash
-  verification, final local documentation commits, concise Hebrew completion
-  report and heartbeat pause. Do not resubmit any scientific stage. The dated
-  operational sections below are preserved historical snapshots.
+- Private review addendum was verified at 16:14:23 Israel: immutable revision
+  `075380b8975fb29f95fa8727234f98cf00e43eaa`, prefix
+  `logit_dynamics_20260919_114500/review_20260919` in the same private repository.
+  All 38 addendum files passed checksum verification. All 296 original
+  snapshot Git blobs (including its manifest) and the repository root README
+  remained unchanged. Review manifest SHA-256:
+  `8ddb24b79f4607ff7233eab20e3bb768e5db8410b0c075467e01b878d33a64fd`.
+  Exact receipt: `run_records/review_addendum_publication_receipt.json`.
+- Additional local commits: `01f7224` records the findings/scientific audit;
+  `f54e42c` preserves the CPU audit, diagnostic, receipts and reuse guide. The
+  closing documentation commit records the addendum receipt and this status.
+- `monitor-polygraph-slurm-continuation` is PAUSED by the app automation tool.
+  No new training, inference or experiment is queued by this task. Future
+  scientific work requires a new scoped request; never resume the superseded
+  September 10 matrix. The dated sections below are historical snapshots.
+
 
 ## Authorization and scope
 

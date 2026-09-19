@@ -18,6 +18,17 @@ revision rather than `main`. The snapshot contains 295 manifest-listed files;
 the private status, revision, manifest digest and listed paths were independently
 verified after upload. Later review documents do not change this result snapshot.
 
+The final reviews, reuse guide, audit scripts and preserved failure/diagnostic
+receipts are independently backed up at immutable review revision
+`075380b8975fb29f95fa8727234f98cf00e43eaa`, prefix
+`logit_dynamics_20260919_114500/review_20260919`.
+[Browse the reviewed documentation](https://huggingface.co/omrifahn/polygraph-experiments/tree/075380b8975fb29f95fa8727234f98cf00e43eaa/logit_dynamics_20260919_114500/review_20260919).
+All 38 review files were checksum-verified, and the original model snapshot's
+296 Git blobs remained unchanged. Use the original artifact revision above for
+model loading. The closing Git receipt/session update follows this immutable
+review snapshot and records its revision; it does not change the scientific
+results or the audit disposition.
+
 For each `SEED` in `7`, `17`, `27`, paths relative to the prefix include:
 
 - `runs/seedSEED/heads/model.safetensors`: twelve auxiliary class heads.
