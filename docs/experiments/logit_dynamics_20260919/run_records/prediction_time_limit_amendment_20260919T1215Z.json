@@ -1,0 +1,53 @@
+{
+  "requested_utc": "2026-09-19T12:15:09.301550+00:00",
+  "job_id": "910063",
+  "approval": "Root explicitly authorized current prediction TimeLimit 30 to 75 minutes on September 19; no scientific/config/source change",
+  "justification": "First prediction blocked on network filesystem RPC wait; no errors. Preserve current work and dependency DAG.",
+  "original_limit_minutes": 30,
+  "approved_limit_minutes": 75,
+  "nominal_reserved_gpu_minutes_before": 675,
+  "nominal_reserved_gpu_minutes_after": 720,
+  "aggregate_gpu_minute_ceiling": 720,
+  "maximum_concurrent_gpus": 3,
+  "configuration_sha256": "6f9db29db035974c6dc08fc249f694ccea1273abde8078de20a8d96d4fb94194",
+  "source_manifest_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+  "before": {
+    "command": [
+      "scontrol",
+      "show",
+      "job",
+      "910063",
+      "-o"
+    ],
+    "returncode": 0,
+    "stdout": "JobId=910063 JobName=ld0919-114500-predictions UserId=omrifahn(23721) GroupId=benohayon(1199) MCS_label=N/A Priority=100018715 Nice=0 Account=gpu-students QOS=normal JobState=RUNNING Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0 RunTime=00:20:32 TimeLimit=00:30:00 TimeMin=N/A SubmitTime=2026-09-19T11:58:38 EligibleTime=2026-09-19T14:54:37 AccrueTime=2026-09-19T14:54:37 StartTime=2026-09-19T14:54:37 EndTime=2026-09-19T15:24:37 Deadline=N/A PreemptEligibleTime=2026-09-19T14:54:37 PreemptTime=None SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-09-19T14:54:37 Scheduler=Main Partition=studentbatch AllocNode:Sid=ubuntu:1809566 ReqNodeList=(null) ExcNodeList=(null) NodeList=s-004 BatchHost=s-004 NumNodes=1 NumCPUs=6 NumTasks=1 CPUs/Task=6 ReqB:S:C:T=0:0:*:* ReqTRES=cpu=6,mem=32000M,node=1,billing=14,gres/gpu=1 AllocTRES=cpu=6,mem=32000M,node=1,billing=14,gres/gpu=1,gres/gpu:geforce_rtx_2080=1 Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=6 MinMemoryNode=32000M MinTmpDiskNode=0 Features=geforce_rtx_2080 DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null) Command=(null) WorkDir=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370 StdErr=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/predictions_910063.err StdIn=/dev/null StdOut=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/predictions_910063.out Power= KillOInInvalidDependent=Yes MemPerTres=gpu:2000 TresPerJob=gres:gpu:1 \n",
+    "stderr": ""
+  },
+  "update": {
+    "command": [
+      "scontrol",
+      "update",
+      "JobId=910063",
+      "TimeLimit=01:15:00"
+    ],
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "Access/permission denied for job 910063\n"
+  },
+  "after": {
+    "command": [
+      "scontrol",
+      "show",
+      "job",
+      "910063",
+      "-o"
+    ],
+    "returncode": 0,
+    "stdout": "JobId=910063 JobName=ld0919-114500-predictions UserId=omrifahn(23721) GroupId=benohayon(1199) MCS_label=N/A Priority=100018728 Nice=0 Account=gpu-students QOS=normal JobState=RUNNING Reason=None Dependency=(null) Requeue=1 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0 RunTime=00:20:32 TimeLimit=00:30:00 TimeMin=N/A SubmitTime=2026-09-19T11:58:38 EligibleTime=2026-09-19T14:54:37 AccrueTime=2026-09-19T14:54:37 StartTime=2026-09-19T14:54:37 EndTime=2026-09-19T15:24:37 Deadline=N/A PreemptEligibleTime=2026-09-19T14:54:37 PreemptTime=None SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-09-19T14:54:37 Scheduler=Main Partition=studentbatch AllocNode:Sid=ubuntu:1809566 ReqNodeList=(null) ExcNodeList=(null) NodeList=s-004 BatchHost=s-004 NumNodes=1 NumCPUs=6 NumTasks=1 CPUs/Task=6 ReqB:S:C:T=0:0:*:* ReqTRES=cpu=6,mem=32000M,node=1,billing=14,gres/gpu=1 AllocTRES=cpu=6,mem=32000M,node=1,billing=14,gres/gpu=1,gres/gpu:geforce_rtx_2080=1 Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=* MinCPUsNode=6 MinMemoryNode=32000M MinTmpDiskNode=0 Features=geforce_rtx_2080 DelayBoot=00:00:00 OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null) Command=(null) WorkDir=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370 Comment=***TEST_COMMENT***  StdErr=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/predictions_910063.err StdIn=/dev/null StdOut=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/predictions_910063.out Power= KillOInInvalidDependent=Yes MemPerTres=gpu:2000 TresPerJob=gres:gpu:1 \n",
+    "stderr": ""
+  },
+  "observed_final_limit": "00:30:00",
+  "status": "denied_or_not_applied",
+  "finished_utc": "2026-09-19T12:15:09.356819+00:00",
+  "remote_receipt": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/prediction_time_limit_amendment_20260919T121509Z.json"
+}

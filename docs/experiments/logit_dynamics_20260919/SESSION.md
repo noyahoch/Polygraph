@@ -91,6 +91,51 @@ Preserved operator instructions and launch records are under
 coordination workspace above. Scientific results are not yet available at this
 snapshot; passing readiness checks is not completion of the comparison.
 
+### Prediction recovery prepared — September 19, approximately 15:19 Israel
+
+Extraction completed at 14:32:40 with all 28,800 records and exact full-export
+logit/CLS12 parity, using 9,242 allocated GPU-seconds. All three fits completed
+their required 16 head epochs and 100 probe epochs. Seed 7 used 1,306 allocated
+seconds; seeds 17 and 27 used 573 each. Freeze job 910062 completed successfully
+at 14:54:34. Original prediction job 910063 started at 14:54:37.
+
+At 15:12, that prediction job was still on its first command (seed 7), with no
+prediction output or numerical error. A bounded read-only process probe found
+the process waiting in `rpc_wait_bit_killable`, supporting network-filesystem
+waiting; the exact waiting path and underlying cause were not established.
+Slurm denied the normal owner request to increase this job's limit from 30 to
+75 minutes. Its limit remained 30 minutes, with scheduled expiry at 15:24:37.
+The denied attempt and diagnostic evidence are preserved in `run_records/`.
+
+A prediction-only recovery is prepared and **conditionally approved, not yet
+submitted at this snapshot**. Its exact configuration SHA-256 is
+`9d28852754f236f3820a015d6478e94bf1eb682a41e89fc19c42c8965080d181`;
+operator helper SHA-256 is
+`6e00f870501eb8025f0ce7e843590105fa68b9e60f6277808fba2c8e91794228`.
+The configuration is `run_records/config_prediction_recovery_v1.json`.
+
+This recovery runs the original prediction command separately for each of
+seeds 7/17/27, with 45 minutes and one GPU per job, at most three concurrently.
+It reuses the completed freeze and immutable scientific source, weights and
+settings. Completed seed predictions verify and skip; an incomplete seed
+recomputes predictions only. Excluding s-004 is an operational workaround, not
+a demonstrated diagnosis. Analysis waits for all three prediction jobs, then
+private backup follows. Neither training nor freeze is resubmitted.
+
+The sole Slurm operator may submit the approved configuration without renewed
+permission **only after** verifying that original job 910063 terminated
+unsuccessfully, its processes are gone, original analysis/backup 910064/910065
+cannot run, the frozen gate/source still match, and no recovery submission
+already exists. If 910063 succeeds, abandon the recovery. Preserve every
+original attempt and receipt. Read current remote state before deciding;
+this note is not evidence that the original job has timed out.
+
+Budget review uses completed actual allocations, not unused expired caps:
+12,033 completed GPU-seconds, plus at most 1,800 for original predictions,
+plus 8,100 for the three recovery reservations, total **21,933 seconds
+(6:05:33)**. This remains below the unchanged 12 cumulative GPU-hour ceiling.
+No scientific result has been used to choose this operational recovery.
+
 ## Execution and completion
 
 Prepare reviewed code and a frozen source snapshot; run correctness/parity checks on Slurm; then use durable dependencies for full CLS extraction, three-seed fitting, frozen prediction, paired analysis and preservation. Failed correctness checks block dependent fitting/evaluation. Mechanical fixes may be made within the approved method; scientific changes must be documented and reconsidered before evaluation.

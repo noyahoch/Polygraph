@@ -1,0 +1,14 @@
+{
+  "configuration_path": "work/logit-dynamics-20260919/ops/config_prediction_recovery_v1.json",
+  "configuration_sha256": "9d28852754f236f3820a015d6478e94bf1eb682a41e89fc19c42c8965080d181",
+  "submit_helper_path": "work/logit-dynamics-20260919/ops/submit_recovery_v1.py",
+  "submit_helper_sha256": "6e00f870501eb8025f0ce7e843590105fa68b9e60f6277808fba2c8e91794228",
+  "source_release": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370",
+  "source_identity_sha256": "400f1fbbc105a370756e5831fe37dda45b7d288cb80f40d848be034d035252da",
+  "evaluation_gate_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0",
+  "gpu_reservation_minutes": 135,
+  "worst_case_aggregate_gpu_seconds": 21933,
+  "status": "prepared_not_submitted",
+  "external_dependency_behavior": "Existing submit receipt freeze.json resolves to completed 910062 without submitting another freeze",
+  "validation": "Source/config static inspection only; exact original predict command vectors preserved; submit helper syntax valid"
+}
