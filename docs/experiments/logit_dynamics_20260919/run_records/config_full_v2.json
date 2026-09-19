@@ -1,0 +1,259 @@
+{
+  "aggregate_gpu_hour_ceiling_including_preflight_and_retries": 12,
+  "authorization": "Root-coordinated implementation of user-approved LogitDynamics follow-up on 2026-09-19; root approves each submitted configuration hash",
+  "completed_preflight_gpu_cap_minutes": 15,
+  "environment": {
+    "hf_hub_cache": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/topology_20260910/cache/huggingface/hub",
+    "import_bundle_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+    "overlay_manifest_sha256": "66e9b9f841830177525f5baf7c806713fe23a25de704bdce8ac2c2fcd48fab6c",
+    "pilot_root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914"
+  },
+  "full_submission_gate": "Preflight successful and reviewed by root; no evaluation-driven tuning",
+  "job_prefix": "ld0919-114500",
+  "max_concurrent_gpus": 3,
+  "phases": {
+    "full": [
+      "extract",
+      "fit7",
+      "fit17",
+      "fit27",
+      "freeze",
+      "predictions",
+      "analysis",
+      "backup"
+    ]
+  },
+  "preflight_bound_receipts": {
+    "ops/baseline_schema_validation.json": "83cf57f070d86c59269f37a15c2b255cf06fa875fe0d41d6faad46d15e496e4b",
+    "ops/stage_receipts/preflight_910039.json": "b3aa9810bf6bdadf694d2193e29e27077abdf75c68930a8c221ae53aa7989a4e",
+    "ops/stage_receipts/validation_v2_910046.json": "c6ead00ffb628dd526ac7b59964e02bb9718d8cc24a1a376f52fa3ac65712d6b",
+    "smoke/preflight_v1/preflight_cls/manifest.json": "cb69bf4b3c22dc54540d9f64b4295eaa7bc5a67491b5bf46b7ed0d9e0f75eb2f",
+    "smoke/preflight_v1/preflight_complete.json": "1f89441efe23d8f6ae053dcc26a4fae2c12e5b2df454f5cea8e43c1615f2a9e1"
+  },
+  "python": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+  "release": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370",
+  "resource_review": {
+    "aggregate_ceiling_gpu_minutes": 720,
+    "approved_by": "root coordinator under user authorization",
+    "approved_utc": "2026-09-19T08:58:18.786060+00:00",
+    "cpu_validation_failed_attempt_preserved": "910041",
+    "cpu_validation_pass_job_id": "910046",
+    "extraction_cap_minutes": 270,
+    "maximum_concurrent_gpus": 3,
+    "preflight_job_id": "910039",
+    "projection_interpretation": "not measured full-run ETA; repeats fixed setup overhead for each sample-sized group",
+    "unamortized_conservative_projection_minutes": 233.60490436665714
+  },
+  "root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+  "schema_version": 1,
+  "scientific_compute_policy": "Slurm jobs only; preserve all old artifacts",
+  "scope": "logit_dynamics_20260919",
+  "source_identity_sha256": "400f1fbbc105a370756e5831fe37dda45b7d288cb80f40d848be034d035252da",
+  "source_manifest_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+  "stages": {
+    "analysis": {
+      "afterok": [
+        "predictions"
+      ],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.evaluate",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500"
+        ]
+      ],
+      "cpus": 4,
+      "gpu": false,
+      "memory_mb": 16000,
+      "minutes": 120
+    },
+    "backup": {
+      "afterok": [
+        "analysis"
+      ],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370/ops/backup.py",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--release",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370"
+        ]
+      ],
+      "cpus": 4,
+      "gpu": false,
+      "memory_mb": 16000,
+      "minutes": 30
+    },
+    "extract": {
+      "afterok": [],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.protocol",
+          "prepare",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--baseline-root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/final_comparison_20260916_215019"
+        ],
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.extract",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--data-root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/topology_20260910/data",
+          "--mode",
+          "full"
+        ]
+      ],
+      "cpus": 6,
+      "gpu": true,
+      "memory_mb": 32000,
+      "minutes": 270
+    },
+    "fit17": {
+      "afterok": [
+        "extract"
+      ],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.train",
+          "fit",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--seed",
+          "17"
+        ]
+      ],
+      "cpus": 6,
+      "gpu": true,
+      "memory_mb": 32000,
+      "minutes": 120
+    },
+    "fit27": {
+      "afterok": [
+        "extract"
+      ],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.train",
+          "fit",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--seed",
+          "27"
+        ]
+      ],
+      "cpus": 6,
+      "gpu": true,
+      "memory_mb": 32000,
+      "minutes": 120
+    },
+    "fit7": {
+      "afterok": [
+        "extract"
+      ],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.train",
+          "fit",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--seed",
+          "7"
+        ]
+      ],
+      "cpus": 6,
+      "gpu": true,
+      "memory_mb": 32000,
+      "minutes": 120
+    },
+    "freeze": {
+      "afterok": [
+        "fit7",
+        "fit17",
+        "fit27"
+      ],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.protocol",
+          "freeze",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500"
+        ]
+      ],
+      "cpus": 4,
+      "gpu": false,
+      "memory_mb": 16000,
+      "minutes": 15
+    },
+    "predictions": {
+      "afterok": [
+        "freeze"
+      ],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.train",
+          "predict",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--seed",
+          "7"
+        ],
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.train",
+          "predict",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--seed",
+          "17"
+        ],
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.train",
+          "predict",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--seed",
+          "27"
+        ]
+      ],
+      "cpus": 6,
+      "gpu": true,
+      "memory_mb": 32000,
+      "minutes": 30
+    }
+  },
+  "total_reserved_gpu_minutes_including_preflight": 675
+}
