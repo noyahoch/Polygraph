@@ -1,5 +1,52 @@
 # LogitDynamics follow-up — September 19, 2026
 
+## Latest checkpoint — September 19, final scientific review
+
+**The scientific comparison and independent saved-result review are complete.
+No further numerical jobs are planned. Private review-document preservation
+and final local commits are being completed.**
+
+- Recovery predictions 910571/910572/910573 completed; analysis 910574 finished
+  at 15:34:44 and backup 910575 at 15:35:05 Israel. GPU allocations total
+  14,376 seconds (3:59:36), including the original prediction timeout.
+- LD mean AUROC is 0.8980659074; historical G_mean is 0.8888946659.
+  Prespecified G_mean minus LD is −0.0091712415, with paired source-photo
+  95% interval [−0.0158737735, −0.0023608076]. Read `RESULTS_HE.md`, the original
+  `results/report.json` and `AUDIT_SCIENCE.md` for interpretation and limitations.
+- Private HF artifact revision is `86605781c0528e286483e305072f7787393da860`,
+  prefix `logit_dynamics_20260919_114500/snapshot_910575` in
+  `omrifahn/polygraph-experiments`. All 295 manifest-listed paths and the exact
+  backup manifest were verified. Portable models/scalers were freshly fetched
+  to the server; all 44 fetched files and native/portable model tensors matched.
+- CPU audit **910647 failed** at 15:55:32 after 115 allocated seconds.
+  Source hashes, roles, complete histories, selected epochs and training scaler
+  reconstructions passed. Seed 17 validation scores exceeded the fixed
+  `atol=rtol=1e-4`; preserve `audit/reproducibility_cpu_v1.json` as FAILED.
+- Targeted CPU diagnostic **910651 completed** at 16:06:09, using 92 allocated
+  seconds. Independent metadata, historical-score identity, all 14 AUROC/AP
+  vectors, seed means/SDs, primary estimate and saved-bootstrap aggregation/
+  interval checks passed. It did not regenerate weighted AUROC for every draw.
+- Exactly one of 3,600 seed 17 validation rows violated CPU replay tolerance:
+  record 15321 / photograph 659, maximum difference 0.0007970333. FP32/FP64 CPU
+  head arithmetic changes top-five membership at layer 4 with boundary margin
+  2.384e-7; the FP64-head diagnostic matches the stored GPU score at the
+  original tolerance. This supports numerical ranking sensitivity, but absent
+  original GPU intermediates does not establish its exact historical cause.
+- The failed strict CPU replay is **not cleared**. Seed 27 validation and full
+  development CPU replay were not completed. Scientific results stay exactly
+  as originally computed on GPU. No tolerance, settings, weights or predictions
+  were changed; no general CPU portability or clean-install claim is supported.
+- Root and the independent scientific reviewer close the comparison with this
+  explicit portability limitation; no extra GPU experiment is needed for the
+  scoped scientific claim. See `AUDIT_REPRODUCIBILITY.md` and `REUSE.md`.
+- Original results/private-backup/accounting receipts are locally committed as
+  `93b9341`. Preserve two unrelated untracked results directories. No push or
+  merge. Ops remains the sole remote operator for final documentation backup.
+- Remaining administrative work: private review addendum with immutable hash
+  verification, final local documentation commits, concise Hebrew completion
+  report and heartbeat pause. Do not resubmit any scientific stage. The dated
+  operational sections below are preserved historical snapshots.
+
 ## Authorization and scope
 
 Omri authorized implementing and running the proposed LogitDynamics comparison on September 19: “Okay, let's do it … I'm connected to the VPN.” The new arm extends the completed September 17 development comparison. Historical instructions to keep all experiments paused are superseded for this arm only.

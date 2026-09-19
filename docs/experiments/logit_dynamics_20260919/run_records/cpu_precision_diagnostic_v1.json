@@ -1,0 +1,243 @@
+{
+  "complete": true,
+  "diagnosis": {
+    "details": [
+      {
+        "CPU_FP32_features_FP64_probe_score": -1.778875248073294,
+        "CPU_FP32_score": -1.7788753509521484,
+        "CPU_FP64_heads_FP32_probe_score": -1.778078317642212,
+        "FP64_heads_matches_saved_at_original_tolerance": true,
+        "changed_numeric_competitor_set_depths": [
+          4
+        ],
+        "changed_top1_depths": [],
+        "changed_top5_set_depths": [
+          4
+        ],
+        "competitor5_minus_competitor6_margins": [
+          0.03939765691757202,
+          0.09362137317657471,
+          0.028747200965881348,
+          2.384185791015625e-07,
+          0.05012857913970947,
+          0.15455925464630127,
+          0.20074701309204102,
+          0.17786240577697754,
+          0.26572859287261963,
+          0.04670572280883789,
+          0.246254563331604,
+          0.4658994674682617,
+          0.13716375827789307
+        ],
+        "dynamics_feature_contribution_sum": -0.0007974552277786942,
+        "head_logits_FP32_vs_FP64_max_abs": 3.053481968606775e-06,
+        "image_id": 659,
+        "largest_feature_contribution_differences": [
+          {
+            "feature": "unique_topk_count",
+            "normalizer_scale": 3.921771670592808,
+            "probe_weight": -0.17167499661445618,
+            "raw_FP32_minus_FP64": 1.0,
+            "weighted_normalized_difference": -0.043774851674839965
+          },
+          {
+            "feature": "topk_weighted_jaccard",
+            "normalizer_scale": 0.10549354882886032,
+            "probe_weight": -0.34358933568000793,
+            "raw_FP32_minus_FP64": -0.013195514678955078,
+            "weighted_normalized_difference": 0.04297739644706127
+          },
+          {
+            "feature": "depth12_final_predicted_class_logit",
+            "normalizer_scale": 8.069255698107401,
+            "probe_weight": -0.8721339702606201,
+            "raw_FP32_minus_FP64": -1.9073486328125e-06,
+            "weighted_normalized_difference": 2.0793294197574141e-07
+          },
+          {
+            "feature": "depth5_competitor_rank5_logit",
+            "normalizer_scale": 0.622420272694413,
+            "probe_weight": -0.1509682685136795,
+            "raw_FP32_minus_FP64": -5.960464477539062e-07,
+            "weighted_normalized_difference": 1.439745602738185e-07
+          },
+          {
+            "feature": "depth9_competitor_rank2_logit",
+            "normalizer_scale": 1.099021358032376,
+            "probe_weight": -0.13308580219745636,
+            "raw_FP32_minus_FP64": -9.5367431640625e-07,
+            "weighted_normalized_difference": 1.1898797946940931e-07
+          },
+          {
+            "feature": "depth11_competitor_rank1_logit",
+            "normalizer_scale": 3.449444168632101,
+            "probe_weight": 0.3877430856227875,
+            "raw_FP32_minus_FP64": -9.5367431640625e-07,
+            "weighted_normalized_difference": -1.155564444133006e-07
+          },
+          {
+            "feature": "depth10_competitor_rank5_logit",
+            "normalizer_scale": 0.8440801003209117,
+            "probe_weight": -0.20754964649677277,
+            "raw_FP32_minus_FP64": -2.384185791015625e-07,
+            "weighted_normalized_difference": 6.185461476349019e-08
+          },
+          {
+            "feature": "depth4_competitor_rank4_logit",
+            "normalizer_scale": 0.6928112748451228,
+            "probe_weight": -0.05794811621308327,
+            "raw_FP32_minus_FP64": -7.152557373046875e-07,
+            "weighted_normalized_difference": 6.044459543996794e-08
+          },
+          {
+            "feature": "depth9_competitor_rank5_logit",
+            "normalizer_scale": 0.8473020332991702,
+            "probe_weight": -0.20062805712223053,
+            "raw_FP32_minus_FP64": 2.384185791015625e-07,
+            "weighted_normalized_difference": -5.979182038373665e-08
+          },
+          {
+            "feature": "depth2_competitor_rank4_logit",
+            "normalizer_scale": 0.62947914388208,
+            "probe_weight": 0.06902886182069778,
+            "raw_FP32_minus_FP64": 5.364418029785156e-07,
+            "weighted_normalized_difference": 5.760217103301102e-08
+          }
+        ],
+        "numeric_feature_contribution_sum": 4.6178694634651466e-07,
+        "record_id": 15321,
+        "row_index": 921,
+        "saved_GPU_score": -1.778078317642212,
+        "top1_minus_top2_margins": [
+          0.15348130464553833,
+          0.11414831876754761,
+          0.0613940954208374,
+          0.12345683574676514,
+          0.0020210742950439453,
+          0.28329384326934814,
+          0.18378901481628418,
+          0.3330928087234497,
+          0.0055921077728271484,
+          0.3265666961669922,
+          3.211515426635742,
+          7.381580352783203,
+          7.383134245872498
+        ],
+        "top5_minus_top6_margins": [
+          0.03939765691757202,
+          0.09362137317657471,
+          0.028747200965881348,
+          2.384185791015625e-07,
+          0.05012857913970947,
+          0.08129644393920898,
+          0.07688772678375244,
+          0.0857919454574585,
+          0.03984546661376953,
+          0.012550830841064453,
+          0.008640766143798828,
+          0.007439613342285156,
+          0.020656824111938477
+        ]
+      }
+    ],
+    "historical_GPU_intermediates_available": false,
+    "interpretation_limit": "FP32-versus-FP64 CPU comparisons characterize sensitivity. Historical GPU head logits/features were not saved, so exact historical GPU rank changes require a separately scoped original-backend replay.",
+    "maximum_absolute_difference": 0.0007970333099365234,
+    "original_tolerance": {
+      "atol": 0.0001,
+      "rtol": 0.0001
+    },
+    "records": 3600,
+    "role": "probe_val",
+    "seed": 17,
+    "violating_record_ids": [
+      15321
+    ],
+    "violating_row_indices": [
+      921
+    ],
+    "violation_count": 1
+  },
+  "elapsed_seconds": 78.75671922415495,
+  "job_id": "910651",
+  "original_CPU_replay_failure_cleared": false,
+  "prior_audit_sha256": "68caa27e659bbe46f7d71c2e5e8d6bcf2a2f15065a32662c0194fe369e5c0d53",
+  "saved_bootstrap": {
+    "draws": 2000,
+    "group": "image_id",
+    "interval_95": [
+      -0.015873773489983947,
+      -0.0023608076406355953
+    ],
+    "passed": true,
+    "undefined_draws": [],
+    "weighted_auroc_draws_recomputed": false
+  },
+  "saved_scores": {
+    "all_14_auroc_ap_and_seed_summary_checks": true,
+    "historical_scores_exact": true,
+    "metadata_exact": true,
+    "passed": true,
+    "per_vector": {
+      "G_mean/seed17": {
+        "auroc": 0.8918293667033568,
+        "average_precision": 0.7816841336308237
+      },
+      "G_mean/seed27": {
+        "auroc": 0.8836615117406048,
+        "average_precision": 0.7736238326854813
+      },
+      "G_mean/seed7": {
+        "auroc": 0.8911931193087148,
+        "average_precision": 0.783218528511687
+      },
+      "LogitDynamics/seed17": {
+        "auroc": 0.8962643380119226,
+        "average_precision": 0.7937858858006084
+      },
+      "LogitDynamics/seed27": {
+        "auroc": 0.8987563516420176,
+        "average_precision": 0.8032898867936457
+      },
+      "LogitDynamics/seed7": {
+        "auroc": 0.8991770324874779,
+        "average_precision": 0.8000409413412997
+      },
+      "MSP": {
+        "auroc": 0.8619425342282248,
+        "average_precision": 0.7093572574823526
+      },
+      "O/seed17": {
+        "auroc": 0.8763025003486318,
+        "average_precision": 0.7597017331951815
+      },
+      "O/seed27": {
+        "auroc": 0.8751050027073122,
+        "average_precision": 0.7571567670621978
+      },
+      "O/seed7": {
+        "auroc": 0.8757152981406873,
+        "average_precision": 0.7581598901268619
+      },
+      "S_mean/seed17": {
+        "auroc": 0.8900664200470995,
+        "average_precision": 0.7793623485890715
+      },
+      "S_mean/seed27": {
+        "auroc": 0.8850089590101055,
+        "average_precision": 0.7678595584101431
+      },
+      "S_mean/seed7": {
+        "auroc": 0.890601807668005,
+        "average_precision": 0.7781018673818819
+      },
+      "entropy": {
+        "auroc": 0.8648505832580459,
+        "average_precision": 0.7157317477630645
+      }
+    },
+    "primary_delta": -0.009171241462913926
+  },
+  "scope": "Saved metric/schema checks and targeted seed17 validation CPU precision diagnostic; no fitting",
+  "script_sha256": "7b1ac1267bafb5c13c621a7f487cc723029c253df0206d713f1a7a8d3a3cae1d"
+}

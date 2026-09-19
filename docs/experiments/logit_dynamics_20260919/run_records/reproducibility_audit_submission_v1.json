@@ -1,0 +1,16 @@
+{
+  "finished_utc": "2026-09-19T12:53:37.054909+00:00",
+  "configuration_sha256": "dda0c746fc9aa9398480e0916917058d1f3dd87d9e30268263cd4d917410b6b3",
+  "audit_script_sha256": "acec13a4899263c2069faca3e45c9367956b308ba56fe5bdc965b02287ff9b0e",
+  "returncode": 0,
+  "stdout": "{\"stage\": \"reproducibility_audit_v1\", \"job_id\": \"910647\", \"afterok\": []}\n",
+  "stderr": "",
+  "source_manifest_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+  "gpus": 0,
+  "cpus": 6,
+  "memory_mb": 16000,
+  "minutes": 30,
+  "exclude_nodes": [
+    "s-004"
+  ]
+}
