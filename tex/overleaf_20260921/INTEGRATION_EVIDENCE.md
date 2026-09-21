@@ -30,8 +30,8 @@ Native later graph/set records are locally preserved under:
 
 ## Preservation and build
 
-- The unified [integration.diff](integration.diff) is against `418652a` and covers only `acl_latex.tex`.
-- Original title/authors, preamble, style files, bibliography, comments, method equations, figure and original results/table source blocks are unchanged. Table numbering and pagination change naturally when the new section is added.
+- The unified [integration.diff](integration.diff) records the scientific integration at `b2ace68` against `418652a`, covering only `acl_latex.tex`. The subsequent comment cleanup is separate in Git history.
+- The scientific integration preserved original title/authors, preamble, style files, bibliography, comments, method equations, figure and original results/table source blocks. Table numbering and pagination change naturally when the new section is added.
 - Only two tables are added. All changed regions are an abstract qualification/addition, introduction bridge, original-setup scope, the follow-up section and conclusion synthesis.
 - Build: `./build.sh`, using the existing pdfLaTeX/latexmk setup with shell escape disabled. The final [PDF](acl_latex.pdf) has **8 pages including references**; the original had 6 (five main-text pages and a references page). All pages were rendered and visually checked. There are no undefined references/citations or overfull boxes; nonfatal underfull-box and disabled-shell-escape warnings remain.
 - TeXcount reports 2,715 body words versus 1,973 in the base (net +742), excluding headings, captions and mathematical expressions. Existing typography was not changed to force a five-page fit. Meeting that target would require a separately authorized reduction of existing material or scope.
@@ -40,4 +40,4 @@ Native later graph/set records are locally preserved under:
 
 No supplied numerical anchor conflicts were found. Rounding is to four decimals for table means and six for contrasts. The rich36, raw12, original benchmark and fusion/decomposition protocols remain explicitly distinct.
 
-This is a focused integration, not a fresh experiment reproduction or comprehensive audit of colleagues' unchanged claims/bibliography. Historical commented drafts were preserved and not treated as current evidence. The page-budget tradeoff remains unresolved; no unrelated scientific or formatting correction was made.
+This is a focused integration, not a fresh experiment reproduction or comprehensive audit of colleagues' unchanged claims/bibliography. Historical commented drafts were preserved in integration commit `b2ace68` and not treated as current evidence. At the user's subsequent request, 434 obsolete draft-comment lines and redundant blank lines were removed from the active TeX. The useful table-macro comment and inline percent spacing controls remain. All active nonblank source lines, all eight rendered page images and extracted PDF text were verified unchanged; the removed drafts remain recoverable in Git. The page-budget tradeoff remains unresolved; no unrelated scientific or formatting correction was made.
