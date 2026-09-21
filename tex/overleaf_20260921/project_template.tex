@@ -1,0 +1,319 @@
+% \documentclass{acmart}
+% \renewcommand\footnotetextcopyrightpermission[1]{}
+% \setcopyright{none}
+% \settopmatter{printacmref=false}
+% \usepackage{amsmath}
+% \usepackage{amsfonts}
+% \usepackage[utf8]{inputenc}
+% \newcommand{\x}{\mathbf{x}}
+% \usepackage{float}
+% \usepackage{graphicx}
+% \usepackage{subcaption}
+
+% \AtBeginDocument{%
+%   \providecommand\BibTeX{{%
+%     \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
+
+%  \citestyle{acmauthoryear}
+
+% %%
+% \title{Project Proposal: Machine Learning with Graphs}
+% \author{Name - ID}
+% \author{Name - ID}
+% \author{Name - ID}
+% \author{Name - ID}
+% \date{}
+
+% \begin{document}
+
+% \maketitle
+% % --------------------------------------------------
+% % Project-Proposal Template  (≤ 3 pages total)
+% % --------------------------------------------------
+
+% % ---------- TL;DR ----------
+% %
+% % Two lines MAX that capture the essence of the project.
+% %   – e.g., “We propose a new method for …” / “We extend …” / “We analyse …”.
+% %
+% \paragraph{TL;DR} \textit{Explain in 1–2 lines the bottom line of the project. For example: “We propose a new method for …”, “We extend …”, or “We analyse …”.}
+
+% % ---------- 1. Background & Motivation  (≤ 1 page) ----------
+% \section{Background \& Motivation}
+
+% \textit{In <= 1 page, cover the background, motivation, and problem statement.  
+% Include relevant citations. After reading this, it should be crystal-clear  
+% (i) what problem you aim to solve, (ii) why it is essential, and  
+% (iii) why existing approaches are insufficient (high-level).}
+
+% %  (You may delete the bullet list once you have real prose.)
+% \begin{itemize}
+%   \item[•] \textbf{Problem statement} — precisely define the gap you tackle.  
+%   \item[•] \textbf{Why it matters} — real-world or scientific significance.  
+%   \item[•] \textbf{Prior work limits} — cite 3–6 key papers; highlight the unsolved bottleneck.
+% \end{itemize}
+
+% % ---------- 2. Proposed Approach  (≤ 1 page) ----------
+% \section{Proposed Approach}
+
+% \textit{In <= 1 page, describe how you plan to solve the problem.  
+% If you propose a new method, outline it formally or verbally.  
+% Be clear and concise; rough ideas are fine at this stage.  
+% You may deviate slightly in the final submission if needed.}
+
+% \begin{itemize}
+%   \item[•] \textbf{Core idea} — a one-paragraph summary.  
+%   \item[•] \textbf{Technical outline} — main components / algorithmic steps.  
+%   \item[•] \textbf{Novelty} — what’s new relative to existing work.  
+
+% \end{itemize}
+
+% % ---------- 3. Experimental Plan  (≤ 1 page) ----------
+% \section{Experimental Plan}
+
+% \textit{In <= 1 page, sketch the experiments you plan to run,  
+% datasets you will use, evaluation metrics, and baselines or comparison methods.  
+% This is a rough plan; minor changes in the final project are allowed.}
+
+% \begin{itemize}
+%   \item[•] \textbf{Datasets} — name datasets your will use, with citations.  
+%   \item[•] \textbf{Baselines / comparisons} — models or methods you’ll compare against, with citations.  
+%   \item[•] \textbf{Metrics} — quantitative (and, if relevant, qualitative) measures, how you are going to measure success.  
+
+% \end{itemize}
+
+% \bibliographystyle{ACM-Reference-Format}
+% \bibliography{references}
+
+% \end{document}
+
+% \documentclass{acmart}
+\documentclass[manuscript,oneside]{acmart}
+\makeatletter
+\@twosidefalse
+\makeatother
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\setcopyright{none}
+\settopmatter{printacmref=false}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage[utf8]{inputenc}
+\newcommand{\x}{\mathbf{x}}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{subcaption}
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
+
+ \citestyle{acmauthoryear}
+
+%%
+\title{Project Proposal: Machine Learning with Graphs}
+\author{Yishai Lavi - 209713031}
+\author{Noya Hochwald - 205420318}
+\author{Omri Fahn - 206484891}
+\author{Eran Kramf - 208522102}
+\date{}
+
+\begin{document}
+\maketitle
+
+\paragraph{TL;DR}
+We represent a frozen ViT's attention as a graph and train a GNN to
+predict failures beyond confidence and non-graph baselines.
+
+\section{Background \& Motivation}
+
+Vision Transformers (ViTs) represent an image as patch tokens and
+repeatedly exchange information through multi-head self-attention
+\citep{dosovitskiy2021image}. Reliability is
+usually estimated from the final logits,
+although predictions with similar confidence may arise from different
+layer-wise interactions. We therefore ask:
+
+\begin{quote}
+\emph{Can a GNN operating on a ViT's multi-layer attention graph
+predict classification errors, especially under unseen corruptions,
+better than output-, representation-, and non-graph attention
+baselines?}
+\end{quote}
+
+This is useful for selective prediction, where likely failures are
+rejected or referred for review, and scientifically useful for testing
+whether errors exhibit recurring routing signatures. Each image
+naturally induces a directed, weighted graph over patch tokens, while
+correctness is a graph-level property of the frozen classifier.
+
+\paragraph{Related work and gap.}
+ViT attention has already been interpreted as a graph, but mainly for
+other objectives: relevance propagation for explanation
+\citep{chefer2021transformer}, weighted-PageRank token pruning
+\citep{wang2024zerotprune}, and graph regularization of class--patch
+interactions for weakly supervised segmentation
+\citep{yang2025more}. \citet{cultrera2023leveraging} use a
+convolutional autoencoder over ViT attention heatmaps for OOD
+detection, without learning on token-to-token connectivity. Closest
+in task, LogitDynamics predicts ViT errors from layer-wise class-logit
+trajectories, but does not use attention graphs
+\citep{beigelman2026logitdynamics}.
+
+NLP provides the closest methodological precedents. Handcrafted
+topological or spectral summaries of attention graphs have been used
+for generated-text and hallucination detection
+\citep{kushnareva2021artificial,binkowski2025hallucination}, while
+HalluZig models how attention-graph topology evolves across layers
+\citep{samaga2026halluzig}. More directly, HaluGNN uses hidden states
+as node features and attention values as weighted edges
+\citep{kong2026halugnn}. CHARM represents raw attention scores and
+activations as attributes of a token graph and applies edge-aware
+message passing; its ablations show a benefit from graph connectivity
+over a set model \citep{frasca2026charm}. CausalGaze further refines
+attention edges using gradient sensitivity before GNN classification
+\citep{kong2026causalgaze}. Thus, learned attention-graph diagnostics
+are established for language models. However, our literature search
+found no analogous method trained on per-image, multi-layer ViT
+patch-attention graphs to predict visual classification failure. We
+investigate this vision-specific gap.
+
+\section{Proposed Approach}
+
+Let $A^{(\ell,h)}\in\mathbb{R}^{N\times N}$ be the attention matrix at
+ViT layer $\ell$ and head $h$, including the class token. Since query
+token $i$ reads information from token $j$, we orient information flow as
+$j\!\rightarrow\!i$. Following CHARM \citep{frasca2026charm}, the raw
+per-head attention scores are used directly as edge features:
+\[
+\mathbf e_{ji}^{(\ell)}
+=
+\left[
+A_{ij}^{(\ell,1)},\ldots,
+A_{ij}^{(\ell,H)}
+\right].
+\]
+To obtain a sparse graph without discarding interactions that are strong
+in only one specialized head, we retain the edge $j\!\rightarrow\!i$
+whenever
+\[
+\max_h A_{ij}^{(\ell,h)}>\tau.
+\]
+Thus, the threshold determines only whether the edge is present; once
+retained, its edge feature contains the original attention scores from
+all heads. The threshold $\tau$ is selected on validation data.
+
+Diagonal scores are
+stored as node features, together with normalized patch coordinates
+and a class-token indicator. We compare this attention-focused
+representation with a richer variant that also appends the
+corresponding ViT token embedding $\mathbf z_i^{(\ell)}$.
+
+
+An edge-aware message-passing GNN uses
+$\mathbf e_{ji}^{(\ell)}$ when computing messages. We construct one
+attention graph for every ViT layer,
+\[
+G^{(1)}(x),\ldots,G^{(L)}(x),
+\]
+and encode all layer graphs with a shared GNN:
+\[
+\mathbf g_\ell=\operatorname{GNN}\!\left(G^{(\ell)}(x)\right).
+\]
+The resulting ordered sequence of graph embeddings
+\[
+\mathbf g_1,\ldots,\mathbf g_L
+\]
+is then combined and followed by an MLP that predicts classification
+failure. Using all layers allows the detector to capture the complete
+evolution of attention routing, including early local interactions and
+later global aggregation. As ablations, we
+will compare this full layer-wise model with a last-layer-only model and a final-four-layers model.
+
+For image $x$ with label $y(x)$ and frozen ViT $f$, the automatic
+target is
+\[
+y_{\mathrm{err}}(x)
+=
+1\left[
+\arg\max_c f_c(x)\neq y(x)
+\right].
+\]
+Only the detector is trained, using class-weighted binary
+cross-entropy. We compare:
+
+\begin{enumerate}
+    \item the attention graph with minimal node features;
+    \item the attention graph augmented with token embeddings.
+\end{enumerate}
+
+
+\paragraph{Novelty.}
+The novelty is not the attention-as-graph view or GNNs over
+Transformer traces in general. It is their controlled evaluation for
+per-image ViT patch graphs, with comparisons against output signals,
+hidden representations, and non-graph models given the same attention
+data.
+
+\section{Experimental Plan}
+
+\paragraph{Datasets and setup.}
+The primary benchmark will use CIFAR-100 and CIFAR-100-C, whose
+corruption families and severity levels follow
+\citet{hendrycks2019benchmarking}. We will begin with a publicly available ViT checkpoint fine-tuned on
+CIFAR-100 and verify its accuracy, preprocessing pipeline, label
+mapping, confidence distribution, and access to attention matrices from
+all Transformer layers. If no suitable checkpoint is available, we
+will fine-tune an ImageNet-pretrained ViT on CIFAR-100. The selected
+ViT will then be frozen throughout all detector experiments.
+
+If no publicly available checkpoint satisfies these requirements, we
+will fine-tune an ImageNet-pretrained ViT on the clean CIFAR-100 training
+set and select the checkpoint according to validation accuracy. In
+either case, the selected ViT will then be frozen and used as the fixed
+classifier throughout all detector experiments.
+
+We will evaluate the selected classifier on CIFAR-100-C and report
+accuracy separately for each corruption type and severity level. After
+validating the classifier, we will precompute its attention graphs. The
+detector will be trained on clean images and a selected subset of noise,
+blur, weather, and digital corruptions, while complete corruption
+families will be reserved for testing. All corrupted versions of the
+same source image will remain in the same split to prevent leakage.
+Optional far-OOD datasets are SVHN \citep{netzer2011svhn} and DTD
+\citep{cimpoi2014describing}; localized patches and occlusions will be
+generated automatically.
+
+
+\paragraph{Baselines and ablations.}
+We first report the frozen ViT's clean and corruption-specific
+classification accuracy. For failure prediction, we compare against
+maximum softmax probability, logit margin, and an MLP on the final
+class-token embedding.
+
+To isolate the contribution of graph structure, we also compare against
+an MLP receiving the same flattened attention tensors as the GNN and a
+sequence model receiving class-token embeddings from all ViT layers.
+
+Graph ablations include last-layer-only input, the final four layers,
+all layers, and threshold sensitivity.
+
+\paragraph{Metrics and success criteria.}
+We evaluate error prediction using AUROC and AUPRC, treating an
+incorrect ViT prediction as the positive class. Since the detector may
+be used to reject unreliable predictions, we also report
+risk--coverage curves, area under the risk--coverage curve, and
+selective accuracy at fixed coverage levels.
+
+Metrics are reported separately for clean images, corruption families
+seen during detector training, and unseen corruption families. The main
+hypothesis is supported if the GNN outperforms non-graph models given
+the same attention values, particularly on unseen corruptions.
+
+\paragraph{Compute resources.}
+The project requires GPU access provided by the course or university. The
+main compute cost is fine-tuning the ViT and precomputing attention graphs,
+token features, and logits for clean and corrupted images, as well as training the GNN over them.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+\end{document}
