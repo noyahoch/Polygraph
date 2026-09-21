@@ -123,6 +123,9 @@
 \paragraph{TL;DR}
 We represent a frozen ViT's attention as a graph and train a GNN to
 predict failures beyond confidence and non-graph baselines.
+In completed follow-ups, adding graph-detector scores improves a
+LogitDynamics adaptation, while a matched set-based combination achieves
+almost identical observed performance.
 
 \section{Background \& Motivation}
 
@@ -139,6 +142,9 @@ predict classification errors, especially under unseen corruptions,
 better than output-, representation-, and non-graph attention
 baselines?}
 \end{quote}
+
+Our completed follow-ups also examine complementary usefulness alongside a
+strong internal-feature predictor and the contribution of its feature groups.
 
 This is useful for selective prediction, where likely failures are
 rejected or referred for review, and scientifically useful for testing
@@ -178,6 +184,11 @@ patch-attention graphs to predict visual classification failure. We
 investigate this vision-specific gap.
 
 \section{Proposed Approach}
+
+This section describes the original proposal. The completed follow-ups in
+Section~\ref{sec:followups} use separately specified layer-specific detectors
+and score combinations; they do not implement the shared-GNN sequence model
+or establish the unseen-corruption objective of the original experimental plan.
 
 Let $A^{(\ell,h)}\in\mathbb{R}^{N\times N}$ be the attention matrix at
 ViT layer $\ell$ and head $h$, including the class token. Since query
@@ -238,7 +249,7 @@ y_{\mathrm{err}}(x)
 \arg\max_c f_c(x)\neq y(x)
 \right].
 \]
-Only the detector is trained, using class-weighted binary
+In this proposed graph-detector setup, only the detector is trained, using class-weighted binary
 cross-entropy. We compare:
 
 \begin{enumerate}
@@ -313,6 +324,206 @@ the same attention values, particularly on unseen corruptions.
 The project requires GPU access provided by the course or university. The
 main compute cost is fine-tuning the ViT and precomputing attention graphs,
 token features, and logits for clean and corrupted images, as well as training the GNN over them.
+
+\section{Controlled Follow-up Experiments}
+\label{sec:followups}
+
+We completed three related comparisons: standalone graph/set detectors
+against a published alternative, score fusion with that alternative, and a
+decomposition of its features. Earlier group experiments already included
+internal-plus-output fusion and competitive rich non-graph controls; these
+follow-ups extend those questions rather than introduce fusion or set
+controls for the first time.
+
+\paragraph{Implemented detectors.}
+The preserved graph and set detectors use attention layers 3, 6, 9 and 12,
+with separate models for each layer and seed. Every graph/set arm receives
+the same H12 token representations within 784-dimensional node features
+and 12 raw per-head attention edge features (the \emph{raw12} regime).
+Per-head values at or below the fixed 0.02 sparsification threshold are zero-filled.
+The graph model uses two width-64 edge-gated mean message-passing layers,
+with source/target-conditioned gates and a CLS-plus-gated-node-sum readout.
+The width-84 set model separately encodes nodes and edges with two-layer
+MLPs. Its readout combines CLS, a gated node sum, node mean/max, edge
+mean/max and $\log(1+\text{edge count})$. It keeps positions, CLS flags,
+diagonal attention and H12 values, but discards edge incidence and thus
+edge-to-endpoint association. Pooling also differs; matching feature
+values does not isolate message passing alone.
+$G$ and $S$ denote equal means of the four within-seed sigmoid detector
+scores, not shared-GNN sequences, union graphs or cross-seed prediction
+averages. The preserved fits used 20 epochs, AdamW, learning rate 0.002,
+weight decay 0.0001, dropout 0.15 and batch size 24; checkpoints maximized
+selection-set AUROC. Subsequent comparisons reused these fits, including
+existing GNN models, and are not independent training replications.
+
+Our LogitDynamics adaptation, $D$ \citep{beigelman2026logitdynamics}, keeps
+the ViT-Base frozen and fits twelve auxiliary linear class heads on CLS
+states. Each head and the original classifier contribute six numeric
+features: the original predicted class's logit and the five largest
+competing-class logits. These 78 values and seven dynamics features feed
+a linear error detector. This is distinct from our earlier local
+CLS-trajectory GRU and is not a reproduction of the published ViT-Large
+experiments. Auxiliary heads use unweighted multiclass training for 16
+epochs; error probes use weighted binary cross-entropy for 100 epochs,
+selecting the highest validation AP and the earliest exact tie. Inputs,
+supervision allocation and budgets differ from the graph/set pipelines.
+
+\paragraph{Data roles and fusion.}
+We use CIFAR-100 photographs with nine views each: clean, and Gaussian
+noise, motion blur, fog and JPEG at severities 3 and 5. All views of a
+photograph remain grouped. Graph/set fitting uses 1,600 source photographs
+and checkpoint selection uses 400. LD auxiliary heads use 1,200 sources;
+the error probe uses 800, and selection uses 400. Standalone evaluation
+uses the same 800 development photographs (7,200 examples) for all methods.
+
+For fusion, a fixed outcome-independent hash partition divides these
+previously examined development photographs into 400 for fitting and 400
+for assessment. The earlier 400-photo combiner pool was unsuitable here
+because LD used it for probe training. We fit separate two-score logistic
+combinations $DG$, $DS$ and $DD'$ per seed, with training-only
+standardization and fixed L2 regularization ($C=1$; intercept; no class
+balancing). Rankings use decision logits, and $D$ remains unrecalibrated.
+$D'$ is another existing LD seed, paired as $7\!\to\!17$,
+$17\!\to\!27$, $27\!\to\!7$; these overlapping pairs are a generic
+ensemble control, not a compute-matched control. This linear score fusion
+is not the earlier conditional gate. Decomposition retains LD's original
+800/400 training/selection roles and evaluates on all 800 development
+photographs. The studies are exploratory: separating combiner fitting
+and assessment does not create an untouched test set.
+
+\paragraph{Statistical scope.}
+AUROC measures error ranking, with incorrect ViT classifications positive.
+Tables report means of seed-specific metrics for seeds 7, 17 and 27, not
+metrics of cross-seed averaged predictions. AP denotes scikit-learn
+average precision, not trapezoidal PR area. The follow-ups use 2,000 paired
+source-photo bootstrap draws. Fusion separately resamples fitting and
+assessment photographs and refits all combiners; decomposition resamples
+evaluation photographs with fitted models fixed. The three primary
+contrasts $DG-D$, $DG-DS$ and $C-B$ use $98\frac{1}{3}\%$
+Bonferroni-adjusted percentile intervals, targeting nominal 95\%
+familywise coverage. Linear percentile endpoints are 0.0083333333 and
+0.9916666667; only about 17 draws occupy each tail. Secondary intervals
+are descriptive 95\% intervals. Uncertainty conditions on preserved base
+models and designated splits, includes combiner-fitting resampling where
+applicable, and does not cover all training variability or previous
+development-data exposure.
+
+\paragraph{Earlier matched-control context.}
+The separate September 11 \emph{rich36} study found graph minus set AUROC
+$+0.006233$ (reported 95\% interval $[0.002618,0.009836]$, five seeds).
+Its attention-only counterpart gave $-0.003686$, with interval
+$[-0.008349,0.001045]$. Feature regimes, cohorts and training budgets
+differ from the later raw12 ensembles, so these are not contradictory
+controlled replications. An earlier two-seed replication found that a learned
+four-layer score stack improved on its learned single-final-layer control.
+No matched four-model final-layer
+ensemble was evaluated, so this does not isolate layer diversity or show
+that ensembling caused the change between studies.
+
+\begin{table}[htbp]
+\centering
+\caption{Separate standalone and fusion evaluations. Mean AUROC across
+three seeds; values should be compared only within a panel.}
+\label{tab:standalone-fusion}
+\begin{tabular}{lr}
+\hline
+\multicolumn{2}{l}{\textbf{Standalone: 800 development photographs}}\\
+Method & Mean AUROC\\
+\hline
+MSP & 0.861943\\
+Full-logit MLP & 0.875708\\
+Set ensemble ($S$) & 0.888559\\
+GNN ensemble ($G$) & 0.888895\\
+LogitDynamics adaptation ($D$) & 0.898066\\
+\hline
+\multicolumn{2}{l}{\textbf{Fusion: 400 assessment photographs}}\\
+Method & Mean AUROC\\
+\hline
+$D$ & 0.900126\\
+$G$ & 0.895609\\
+$S$ & 0.894954\\
+$DG$ & 0.907329\\
+$DS$ & 0.907286\\
+$DD'$ & 0.902116\\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Standalone and complementary usefulness.}
+On 800 development photographs, the prespecified $G-D$ difference was
+$-0.009171$, with ordinary 95\% interval $[-0.015874,-0.002361]$;
+$D$ had higher AUROC in all three seed pairs
+(Table~\ref{tab:standalone-fusion}). This earlier comparison has its own
+single-contrast interval, without retroactive follow-up multiplicity
+correction. It establishes an advantage for the fitted LD adaptation over
+the preserved graph ensemble here, not over every group model, such as
+the separate rich conditional-gate pipeline.
+
+On the distinct 400-photo fusion assessment, $DG-D=+0.007203$, adjusted
+interval $[0.003415,0.011330]$. Although $G$ underperforms $D$ alone,
+its score improves ranking when combined with $D$. However,
+$DG-DS=+0.000043$, adjusted interval $[-0.001311,0.001508]$:
+the set combination has almost identical observed performance, with no
+demonstrated graph-specific fusion advantage. This is not equivalence.
+The secondary $DG-DD'$ contrast is $+0.005213$, descriptive 95\%
+interval $[0.001942,0.008673]$. $DD'$ also ranks above $D$ by point
+estimate; this ordering is descriptive only.
+
+\begin{table}[htbp]
+\centering
+\caption{LD feature decomposition on all 800 development photographs.
+Only A/B/C readouts are newly fitted; D is the preserved full model.}
+\label{tab:ld-decomposition}
+\begin{tabular}{lp{0.61\linewidth}r}
+\hline
+Variant & Features & Mean AUROC\\
+\hline
+$A$ & Six original-classifier features & 0.863598\\
+$B$ & $A$ plus the layer-12 auxiliary-head block & 0.894831\\
+$C$ & Numeric blocks from all auxiliary layers and the original classifier & 0.898966\\
+$D$ & $C$ plus seven dynamics features & 0.898066\\
+\hline
+\end{tabular}
+\end{table}
+
+\paragraph{Feature-group decomposition.}
+With frozen auxiliary heads and training-only normalization, A/B/C use
+the original linear-probe recipe. Their newly generated cache reproduces
+preserved $D$ predictions before fitting. The largest observed increment
+in this nested comparison is the final-layer auxiliary block:
+$B-A=+0.031233$, descriptive 95\% interval $[0.025273,0.037483]$
+(Table~\ref{tab:ld-decomposition}). $A$ is a six-feature readout, not the
+full-logit MLP. This contrast does not isolate auxiliary supervision
+from changes in projection, inputs and readout dimensionality.
+
+Intermediate-layer projections provide a smaller additional benefit.
+The difference was $C-B=+0.004135$; its adjusted interval was
+$[0.000428,0.007911]$.
+The small positive lower endpoint warrants restraint given the limited
+bootstrap tail resolution. This tests usefulness under the fixed recipe,
+not information absent from H12 or a unique explanation of the
+LD--GNN difference. Finally, adding the dynamics block slightly lowers
+AUROC: $D-C=-0.000900$, descriptive 95\% interval
+$[-0.001750,-0.000048]$. The effect is small and close to zero; it
+does not establish that dynamics is generally harmful or unnecessary.
+The block includes class identities, not only summaries already present
+in $C$, so this is not a clean dynamics-versus-information-content test.
+
+\paragraph{Interpretation and boundaries.}
+These follow-ups distinguish standalone quality from complementary
+usefulness. Graph scores improve a stronger LD score, but a matched
+non-message-passing combination performs almost identically. This
+supports complementary detector outputs without establishing graph
+necessity. Attention-derived feature content, endpoint associations and
+graph processing are different questions; absence of message passing
+does not imply absence of attention information. The ablation identifies
+useful feature groups under a fixed readout, not a complete causal
+explanation. Score-level complementarity does not establish information
+absent from all LD features or final logits. Better error ranking neither
+improves the frozen classifier's accuracy nor demonstrates calibration,
+threshold transfer or deployment reliability. These follow-ups do not
+validate fusion on unseen corruption families, and their near-tie does
+not invalidate the earlier positive rich-feature result.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
