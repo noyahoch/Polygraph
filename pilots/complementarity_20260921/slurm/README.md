@@ -11,11 +11,11 @@ submission, read the newest operator HANDOFF and reconcile user, account,
 names, submission timestamps, intents and job IDs against the live scheduler.
 An existing intent without an unambiguous receipt must never be blindly retried.
 
-The proposed initial envelope is 105 GPU-minutes: cache plus CUDA checks20,
-three independent seed fits25each, and one post-freeze prediction job10.
-The new campaign ceiling is120 GPU-minutes including failures; this envelope
-leaves15minutes unreserved. CPU allocations total230job-wall-minutes including
-preparation, analysis and backup, leaving10minutes under the240minute ceiling.
+The proposed initial envelope is 105 GPU-minutes: cache plus CUDA checks 20,
+three independent seed fits 25 each, and one post-freeze prediction job 10.
+The new campaign ceiling is 120 GPU-minutes including failures; this envelope
+leaves 15 minutes unreserved. CPU allocations total 230 job-wall-minutes including
+preparation, analysis and backup, leaving 10 minutes under the 240 minute ceiling.
 These are allocation ceilings rather than estimates of elapsed calendar time.
 
 `stage_runner.py` verifies all source files, preserves the exact parent source,
@@ -24,15 +24,15 @@ sanitizes credentials. `submit.py` preserves one-shot intents and enforces full
 reservation ceilings plus previous-attempt accounting. Automatic requeue is off.
 Failure requires reconciliation and a separately reviewed mechanical recovery.
 
-The first50 bootstrap draws are retained. `advance_after_timing.py` sees only
+The first 50 bootstrap draws are retained. `advance_after_timing.py` sees only
 their completion/timing metadata, and submits the remaining fixed1950draws only
-when the measured estimate with a1.25safety factor fits the already approved
-150minute remainder allocation. No scientific effect is used for this decision.
+when the measured estimate with a 1.25 safety factor fits the already approved
+150 minute remainder allocation. No scientific effect is used for this decision.
 Jobs after the timing controller continue independently of the laptop.
 
 `backup.py` uses the existing protected server token only during the private
 upload. It snapshots all new scientific and operational state plus small bound
-parent inputs/models, with a512MiB uncompressed scope guard. Original image/CLS
+parent inputs/models, with a 512 MiB uncompressed scope guard. Original image/CLS
 caches are not duplicated. A compressed archive retains every per-draw file;
 the publisher verifies every remotely downloaded object at an immutable revision,
 then checks each downloaded archive member against its per-file manifest.
