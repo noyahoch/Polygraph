@@ -1,5 +1,17 @@
 # LogitDynamics follow-up — September 19, 2026
 
+## Reopened verification — September 21, 2026
+
+Omri challenged the incomplete CPU replay and asked why it was not completed.
+He subsequently confirmed the requested VPN reconnection. This authorizes
+finishing the bounded verification of the existing experiment; it does not
+authorize new models, hyperparameters, training or changes to reported scores.
+
+Current scope and restart entry point: [REPLAY_COMPLETION_20260921.md](REPLAY_COMPLETION_20260921.md).
+The operator must reconcile current jobs and new submission receipts before
+launching anything. Historical job IDs below must not be treated as live jobs.
+The September 19 closure remains preserved below as a dated record.
+
 ## Completed — September 19, 16:15 Israel
 
 **The scientific comparison, independent saved-result review, private model and
