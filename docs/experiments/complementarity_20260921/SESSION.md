@@ -1,9 +1,10 @@
 # Complementarity follow-up — September 21, 2026
 
 Omri explicitly authorized implementing the final two-experiment plan. Read
-PROTOCOL.md before any numerical work. Both scientific definitions must be
-frozen before new result inspection. No experiment has been submitted at this
-initial documentation checkpoint; reconcile live operator records before acting.
+PROTOCOL.md before any numerical work. Both scientific definitions were frozen
+before new result inspection. The initial DAG was submitted on September 21;
+read the execution checkpoint below and reconcile live operator records before
+acting. Earlier pre-submission notes are historical.
 
 ## Ownership
 
@@ -60,6 +61,49 @@ Access failures require precise user action while independent coding continues.
   These are ceilings, not measured runtime estimates. Actual new GPU/statistical
   runtime is zero at this checkpoint. Reconcile before relying on this note.
 
-Next: restore access, reconcile the original sources and live scheduler, review
-the exact release/configuration hashes, then launch the gated Slurm workflow.
-The plan is already authorized; another scientific approval is not required.
+## Execution checkpoint — September 21, 14:05 Israel
+
+Access returned after Omri confirmed the VPN reconnection. Read-only readiness
+found an empty queue and no previous new-namespace submissions. The operator
+verified the original 133 source files, original scores, all 450 CLS shards and
+required model artifacts, then staged and verified all 160 release files.
+
+Remote root:
+`/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/complementarity_20260921_135802`.
+
+The frozen source checkpoint is `45b0c4f`. Configuration SHA-256:
+`19c04dc936a958fa9864a008cf01171d4446a9b55734681294b38b1f6cbe31bd`.
+Source-manifest SHA-256:
+`4f2debe7aaa861c44538240ce624d4ff1ad4e4160dbe538f1f1298e24db08fed`.
+
+All initial jobs were submitted once at 14:05:18 Israel under user `omrifahn`,
+account `gpu-students`, with job-name prefix `comp0921-135802`:
+
+| Stage | Job ID |
+|---|---:|
+| Prepare and CPU checks | 915915 |
+| CUDA checks and new-cache compatibility gate | 915916 |
+| A/B/C fits, seed 7 | 915917 |
+| A/B/C fits, seed 17 | 915918 |
+| A/B/C fits, seed 27 | 915919 |
+| Fusion fits | 915920 |
+| Freeze all fitted models | 915921 |
+| Ablation predictions | 915922 |
+| Fusion predictions | 915923 |
+| Retained first 50 bootstrap draws | 915924 |
+
+At 14:05:52, preparation was running on `rack-iscb-31`; all descendants were
+pending on dependencies. This is not evidence that numerical tests passed or
+that the experiment completed. Match timestamps/account/names as well as IDs.
+
+The durable timing controller owns submission of the remaining 1,950 draws,
+report and private backup. Do not submit that phase independently. The existing
+`monitor-polygraph-slurm-continuation` heartbeat is now active for this new
+scope only and should stay quiet on unchanged state. Pause it after validated
+results, preservation and the final concise Hebrew report.
+
+Submission, staging and scheduler evidence are in the operator directory:
+`submission_stdout_v1.jsonl`, `staging_receipt.json`, and `status_initial.json`.
+Next: inspect completion receipts and early failures, continue only within the
+frozen protocol, and account for actual consumed plus outstanding reserved
+resources before any mechanical recovery. No new scientific approval is needed.
