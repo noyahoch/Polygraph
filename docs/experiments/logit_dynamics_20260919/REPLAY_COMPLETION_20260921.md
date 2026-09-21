@@ -1,5 +1,43 @@
 # Completing saved-input replay verification — September 21, 2026
 
+## Completed numerical checks — September 21, 12:29:52 Israel
+
+Both jobs completed successfully as processes. CUDA replay reproduced all six
+original score vectors exactly. CPU replay executed all six cases; the known
+single seed-17 validation mismatch remains, while all development vectors and
+the other two validation vectors passed the unchanged score tolerance. Therefore
+CPU `execution_complete` is true and `tolerance_passed` is false. The CUDA score
+equality check compares values with `np.array_equal`, not raw storage bytes.
+
+Independent CPU recalculation of all 2,000 bootstrap draws (12,000 weighted
+AUROC calculations across three seed pairs) passed at absolute tolerance 1e-12;
+maximum paired-difference discrepancy was 3.3306690738754696e-16. No draw was
+undefined. All original result files, model weights, frozen source and prior
+failed-audit/diagnostic records remain unchanged after both jobs.
+
+CPU job 915652 used 279 allocated seconds; CUDA job 915653 used 283 allocated
+seconds, on a runtime-reported RTX 2080 Ti. Total campaign GPU allocation is
+now 14,659 seconds (4:04:19). Both completed by 12:29:52 and the queue was empty
+in the 12:31:25 reconciliation. The original scientific results did not change.
+
+Exact local evidence under `run_records/replay_completion_20260921/`:
+
+- `final_receipts/audit/replay_completion_20260921_cpu_v1.json`, SHA-256
+  `8ad1cd139368bb3ae1f3c59efb52b74951baeeef790fb8d4a6985e17245eb3f9`.
+- `final_receipts/audit/replay_completion_20260921_cuda_v1.json`, SHA-256
+  `9cdb7815b05bb51945c1b7dd5e8578746d64ea29a1dcdd85e144f400f485d57a`.
+- `final_receipts_verification_20260921.json`: exact downloaded-file hashes,
+  13 remote NPZ evidence hashes, job/account/time identity, final accounting
+  and direct unchanged-originals verification.
+
+The engineer separately checked outstanding obligations; an independent reviewer
+read final outputs and preservation receipts and found no unresolved evidence
+blocker. This completes cached-input verification, with the CPU limitation
+retained. See [AUDIT_REPRODUCIBILITY.md](AUDIT_REPRODUCIBILITY.md) for every
+case and numerical difference. Private preservation of these new records and
+the updated reports follows as a separate addendum; it must not change earlier
+Hub snapshots. No numerical work remains queued within this scope.
+
 ## Scope and reason
 
 The original CPU audit stopped at its first score-tolerance failure, before
@@ -102,3 +140,19 @@ and submission records are in the operator namespace above.
 - New remote receipts: `audit/replay_completion_20260921_cpu_v1.json` and
   `audit/replay_completion_20260921_cuda_v1.json` under the experiment root.
 - Original scientific outputs, failed audit and diagnostic remain unchanged.
+
+## Other completion obligations
+
+A separate read-only review found no missing September 19 fit, seed, prediction,
+scientific report or original model/source backup. The original preflight also
+checked auxiliary-head weights/AdamW/RNG restoration and the next optimizer
+update, plus probe save/reload (`run_records/preflight_readout.json`,
+`resume_next_step_parity: true`). This was a bounded smoke test, not a recorded
+kill/restart of every complete production fit.
+
+After these audits, the remaining delivery work is independent receipt review,
+updating the English/Hebrew reports and reuse documentation, and preserving
+the new audit evidence and current documents in a separate private HF addendum.
+The September 21 English report postdates the original September 19 review
+backup. The superseded September 10 training matrix and earlier optional
+research ideas are not outstanding tasks of this LogitDynamics comparison.

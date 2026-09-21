@@ -1,12 +1,63 @@
-# Engineering and reproducibility audit — September 19, 2026
+# Engineering and reproducibility audit — September 19–21, 2026
 
 The completed fixed LogitDynamics run has all three training pipelines, a common
 freeze, paired predictions, evaluation and a private Hugging Face snapshot.
 The source and saved JSON records support the provenance and completion findings
-below. The bounded CPU audit verified the freshly retrieved weights, histories
-and train-only scalers, but failed its unchanged score-replay tolerance for
-seed 17 validation. Full portable CPU score replay is therefore **not verified**.
-No local tensor loading or numerical testing was used for this audit.
+below. The September 21 completion audit replayed every validation/development
+score from the published portable weights on CPU and CUDA. CUDA scores matched
+the original values exactly; CPU retained one validation tolerance violation.
+All development CPU scores passed tolerance. Every bootstrap draw was also
+independently recomputed. No local tensor loading or numerical testing was used.
+
+## Current disposition — September 21
+
+Jobs **915652** (CPU) and **915653** (CUDA) completed at 12:29:49 and 12:29:52
+Israel, using 279 and 283 allocated seconds respectively. Each loaded the six
+published safetensors and three scalers inside the existing server environment;
+native and portable parameter tensors matched exactly. The CUDA allocation
+reported an NVIDIA GeForce RTX 2080 Ti. Both audits executed all six cases;
+the score tolerance remained `atol=rtol=1e-4`.
+
+| Seed / role | Records | CPU maximum absolute difference | CPU violations | CUDA maximum absolute difference |
+| --- | ---: | ---: | ---: | ---: |
+| 7 / validation | 3,600 | 3.4570693969726562e-6 | 0 | 0 |
+| 17 / validation | 3,600 | 0.0007970333099365234 | 1 | 0 |
+| 27 / validation | 3,600 | 2.384185791015625e-6 | 0 | 0 |
+| 7 / development | 7,200 | 3.337860107421875e-6 | 0 | 0 |
+| 17 / development | 7,200 | 2.4437904357910156e-6 | 0 | 0 |
+| 27 / development | 7,200 | 3.814697265625e-6 | 0 | 0 |
+
+CUDA had exact score-value equality for all cases (`np.array_equal`, not a
+separate byte-representation comparison). CPU execution completed, but its
+aggregate `tolerance_passed` is false. The sole failing row remains validation
+record 15321 / image 659 for seed 17: saved score −1.778078317642212, CPU replay
+−1.7788753509521484. The old failure was not erased or cleared. CPU development
+metrics are not universally identical: seed 7 AUROC is 0.8991769878197307 versus
+saved 0.8991770324874779; AP is 0.8000408005318231 versus 0.8000409413412997.
+These new CPU scores were not substituted into the scientific results.
+
+The CPU job independently recomputed all 2,000 shared source-photo bootstrap
+draws for all three seed pairs using `sklearn.metrics.roc_auc_score` with photo
+multiplicity weights, rather than the production `WeightedAUC` implementation.
+All 12,000 weighted AUROC calculations completed. The maximum per-seed paired
+difference discrepancy was 3.3306690738754696e-16; no draw was undefined. The
+recomputed interval was [−0.015873773489983915, −0.002360807640635412], agreeing
+with the saved interval at absolute tolerance 1e-12. All 14 saved point-metric
+vectors and seeded source multiplicities were independently checked as well.
+
+Exact receipts and direct post-run source/result-preservation evidence are in
+`run_records/replay_completion_20260921/`. The audit script is
+`pilots/logit_dynamics_20260919/ops/audit_replay_completion.py`, SHA-256
+`582a308a4b8b0ba4f1ef0f0114129761989434d2768f5d663e8bc589ab3dde55`.
+The original report, scores, bootstrap, freeze gate, source and failed audit
+remain unchanged. See [the completion record](REPLAY_COMPLETION_20260921.md).
+
+**The previously unexecuted replay cases are now complete.** Portable GPU
+checkpoint-to-score replay from the cached CLS inputs is verified in this
+environment. The one CPU tolerance failure remains a documented limitation.
+This does not test a clean installation, fresh raw-image-to-output pipeline,
+full training rerun or replication of the paper's broader experimental study.
+The detailed September 19 record below is retained as historical evidence.
 
 ## Artifact identity
 
@@ -121,7 +172,7 @@ arbitrary-image end-to-end inference. The pinned source uses absolute campaign
 paths and existing baseline/cache resources. See [REUSE.md](REUSE.md) for the
 precise artifact layout and practical boundaries.
 
-## Final replay status
+## Original replay and diagnostic — September 19 (historical)
 
 CPU Slurm job **910647** failed after 115 allocated CPU-job seconds (30-minute
 outer cap, 25-minute internal limit, six CPU threads, 16 GB; no GPU or fitting).
@@ -183,9 +234,10 @@ GPU head logits and feature vectors were not saved, so it does **not** prove
 the exact historical GPU ranking responsible for the discrepancy. The receipt
 explicitly retains `original_CPU_replay_failure_cleared: false`.
 
-The completed original GPU comparison and independently checked saved metrics
+At the September 19 closure, the completed original GPU comparison and independently checked saved metrics
 remain unchanged. Published portable weights loaded exactly; full CPU score
 replay **did not pass**. Seed 27 validation and all development scores remain
 unverified by fresh CPU inference. No additional GPU replay, fitting, threshold
 change or scientific rerun is pending. The audit closes with these explicit
-portability limits.
+portability limits. The September 21 section above supersedes the statements
+about unexecuted cases and no pending replay; it preserves the original failure.

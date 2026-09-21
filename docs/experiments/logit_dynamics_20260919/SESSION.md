@@ -1,6 +1,24 @@
 # LogitDynamics follow-up — September 19, 2026
 
-## Reopened verification — September 21, 2026
+## Verification completed — September 21, 2026
+
+CPU job **915652** and CUDA job **915653** completed by 12:29:52 Israel.
+All three seeds' validation and development predictions were replayed. CUDA
+matched every original score exactly. CPU completed all checks; one previously
+known seed-17 validation row still exceeds `atol=rtol=1e-4`, and all development
+score vectors passed. The independent implementation also recalculated all
+2,000 bootstrap draws, agreeing within 1e-12. Original scientific outputs,
+weights, source, failed audit and diagnostic remain unchanged, checked directly
+against pinned hashes. Independent review found no unresolved evidence blocker.
+
+The GPU audit added 283 seconds; total allocated GPU time is now 14,659 seconds
+(4:04:19). CPU used 279 seconds without a GPU. No numerical jobs remain queued
+in the 12:31:25 reconciliation. The previous heartbeat remains paused. Updated
+reports and a new private verification addendum preserve this completed check;
+the publication receipt is recorded after upload. This is cached-CLS replay in
+the existing environment, not clean-install or raw-image end-to-end reproduction.
+
+### Reopening and submission record
 
 Omri challenged the incomplete CPU replay and asked why it was not completed.
 He subsequently confirmed the requested VPN reconnection. This authorizes

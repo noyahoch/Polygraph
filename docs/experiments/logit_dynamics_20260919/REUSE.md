@@ -59,22 +59,25 @@ record. Keep the numeric competitor exclusion, raw top-five dynamics, terminal
 original-classifier logits and feature order exactly as in the pinned source.
 These imports were exercised by CPU audit 910647: all six portable weight files
 loaded and matched their native counterparts exactly, and all three train-only
-scalers were reproduced within the fixed tolerance. **Full CPU score replay did
-not pass**: seed 17 validation exceeded the upfront `atol=rtol=1e-4` tolerance
-(maximum absolute difference `0.0007970333099365234`). Seed 7 validation passed;
-seed 27 validation and development replays were not reached. The failed receipt
-is preserved, and the tolerance and published scores remain unchanged. Consult
-the audit document for the separately scoped diagnostic rather than assuming
-cross-backend score equivalence from successful weight loading.
+scalers were reproduced within the fixed tolerance. That audit stopped at a
+seed-17 validation score failure. The September 21 completion audits **915652**
+(CPU) and **915653** (CUDA) subsequently replayed all six seed/role combinations.
+On CUDA all original validation and development score values matched exactly.
+On CPU, all development scores and validation for seeds 7/27 passed the original
+`atol=rtol=1e-4`. One seed-17 validation score still failed, with maximum absolute
+difference `0.0007970333099365234`. Thus replay execution is complete; universal
+CPU score equivalence is not certified. Original scores and tolerance are unchanged.
 
-Diagnostic 910651 then verified the saved 14-vector metrics, exact metadata and
+The September 19 diagnostic 910651 verified the saved 14-vector metrics, exact metadata and
 historical scores, and stored-bootstrap aggregation. It isolated one seed 17
 validation record (ID 15321, photograph 659) whose depth-4 top-five membership
 changes across CPU precisions at a near tie. FP64 CPU heads reproduced its
 saved GPU score, but the historical GPU intermediate ranks are unavailable.
-This sensitivity diagnosis does not clear the failed full CPU replay or verify
-the unreached seed 27 validation and development CPU scores. No additional
-numerical audit is pending.
+This sensitivity diagnosis does not clear the CPU tolerance failure. The later
+completion audit checked all previously unreached scores and independently
+recomputed every weighted bootstrap draw. Minor CPU metric differences are
+listed in the audit document; all original scientific results remain unchanged.
+No numerical check remains pending within the current bounded replay scope.
 
 All numerical execution for this project remains inside Slurm. The existing
 production command `python -m pilots.logit_dynamics_20260919.train predict`
@@ -113,7 +116,7 @@ absolute-path-bound campaign immediately runnable. Preserve the old manifests;
 a relocated reproduction needs a separately documented namespace and restored
 baseline/cache/environment dependencies.
 
-## Final CPU audit command
+## Original CPU audit command — September 19 (historical)
 
 The operator runs this inside the pinned existing server environment, after
 staging the checksum-verified source release and the published files. The fresh
@@ -149,3 +152,24 @@ The immutable audit receipts are `audit/reproducibility_cpu_v1.json` (SHA-256
 and `audit/cpu_precision_diagnostic_v1.json` (SHA-256
 `9c6ddea512a82f0624eed238d8100d23e0c0b1e4eb016c49563bd380a82c2343`).
 The latter is a diagnostic completion receipt, not a successful full replay.
+
+## Completed CPU and CUDA replay — September 21
+
+The new audit source is
+`pilots/logit_dynamics_20260919/ops/audit_replay_completion.py`, SHA-256
+`582a308a4b8b0ba4f1ef0f0114129761989434d2768f5d663e8bc589ab3dde55`.
+It was staged as `ops/audit_replay_completion_20260921_v1.py` on the server.
+Both commands use the same `--root`, `--release` and `--published-dir` shown
+above, adding `--backend cpu` or `--backend cuda`, and new outputs
+`audit/replay_completion_20260921_cpu_v1.json` and
+`audit/replay_completion_20260921_cuda_v1.json`. Exact command vectors and
+the unchanged environment overlay are in
+`run_records/replay_completion_20260921/config_replay_completion_v1.json`.
+These are completed historical commands, not instructions to resubmit them.
+
+The audit uses production feature/scoring routines and the original batch size
+512; the CPU companion independently computes all 2,000 bootstrap draws with
+scikit-learn. New per-record replay scores and bootstrap evidence remain under
+separate audit directories on Slurm. Read [the completion record](REPLAY_COMPLETION_20260921.md)
+and its private preservation receipt for the later audit-code/evidence snapshot;
+the original model revision remains the loading target.

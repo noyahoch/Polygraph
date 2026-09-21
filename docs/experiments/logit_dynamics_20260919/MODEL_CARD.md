@@ -124,8 +124,8 @@ The scientific implementation was locally committed as `4310b9d` on
 documents. No branch push or merge occurred; the private Hub source copy makes
 the trained models independent of unpublished files on the Mac.
 
-All compute ran on Slurm. The completed GPU allocations, including the original
-prediction timeout and successful recovery, total 14,376 seconds (3:59:36).
+All compute ran on Slurm. The original September 19 GPU allocations, including
+the prediction timeout and successful recovery, totaled 14,376 seconds (3:59:36).
 The recovery changed scheduling only; all failed attempts and source identities
 remain preserved. Final CPU artifact checks are documented separately and add
 no GPU training. See [SESSION.md](SESSION.md) for operational receipts and
@@ -141,8 +141,18 @@ FP32/FP64 CPU top-five ranking sensitivity at a near tie; the higher-precision
 head calculation matched the saved GPU score. Historical GPU intermediates
 were not saved, so the exact original cause is not established. The separate
 saved-metric audit passed for all 14 vectors, seed summaries, metadata and
-stored-bootstrap aggregation. The original strict CPU failure is not cleared;
-seed 27 validation and full development CPU replay remain unverified. Original
-GPU scores and the completed scientific comparison remain unchanged. Consult
+stored-bootstrap aggregation. The original strict CPU failure is not cleared.
+On September 21, completion audits 915652 (CPU) and 915653 (CUDA) ran all six
+seed/role replays from portable weights and cached CLS inputs. CUDA reproduced
+all original score values exactly. CPU retained only the same validation
+violation; all development scores and seeds 7/27 validation passed the unchanged
+tolerance. Small CPU metric differences are recorded in the detailed audit.
+All 2,000 bootstrap draws were independently recomputed using scikit-learn,
+agreeing with paired differences to 3.33e-16. The GPU replay added 283 allocated
+seconds, bringing total GPU usage to 14,659 seconds (4:04:19). The CPU companion
+used 279 allocated seconds without a GPU. The existing environment and saved
+CLS inputs were used; a clean installation or fresh raw-image pipeline was not
+tested. Original GPU scores and the completed scientific comparison remain
+unchanged. Consult
 [AUDIT_REPRODUCIBILITY.md](AUDIT_REPRODUCIBILITY.md)
 for the final status before claiming cross-device reproducibility.

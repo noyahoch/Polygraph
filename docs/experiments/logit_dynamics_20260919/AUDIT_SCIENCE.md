@@ -166,7 +166,25 @@ This demonstrates a competitive alternative internal-signal recipe under
 the stated training budgets, with development reuse and unequal supervision
 and capacity limiting broader conclusions.**
 
-## Final disposition after the CPU audit
+## September 21 verification completion
+
+The portable-checkpoint replay is now complete for validation and development
+across all three seeds, on both CPU and CUDA. CUDA reproduced all original score
+values exactly. CPU retained only the known seed-17 validation violation; all
+development score vectors passed the unchanged tolerance, with small numerical
+metric differences recorded separately. The independent CPU implementation also
+recomputed every weighted AUROC in all 2,000 paired bootstrap draws, agreeing
+with saved paired differences to 3.33e-16 and the interval within 1e-12.
+
+This closes the previously unexecuted checks and strengthens verification of
+the existing results; it is not another scientific experiment. It changes no
+model, original score, confidence interval, primary finding or methodological
+limitation. In particular, the reused development cohort and unequal method
+inputs/supervision remain. The one CPU tolerance failure also remains recorded.
+A clean installation and fresh raw-image-to-output pipeline were not tested.
+See [the current reproducibility audit](AUDIT_REPRODUCIBILITY.md).
+
+## September 19 disposition after the CPU audit (historical)
 
 The completed comparison can close with its **original GPU predictions and
 reported results unchanged**, and an explicit limitation on strict CPU replay.

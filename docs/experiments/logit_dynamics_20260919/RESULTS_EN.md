@@ -41,11 +41,13 @@ LogitDynamics had higher AUROC in all three seed pairs. The prespecified mean pa
 
 The evaluation images had already been examined in earlier work. This was a fixed ViT-Base adaptation, not a replication of the original paper's ViT-Large experiments and hyperparameter search. The methods differed in their inputs, supervision allocation, parameter counts and training budgets. The interval is conditional on the fitted model pairs. Only the primary AUROC contrast received an interval.
 
-Independent checks verified the saved AUROC/AP values, seed summaries, metadata and historical predictions. They checked the stored bootstrap aggregation and interval, but did not recompute each draw's weighted AUROC.
+On September 21, two additional Slurm audits loaded the published portable weights and replayed validation and development predictions for all three seeds from the saved CLS inputs. On GPU, all six score vectors exactly matched the original values, with maximum absolute difference zero. On CPU, all three development vectors and two validation vectors passed the unchanged absolute/relative tolerance of 0.0001. Seed-17 validation retained the previously recorded single failing example among 3,600, with a score difference of 0.000797. All six CPU checks were completed; the CPU tolerance failure remains recorded. CPU development metrics are not exactly identical in every case: seed-7 AUROC was 0.8991769878 versus the saved 0.8991770325.
 
-The strict CPU replay failed its fixed absolute/relative tolerance of 0.0001 on one of 3,600 seed-17 validation examples, with a score difference of 0.000797. Published and original weights matched exactly. Seed-27 validation and full development prediction replay on CPU were not completed. The original GPU predictions and reported results were retained unchanged.
+The CPU audit also independently recalculated all 2,000 paired bootstrap draws using scikit-learn weighted AUROC: 12,000 AUROC calculations across the three seed pairs. The maximum discrepancy in a per-seed paired difference was 3.33 × 10⁻¹⁶; the interval matched at absolute tolerance 10⁻¹². Independent checks verified all 14 saved AUROC/AP vectors, metadata and historical predictions. The original GPU scores and reported results were retained unchanged.
 
-All computation ran on Slurm. Total allocated GPU time, including the unsuccessful prediction attempt and recovery, was **3 hours, 59 minutes, 36 seconds**.
+These checks used the existing server environment and cached CLS representations. A clean dependency installation, fresh raw-image-to-output replay and full training replication were not performed.
+
+All computation ran on Slurm. The original experiment used **3 hours, 59 minutes, 36 seconds** of allocated GPU time, including the unsuccessful prediction attempt and recovery. The September 21 GPU replay added **4 minutes, 43 seconds**, bringing the total to **4 hours, 4 minutes, 19 seconds**. The parallel CPU audit used 4 minutes, 39 seconds of allocated job time and no GPU.
 
 **Sources**
 
