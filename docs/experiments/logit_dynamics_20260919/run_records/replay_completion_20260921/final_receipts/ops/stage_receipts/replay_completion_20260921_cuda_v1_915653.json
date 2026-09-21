@@ -1,0 +1,30 @@
+{
+  "complete": true,
+  "configuration_sha256": "8f03bcfeeba2bef3e8544d46ec12be37336000eb1da70dfbe74759c989f137d7",
+  "elapsed_seconds": 277.6198687371798,
+  "environment": {
+    "imports": {
+      "archive_bytes": 55418880,
+      "archive_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+      "local_package_root": "/tmp/logit-dynamics-915653-yfjp0gpq/import_staging/imports",
+      "native_libraries": "Original pinned environment paths; unchanged",
+      "packages": {
+        "torch-geometric": "2.6.1",
+        "transformers": "5.16.1"
+      },
+      "precedence": "Experiment cwd first for -m; staged package trees precede installed copies",
+      "preparation_seconds": 11.357180305756629
+    },
+    "overlay_manifest_sha256": "66e9b9f841830177525f5baf7c806713fe23a25de704bdce8ac2c2fcd48fab6c",
+    "python": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+    "scratch": "/tmp/logit-dynamics-915653-yfjp0gpq"
+  },
+  "finished_utc": "2026-09-21T09:29:51.995484+00:00",
+  "gpu": true,
+  "hostname": "s-005",
+  "job_id": "915653",
+  "source_manifest_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+  "stage": "replay_completion_20260921_cuda_v1",
+  "started_utc": "2026-09-21T09:25:14.349978+00:00",
+  "status": "complete"
+}

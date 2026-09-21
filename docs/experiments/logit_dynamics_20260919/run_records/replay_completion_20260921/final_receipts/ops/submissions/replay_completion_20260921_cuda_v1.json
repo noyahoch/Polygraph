@@ -1,0 +1,30 @@
+{
+  "command": [
+    "sbatch",
+    "--parsable",
+    "--account=gpu-students",
+    "--partition=studentbatch",
+    "--job-name=ld0921-replay-replay_completion_20260921_cuda_v1",
+    "--time=15",
+    "--nodes=1",
+    "--ntasks=1",
+    "--cpus-per-task=6",
+    "--mem=16000",
+    "--output=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/replay_completion_20260921_cuda_v1_%j.out",
+    "--error=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/replay_completion_20260921_cuda_v1_%j.err",
+    "--chdir=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370",
+    "--kill-on-invalid-dep=yes",
+    "--gpus=1",
+    "--constraint=geforce_rtx_2080",
+    "--exclude=s-004",
+    "--wrap",
+    "exec /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python -B /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370/ops/stage_runner.py --config /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/config_replay_completion_20260921_v1.json --config-sha256 8f03bcfeeba2bef3e8544d46ec12be37336000eb1da70dfbe74759c989f137d7 --stage replay_completion_20260921_cuda_v1"
+  ],
+  "configuration_sha256": "8f03bcfeeba2bef3e8544d46ec12be37336000eb1da70dfbe74759c989f137d7",
+  "created_utc": "2026-09-21T09:25:09.138627+00:00",
+  "dependencies": [],
+  "job_id": "915653",
+  "job_name": "ld0921-replay-replay_completion_20260921_cuda_v1",
+  "response": "915653",
+  "stage": "replay_completion_20260921_cuda_v1"
+}

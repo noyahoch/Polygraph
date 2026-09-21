@@ -1,0 +1,17 @@
+{"stage": "replay_completion_20260921_cpu_v1", "command_index": 0, "started_utc": "2026-09-21T09:25:15.112964+00:00", "command": ["/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python", "-B", "-c", "from pathlib import Path; import hashlib; assert hashlib.sha256(Path('/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/audit_replay_completion_20260921_v1.py').read_bytes()).hexdigest()=='582a308a4b8b0ba4f1ef0f0114129761989434d2768f5d663e8bc589ab3dde55'"]}
+{"stage": "replay_completion_20260921_cpu_v1", "command_index": 1, "started_utc": "2026-09-21T09:25:15.295502+00:00", "command": ["/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python", "-B", "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/audit_replay_completion_20260921_v1.py", "--root", "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500", "--release", "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370", "--published-dir", "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/published_86605781", "--backend", "cpu", "--out", "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/replay_completion_20260921_cpu_v1.json"]}
+{"replayed": "seed7/probe_val", "backend": "cpu", "violations": 0}
+{"replayed": "seed17/probe_val", "backend": "cpu", "violations": 1}
+{"replayed": "seed27/probe_val", "backend": "cpu", "violations": 0}
+{"replayed": "seed7/dev_eval", "backend": "cpu", "violations": 0}
+{"replayed": "seed17/dev_eval", "backend": "cpu", "violations": 0}
+{"replayed": "seed27/dev_eval", "backend": "cpu", "violations": 0}
+{"independent_sklearn_bootstrap_draws": 250}
+{"independent_sklearn_bootstrap_draws": 500}
+{"independent_sklearn_bootstrap_draws": 750}
+{"independent_sklearn_bootstrap_draws": 1000}
+{"independent_sklearn_bootstrap_draws": 1250}
+{"independent_sklearn_bootstrap_draws": 1500}
+{"independent_sklearn_bootstrap_draws": 1750}
+{"independent_sklearn_bootstrap_draws": 2000}
+{"execution_complete": true, "tolerance_passed": false, "receipt": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/replay_completion_20260921_cpu_v1.json"}

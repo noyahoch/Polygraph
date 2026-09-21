@@ -1,0 +1,172 @@
+{
+  "accounting": [
+    "915652|ld0921-replay-replay_completion_20260921_cpu_v1|omrifahn|gpu-students|2026-09-21T12:25:09|2026-09-21T12:25:10|2026-09-21T12:29:49|COMPLETED|0:0|279|billing=9,cpu=6,mem=16000M,node=1",
+    "915652.batch|batch||gpu-students|2026-09-21T12:25:10|2026-09-21T12:25:10|2026-09-21T12:29:49|COMPLETED|0:0|279|cpu=6,mem=16000M,node=1",
+    "915653|ld0921-replay-replay_completion_20260921_cuda_v1|omrifahn|gpu-students|2026-09-21T12:25:09|2026-09-21T12:25:09|2026-09-21T12:29:52|COMPLETED|0:0|283|billing=10,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=16000M,node=1",
+    "915653.batch|batch||gpu-students|2026-09-21T12:25:09|2026-09-21T12:25:09|2026-09-21T12:29:52|COMPLETED|0:0|283|cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=16000M,node=1"
+  ],
+  "all_six_original_portable_model_files_unchanged": true,
+  "checked_utc": "2026-09-21T09:31:25.257624+00:00",
+  "files": {
+    "audit/replay_completion_20260921_cpu_v1.json": {
+      "bytes": 9519,
+      "sha256": "8ad1cd139368bb3ae1f3c59efb52b74951baeeef790fb8d4a6985e17245eb3f9"
+    },
+    "audit/replay_completion_20260921_cuda_v1.json": {
+      "bytes": 6895,
+      "sha256": "9cdb7815b05bb51945c1b7dd5e8578746d64ea29a1dcdd85e144f400f485d57a"
+    },
+    "logs/replay_completion_20260921_cpu_v1_915652.err": {
+      "bytes": 234,
+      "sha256": "191b44c455aa59594ff82a18b91d6a3dd740711f9672c11a0aa93112f1f0ed98"
+    },
+    "logs/replay_completion_20260921_cpu_v1_915652.out": {
+      "bytes": 2521,
+      "sha256": "f635c079e7ca5269e444727fcc824a2fc772c68a830fcdad61d8d5ed8a0d8d18"
+    },
+    "logs/replay_completion_20260921_cuda_v1_915653.err": {
+      "bytes": 234,
+      "sha256": "191b44c455aa59594ff82a18b91d6a3dd740711f9672c11a0aa93112f1f0ed98"
+    },
+    "logs/replay_completion_20260921_cuda_v1_915653.out": {
+      "bytes": 2166,
+      "sha256": "89ae2c6711359fe557e8cce1b18f9bce7576365023af1d1cdf025eda00227a1c"
+    },
+    "ops/stage_receipts/replay_completion_20260921_cpu_v1_915652.json": {
+      "bytes": 1358,
+      "sha256": "4d1c0f6d491bd2854c9286bb40bba5e0682d34400d0dbe318e1ea1717898ec2e"
+    },
+    "ops/stage_receipts/replay_completion_20260921_cuda_v1_915653.json": {
+      "bytes": 1350,
+      "sha256": "a0629afeeffcde82c0d0378dd54a54bb3aa4d6ca5113d8a984e46664c4696975"
+    },
+    "ops/submissions/replay_completion_20260921_cpu_v1.intent.json": {
+      "bytes": 1651,
+      "sha256": "b48a0fc979920a0eca2ac6ddf6d3a65a6d11d9cbe688fceddf49a562d4d49aa9"
+    },
+    "ops/submissions/replay_completion_20260921_cpu_v1.json": {
+      "bytes": 1697,
+      "sha256": "bc2c69144ffd5aff5e283bda09450f1f6b8168900e007e4cc39e456062777296"
+    },
+    "ops/submissions/replay_completion_20260921_cuda_v1.intent.json": {
+      "bytes": 1710,
+      "sha256": "12f461ef832f4ebb4235a23e1864c7059cd88756b3f93563d7ee1a905a3d4680"
+    },
+    "ops/submissions/replay_completion_20260921_cuda_v1.json": {
+      "bytes": 1756,
+      "sha256": "2ef4fc2e8c4ea0c1cb99e76da3ebf8f3e588bc9e49dc83637fa232ad02d5f5c5"
+    }
+  },
+  "original_checks": {
+    "audit/cpu_precision_diagnostic_v1.json": {
+      "actual_sha256": "9c6ddea512a82f0624eed238d8100d23e0c0b1e4eb016c49563bd380a82c2343",
+      "expected_sha256": "9c6ddea512a82f0624eed238d8100d23e0c0b1e4eb016c49563bd380a82c2343",
+      "reference": "September19 download/audit disposition receipts",
+      "unchanged": true
+    },
+    "audit/reproducibility_cpu_v1.json": {
+      "actual_sha256": "68caa27e659bbe46f7d71c2e5e8d6bcf2a2f15065a32662c0194fe369e5c0d53",
+      "expected_sha256": "68caa27e659bbe46f7d71c2e5e8d6bcf2a2f15065a32662c0194fe369e5c0d53",
+      "reference": "September19 download/audit disposition receipts",
+      "unchanged": true
+    },
+    "campaign.json": {
+      "actual_sha256": "f133671b92871129a0e859e47188c316e8ef535634a1fda33a9efa287dfa094f",
+      "expected_sha256": "f133671b92871129a0e859e47188c316e8ef535634a1fda33a9efa287dfa094f",
+      "reference": "original immutable published backup manifest",
+      "unchanged": true
+    },
+    "evaluation/bootstrap.npz": {
+      "actual_sha256": "05c34965ce00ddef29abbd6af92022acdf4ef8a44c33e9833a7fd1658f920e46",
+      "expected_sha256": "05c34965ce00ddef29abbd6af92022acdf4ef8a44c33e9833a7fd1658f920e46",
+      "reference": "original immutable published backup manifest",
+      "unchanged": true
+    },
+    "evaluation/complete.json": {
+      "actual_sha256": "bd0420af3b123b2286721c05672ef20674223e9796808620aa549d90ddab96f5",
+      "expected_sha256": "bd0420af3b123b2286721c05672ef20674223e9796808620aa549d90ddab96f5",
+      "reference": "original immutable published backup manifest",
+      "unchanged": true
+    },
+    "evaluation/report.json": {
+      "actual_sha256": "d8daf3374f3fb2bb5279b6383a48a933ce26a1126d7efe66bddb2b9a2ff79112",
+      "expected_sha256": "d8daf3374f3fb2bb5279b6383a48a933ce26a1126d7efe66bddb2b9a2ff79112",
+      "reference": "original immutable published backup manifest",
+      "unchanged": true
+    },
+    "evaluation/scores.npz": {
+      "actual_sha256": "8b17c6a55c26beb0dc9ac54c574849b61d93c8feedd576677f5e96c20f6dff75",
+      "expected_sha256": "8b17c6a55c26beb0dc9ac54c574849b61d93c8feedd576677f5e96c20f6dff75",
+      "reference": "original immutable published backup manifest",
+      "unchanged": true
+    },
+    "evaluation_gate.json": {
+      "actual_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0",
+      "expected_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0",
+      "reference": "original immutable published backup manifest",
+      "unchanged": true
+    },
+    "role_map.json": {
+      "actual_sha256": "7df831d2e9de37fe2a5792a409949cbd7d46a9f24adc4ed16239f2b91fdeca3b",
+      "expected_sha256": "7df831d2e9de37fe2a5792a409949cbd7d46a9f24adc4ed16239f2b91fdeca3b",
+      "reference": "original immutable published backup manifest",
+      "unchanged": true
+    }
+  },
+  "queue": [],
+  "remote_evidence": {
+    "audit/replay_completion_20260921_cpu_v1/independent_bootstrap.npz": {
+      "bytes": 759094,
+      "sha256": "06e7996ee80d83304fcc063d9521c76548b5af2b2e73cb9fcce0d72dcf6e5270"
+    },
+    "audit/replay_completion_20260921_cpu_v1/seed17_dev_eval.npz": {
+      "bytes": 88478,
+      "sha256": "497912fc858b6b1259b9cfee3518d6ab3f2c81ea1f3a9cef7a48be961d19cda8"
+    },
+    "audit/replay_completion_20260921_cpu_v1/seed17_probe_val.npz": {
+      "bytes": 45914,
+      "sha256": "d8f16645c8417def9c5664a6df6d9ea472779103cf09a5af570f6ddde89d8ee9"
+    },
+    "audit/replay_completion_20260921_cpu_v1/seed27_dev_eval.npz": {
+      "bytes": 88519,
+      "sha256": "ca9e4d64952772724336d6ead4b893d1718518f7814f9b8831b1c3c12a0fac91"
+    },
+    "audit/replay_completion_20260921_cpu_v1/seed27_probe_val.npz": {
+      "bytes": 45960,
+      "sha256": "a54854437f3684bb2bafdf1b3dad7a0bb51bd3f7c427b97f391468ab40544c86"
+    },
+    "audit/replay_completion_20260921_cpu_v1/seed7_dev_eval.npz": {
+      "bytes": 88239,
+      "sha256": "8f04b25ad162c379cf56f0c23f119f7e1b4b1b9e27f28bc74b6bed9f547d4b32"
+    },
+    "audit/replay_completion_20260921_cpu_v1/seed7_probe_val.npz": {
+      "bytes": 45785,
+      "sha256": "764b31033f171619ab5db1c427c7be394b9975a51200fc47594dc85a5a72b27c"
+    },
+    "audit/replay_completion_20260921_cuda_v1/seed17_dev_eval.npz": {
+      "bytes": 88473,
+      "sha256": "4f5f5a050386f83b4fe15552f5d44259a6b0836573b9ac8873833518b2a256e6"
+    },
+    "audit/replay_completion_20260921_cuda_v1/seed17_probe_val.npz": {
+      "bytes": 45887,
+      "sha256": "e0d69aac1be9f3388145464660fa93e9f028180ed9033021988e7f3e4dbd3df5"
+    },
+    "audit/replay_completion_20260921_cuda_v1/seed27_dev_eval.npz": {
+      "bytes": 88495,
+      "sha256": "73e11f6ba46f6bb5baf963c6141d2dfd85d8c30dc055a2a5405fa506d8218e03"
+    },
+    "audit/replay_completion_20260921_cuda_v1/seed27_probe_val.npz": {
+      "bytes": 45965,
+      "sha256": "50fcffe98dc781778373e272c67e682746b83c896484c91b5272c022c5fd8c91"
+    },
+    "audit/replay_completion_20260921_cuda_v1/seed7_dev_eval.npz": {
+      "bytes": 88269,
+      "sha256": "1dc11b85bd0db52d6152dbdc7f38e09e760e22a650c215caacf849c2d0f6cb23"
+    },
+    "audit/replay_completion_20260921_cuda_v1/seed7_probe_val.npz": {
+      "bytes": 45775,
+      "sha256": "2c0a734cd1a47d895d6149ab313b3332fc3fb94fcf870aafc5e6f8c084fbccf3"
+    }
+  },
+  "source_files_unchanged": 133
+}

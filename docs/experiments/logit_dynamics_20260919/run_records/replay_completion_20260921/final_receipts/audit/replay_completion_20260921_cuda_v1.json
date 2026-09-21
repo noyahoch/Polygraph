@@ -1,0 +1,177 @@
+{
+  "all_six_replays_executed": true,
+  "backend": "cuda",
+  "clean_install_tested": false,
+  "elapsed_seconds": 256.82620677817613,
+  "execution_complete": true,
+  "independent_bootstrap": {
+    "executed": false,
+    "reason": "CPU-only companion audit owns independent statistics"
+  },
+  "internal_deadline_seconds": 840,
+  "job_id": "915653",
+  "native_portable_parameter_equality": true,
+  "prior_failed_audits_cleared": false,
+  "provenance": {
+    "campaign_sha256": "f133671b92871129a0e859e47188c316e8ef535634a1fda33a9efa287dfa094f",
+    "evaluation_gate_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0",
+    "fetched_files_verified": 44,
+    "original_failed_audit_preserved": true,
+    "original_failed_audit_sha256": "68caa27e659bbe46f7d71c2e5e8d6bcf2a2f15065a32662c0194fe369e5c0d53",
+    "published_manifest_sha256": "f2e17250d314568bf7b5815b5eea7d79720e8c9bb24d35289f58530f974ed572",
+    "published_revision": "86605781c0528e286483e305072f7787393da860",
+    "source_files_verified": 133,
+    "source_manifest_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3"
+  },
+  "raw_image_end_to_end_tested": false,
+  "replay": {
+    "seed17/dev_eval": {
+      "atol": 0.0001,
+      "bitwise_scores_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "records": 7200,
+      "replay_metrics": {
+        "auroc": 0.8962643380119226,
+        "average_precision": 0.7937858858006084
+      },
+      "rtol": 0.0001,
+      "saved_metrics": {
+        "auroc": 0.8962643380119226,
+        "average_precision": 0.7937858858006084
+      },
+      "score_artifact": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/replay_completion_20260921_cuda_v1/seed17_dev_eval.npz",
+      "score_artifact_sha256": "4f5f5a050386f83b4fe15552f5d44259a6b0836573b9ac8873833518b2a256e6",
+      "tolerance_passed": true,
+      "violation_count": 0,
+      "violations": []
+    },
+    "seed17/probe_val": {
+      "atol": 0.0001,
+      "bitwise_scores_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "records": 3600,
+      "replay_metrics": {
+        "auroc": 0.8818039616157688,
+        "average_precision": 0.7945446561607754
+      },
+      "rtol": 0.0001,
+      "saved_metrics": {
+        "auroc": 0.8818039616157688,
+        "average_precision": 0.7945446561607754
+      },
+      "score_artifact": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/replay_completion_20260921_cuda_v1/seed17_probe_val.npz",
+      "score_artifact_sha256": "e0d69aac1be9f3388145464660fa93e9f028180ed9033021988e7f3e4dbd3df5",
+      "tolerance_passed": true,
+      "violation_count": 0,
+      "violations": []
+    },
+    "seed27/dev_eval": {
+      "atol": 0.0001,
+      "bitwise_scores_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "records": 7200,
+      "replay_metrics": {
+        "auroc": 0.8987563516420176,
+        "average_precision": 0.8032898867936457
+      },
+      "rtol": 0.0001,
+      "saved_metrics": {
+        "auroc": 0.8987563516420176,
+        "average_precision": 0.8032898867936457
+      },
+      "score_artifact": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/replay_completion_20260921_cuda_v1/seed27_dev_eval.npz",
+      "score_artifact_sha256": "73e11f6ba46f6bb5baf963c6141d2dfd85d8c30dc055a2a5405fa506d8218e03",
+      "tolerance_passed": true,
+      "violation_count": 0,
+      "violations": []
+    },
+    "seed27/probe_val": {
+      "atol": 0.0001,
+      "bitwise_scores_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "records": 3600,
+      "replay_metrics": {
+        "auroc": 0.8835029258250664,
+        "average_precision": 0.8019755629531333
+      },
+      "rtol": 0.0001,
+      "saved_metrics": {
+        "auroc": 0.8835029258250664,
+        "average_precision": 0.8019755629531333
+      },
+      "score_artifact": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/replay_completion_20260921_cuda_v1/seed27_probe_val.npz",
+      "score_artifact_sha256": "50fcffe98dc781778373e272c67e682746b83c896484c91b5272c022c5fd8c91",
+      "tolerance_passed": true,
+      "violation_count": 0,
+      "violations": []
+    },
+    "seed7/dev_eval": {
+      "atol": 0.0001,
+      "bitwise_scores_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "records": 7200,
+      "replay_metrics": {
+        "auroc": 0.8991770324874779,
+        "average_precision": 0.8000409413412997
+      },
+      "rtol": 0.0001,
+      "saved_metrics": {
+        "auroc": 0.8991770324874779,
+        "average_precision": 0.8000409413412997
+      },
+      "score_artifact": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/replay_completion_20260921_cuda_v1/seed7_dev_eval.npz",
+      "score_artifact_sha256": "1dc11b85bd0db52d6152dbdc7f38e09e760e22a650c215caacf849c2d0f6cb23",
+      "tolerance_passed": true,
+      "violation_count": 0,
+      "violations": []
+    },
+    "seed7/probe_val": {
+      "atol": 0.0001,
+      "bitwise_scores_equal": true,
+      "maximum_absolute_difference": 0.0,
+      "records": 3600,
+      "replay_metrics": {
+        "auroc": 0.881308557025222,
+        "average_precision": 0.7941545257603159
+      },
+      "rtol": 0.0001,
+      "saved_metrics": {
+        "auroc": 0.881308557025222,
+        "average_precision": 0.7941545257603159
+      },
+      "score_artifact": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/replay_completion_20260921_cuda_v1/seed7_probe_val.npz",
+      "score_artifact_sha256": "2c0a734cd1a47d895d6149ab313b3332fc3fb94fcf870aafc5e6f8c084fbccf3",
+      "tolerance_passed": true,
+      "violation_count": 0,
+      "violations": []
+    }
+  },
+  "runtime": {
+    "CUBLAS_WORKSPACE_CONFIG": ":4096:8",
+    "GPU": "NVIDIA GeForce RTX 2080 Ti",
+    "backend": "cuda",
+    "batch_size": 512,
+    "clean_install_tested": false,
+    "cpu_threads": 6,
+    "cuda_matmul_allow_tf32": false,
+    "cuda_version": "12.6",
+    "cudnn_allow_tf32": false,
+    "cudnn_benchmark": false,
+    "deterministic_algorithms": false,
+    "existing_environment": true,
+    "matmul_precision": "highest",
+    "numpy": "2.5.2",
+    "platform": "Linux-6.14.0-27-generic-x86_64-with-glibc2.39",
+    "python": "3.12.13 | packaged by conda-forge | (main, Mar  5 2026, 16:50:00) [GCC 14.3.0]",
+    "sklearn": "1.8.0",
+    "torch": "2.14.0+cu126"
+  },
+  "scientific_results_replaced": false,
+  "scope": "Fixed published-checkpoint cached-CLS replay and separate CPU statistics; no fitting",
+  "score_tolerance": {
+    "atol": 0.0001,
+    "rtol": 0.0001
+  },
+  "script_sha256": "582a308a4b8b0ba4f1ef0f0114129761989434d2768f5d663e8bc589ab3dde55",
+  "tolerance_passed": true
+}
