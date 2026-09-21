@@ -1,0 +1,1038 @@
+\documentclass[11pt]{article}
+\usepackage[preprint]{acl}
+\usepackage{times}
+\usepackage{latexsym}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{inconsolata}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{booktabs}
+\usepackage{multirow}
+
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+
+\title{Polygraph: Reliable ViT Error Detection from Topological Evidence-Flow}
+
+\author{Yishai Lavi \and Noya Hochwald \and Omri Fahn \and Eran Kramf \\
+  Tel Aviv University \\
+  \texttt{\{yishailavi, noyahoch, omrifahn, erankramf\}@mail.tau.ac.il} \\}
+
+\begin{document}
+\maketitle
+
+% \begin{abstract}
+% Reliable confidence estimation is critical when deploying vision models[cite: 1]. We study error prediction: determining whether an image classifier's output is correct using only signals from a single forward pass[cite: 1]. Motivated by internal-signal hallucination detection in large language models, we investigate whether similar topological signals exist in Vision Transformers (ViTs)[cite: 1]. While classical measures rely on output logits, they ignore how class evidence is routed through the network. We propose Polygraph, a method that models the topological evidence flow of class representations through attention graphs. By extracting structural features from the last $L=4$ layers via an edge-aware message-passing Graph Neural Network (GNN), we capture predictive routing signatures[cite: 1, 2]. A leakage-controlled conditional mixture gate combines these topological features with the full-logit representation. Across CIFAR-100 and CIFAR-100-C, Polygraph improves AUROC and AUPRC over state-of-the-art baselines like LogitDynamics and shows strong out-of-distribution generalization while requiring minimal additional computation[cite: 1, 2].
+% \end{abstract}
+
+% \begin{abstract}
+% Detecting when an image classifier fails is a fundamental challenge for the safe deployment of Vision Transformers (ViTs)[cite: 1]. Standard error detection mechanisms depend almost exclusively on the network's final output logits, fundamentally ignoring the complex token-to-token routing dynamics that construct the prediction[cite: 1]. Drawing inspiration from hallucination detection in large language models, we hypothesize that ViTs exhibit recurring topological signatures when forming incorrect predictions[cite: 1]. In this work, we introduce Polygraph, a framework that models a frozen ViT's attention mechanism as a directed graph to capture these latent failure patterns[cite: 1]. By deploying an edge-gated Message Passing Neural Network (MPNN) across the final $L=4$ layers, we extract structural evidence-flow features entirely within a single forward pass[cite: 1, 2]. These topological signals are then fused with the full-logit vector via a leakage-controlled conditional mixture gate[cite: 2]. Evaluated on CIFAR-100 and CIFAR-100-C, Polygraph significantly outperforms representation baselines and LogitDynamics, achieving 0.8939 AUROC and 0.8748 AUPRC, while demonstrating high robustness to entirely unseen visual corruptions[cite: 1, 2].
+% \end{abstract}
+
+% \begin{abstract}
+% Detecting when an image classifier fails is a fundamental challenge for the safe deployment of Vision Transformers (ViTs). Standard error detection mechanisms depend almost exclusively on the network's final output logits, fundamentally ignoring the complex token-to-token routing dynamics that construct the prediction. Drawing inspiration from hallucination detection in large language models, we hypothesize that ViTs exhibit recurring topological signatures when forming incorrect predictions. In this work, we introduce Polygraph, a framework that models a frozen ViT's attention mechanism as a directed graph to capture these latent failure patterns. By deploying an edge-gated Message Passing Neural Network (MPNN) across the final $L$ layers, we extract structural evidence-flow features entirely within a single forward pass. These topological signals are then fused with the full-logit vector via a leakage-controlled conditional mixture gate. Evaluated on CIFAR-100 and CIFAR-100-C, Polygraph significantly outperforms representation baselines and LogitDynamics, demonstrating high robustness to entirely unseen visual corruptions.
+% \end{abstract}
+\begin{abstract}
+Detecting when an image classifier fails is a fundamental challenge for the safe deployment of Vision Transformers (ViTs). Standard error detection mechanisms often depend primarily on the network's final output logits, largely ignoring the complex token-to-token routing dynamics that construct the prediction. Drawing inspiration from hallucination detection in large language models, we hypothesize that ViTs exhibit recurring topological signatures when forming incorrect predictions. In this work, we introduce Polygraph, a framework that models a frozen ViT's attention mechanism as a directed graph to capture these latent failure patterns. By deploying an edge-gated MPNN over the final transformer layer, we extract structural evidence-flow features within a single forward pass. These internal signals are then fused with the full-logit vector via a mixture gate. Evaluated on CIFAR-100-C, the graph model provides complementary predictive signal to strong output- and representation-based baselines, while topology ablations indicate a modest additional benefit from explicit graph structure. The combined Polygraph detector achieves the strongest error-detection performance and retains its advantage on corruption families entirely unseen during detector training.
+\end{abstract}
+
+
+% \section{Introduction}
+% Vision Transformers (ViTs) \citep{Dosovitskiy2021} construct image representations through complex, layer-wise information routing among patch tokens, yet their predictive reliability is almost exclusively estimated from the final softmax distribution. This conventional reliance on output logits discards the rich structural dynamics of the attention manifold; predictions exhibiting identical confidence scores often emerge from fundamentally different internal routing behaviors. 
+
+% To address this, we frame error prediction as a topological pattern recognition problem. Given a frozen classifier $f$ and an input image $x$ with ground-truth label $y$, our objective is to predict the binary error indicator:
+% $$e(x) = \mathbb{1}[\hat{y} \neq y]$$
+% using strictly internal signals extracted during a single forward pass, without access to external verification or out-of-distribution exposure during inference. 
+
+% While recent approaches such as LogitDynamics \citep{Beigelman2026} track the layer-wise trajectory of class evidence, they do not explicitly model the token-to-token connectivity that underlies these predictions. We propose Polygraph, a method that reformulates ViT self-attention as a sequence of directed graphs to capture latent routing signatures. Using the final Transformer layers as attributed graphs, we construct node features from token hidden states and edge features from evidence-flow statistics derived from attention, message magnitude, and class-direction signals. We then train a graph-based internal detector and combine its output with a strong full-logit expert using a leakage-controlled conditional mixture gate. This allows Polygraph to detect classification failures with high precision, particularly under unseen visual corruptions.
+
+\section{Introduction}
+Vision Transformers (ViTs) \citep{Dosovitskiy2021} construct image representations through complex, layer-wise information routing among patch tokens, yet their predictive reliability is commonly estimated from the final softmax distribution. This reliance on output scores leaves much of the internal token interaction that constructs the prediction unmodeled; predictions with similar output confidence can nevertheless arise from different internal representations and routing patterns.
+
+To address this, we investigate error prediction through the attributed attention graph induced by a ViT. Given a frozen classifier $f$ and an input image $x$ with ground-truth label $y$, let $
+\hat{y}(x)=\arg\max_c f_c(x)$, and $
+e(x)=1[\hat{y}(x)\neq y]$. Our objective is to predict $e(x)$ using only signals available from a single forward pass of the frozen classifier, without external verification or additional classifier evaluations.
+
+While recent approaches such as LogitDynamics \citep{Beigelman2026} track the layer-wise trajectory of class evidence, they do not explicitly model the token-to-token connectivity underlying these predictions. We propose Polygraph, a method that represents the final ViT block as a directed attributed graph to capture latent routing signatures. Node features are constructed from token hidden states, while edge features encode evidence-flow statistics derived from attention and class signals. An edge-gated MPNN produces a graph-based internal failure score, which is combined with a strong full-logit detector using a learned per-example mixture gate fitted on held-out validation data. The resulting detector improves over either source of evidence alone and retains its advantage on corruption families excluded from detector training. Controlled topology ablations further show that most of the predictive signal lies in the internal node and edge representations, while graph connectivity and edge alignment provide a more modest additional contribution.
+
+
+% \section{Related Work}
+
+% \paragraph{Transformer Interpretability and OOD Detection.}
+% Existing interpretations of ViT attention primarily support relevance propagation \citep{Chefer2021}, weighted-PageRank token pruning \citep{Wang2024}, or weakly supervised segmentation \citep{Yang2025}. In the context of out-of-distribution (OOD) and error detection, \citet{Cultrera2023} apply a convolutional autoencoder to attention heatmaps but do not model explicit token-to-token connectivity. The closest methodological baseline is LogitDynamics \citep{Beigelman2026}, which reliably predicts ViT errors by modeling layer-wise class-logit trajectories. However, because LogitDynamics relies exclusively on compressed, post-head representations, it discards the underlying routing mechanisms that form these hypotheses.
+
+% \paragraph{Graph-Based Error Detection.}
+% Natural language processing provides the strongest precedents for topological error detection. Spectral and topological summaries of attention graphs have been deployed to detect generated text and hallucinations \citep{Binkowski2025, Kushnareva2021}. Recent architectures directly leverage these structures: HalluZig \citep{Samaga2026} tracks attention-graph topology across layers, while HaluGNN \citep{Kong2026b} uses hidden states as node features and attention values as weighted edges. Most directly, CHARM \citep{Frasca2026} represents raw attention scores and activations as attributes of a token graph and applies edge-aware message passing, demonstrating the advantage of graph connectivity over set-based models. Despite these advances in NLP, our literature search found no analogous method applying graph-based message passing to multi-layer ViT patch-attention graphs to predict visual classification failures.
+
+% \section{Related Work}
+
+% \paragraph{ViT Reliability and Attention-Based Diagnostics.}
+% A standard baseline for detecting classifier failures is the maximum softmax probability of the predicted class \citep{Hendrycks2017}, motivating methods that seek additional information beyond the final output distribution. In Vision Transformers, attention and intermediate representations have been exploited for several purposes beyond classification. \citet{Chefer2021} propagate relevance through Transformer layers for explanation, \citet{Wang2024} apply weighted PageRank to attention graphs for token pruning, and \citet{Yang2025} model class--patch attention as a directed graph for weakly supervised segmentation. For reliability estimation, \citet{Cultrera2023} use a convolutional autoencoder over ViT attention heatmaps for out-of-distribution detection, but do not explicitly learn over token-to-token connectivity. The closest task-level baseline is LogitDynamics \citep{Beigelman2026}, which predicts ViT classification errors from layer-wise class-logit trajectories and stability statistics derived from intermediate representations. While this captures how class evidence evolves with depth, it reduces each layer to class-level evidence rather than retaining pairwise interactions among patch tokens.
+
+% \paragraph{Graph-Based Error Detection.}
+% Natural language processing provides the closest precedents for learning failure signals from Transformer attention graphs. Earlier approaches construct handcrafted structural descriptors: \citet{Kushnareva2021} use topological features of attention maps for artificial-text detection, while \citet{Binkowski2025} use spectral features of attention graphs for hallucination detection. HalluZig \citep{Samaga2026} models the evolution of attention-graph topology across layers using zigzag persistence. More recent approaches learn directly from attributed token graphs. HaluGNN \citep{Kong2026b} uses hidden states as node features and attention values as weighted edges, while CHARM \citep{Frasca2026} jointly represents activations and attention in a token graph and applies edge-aware message passing; its ablations demonstrate an advantage of preserving graph connectivity over a corresponding set-based model. CausalGaze \citep{Kong2026a} further refines attention graphs using gradient-guided counterfactual sensitivity of attention edges. To our knowledge, no prior work applies graph-based message passing to per-image ViT patch-attention graphs for predicting visual classification failures. Polygraph studies this vision-specific setting and, through matched non-graph and rewiring ablations, explicitly evaluates how much predictive value is attributable to graph structure itself.
+
+\section{Related Work}
+
+\paragraph{ViT Reliability and Attention-Based Diagnostics.}
+A standard baseline for detecting classifier failures is the maximum softmax probability of the predicted class \citep{Hendrycks2017}. In Vision Transformers, attention and intermediate representations have been exploited for several purposes beyond classification: \citet{Chefer2021} for explanation, \citet{Wang2024} for token pruning, and \citet{Yang2025} for weakly supervised segmentation. \citet{Cultrera2023} use a convolutional autoencoder over ViT attention heatmaps for out-of-distribution detection, but operate on attention heatmaps rather than a token-interaction graph. The closest task-level baseline is LogitDynamics \citep{Beigelman2026}, which predicts ViT classification errors from layer-wise class-logit trajectories and stability statistics derived from intermediate representations, thus reduces each layer to a class-level evidence rather than retaining pairwise interactions among patch tokens.
+
+\paragraph{Graph-Based Error Detection.}
+Natural language processing provides the closest precedents for our work. Earlier approaches construct handcrafted structural descriptors, such as  \citet{Kushnareva2021} and \citet{Binkowski2025}. HalluZig \citep{Samaga2026} models the evolution of attention-graph topology across layers using zigzag persistence. HaluGNN \citep{Kong2026b} uses hidden states as node features and attention values as weighted edges, while CHARM \citep{Frasca2026} represents attention and activations as attributes of a token graph and applies edge-aware message passing. CausalGaze \citep{Kong2026a} further refines attention graphs using gradient-guided counterfactual sensitivity of attention edges. To our knowledge, no prior work applies graph-based message passing to per-image ViT patch-attention graphs for predicting visual classification failures. Polygraph studies this vision-specific setting.
+
+
+% \section{Methodology}
+
+% \subsection{Attention Graph Construction}
+% Given an input image $x$, let $f$ denote a frozen Vision Transformer. At a given layer $l$, the multi-head self-attention mechanism produces an attention matrix $A^{(l,h)} \in \mathbb{R}^{N \times N}$ for each head $h$, where $N$ is the sequence length including the class (CLS) token. Because a query token $i$ aggregates information from a key token $j$, we define the directed edge for information flow as $j \rightarrow i$.
+
+% To establish a sparse graph structure without discarding interactions that are strong in only one specialized head, we retain an edge if its maximum attention score across all heads exceeds a threshold $\tau$:
+% $$ \max_{h} A_{ij}^{(l,h)} > \tau $$
+% Using $\tau=0.02$, this yields a sparse graph of approximately 7,600 edges per layer. The final Transformer block is used as the primary graph source, as depth ablations showed it provides the strongest standalone error signal.
+
+% \subsection{Node Features}
+% Each node is represented by:
+
+% \begin{itemize}
+%     \item \textbf{Base Topological Features:} Each token node is represented by its spatial patch coordinates (2 dimensions), a CLS indicator (1 dimension), the normalized transformer layer depth (1 dimension), and the token’s per-head diagonal self-attention values (12 dimensions). This yields a 16-dimensional geometric and attention baseline per node.
+%     \item \textbf{Full Hidden States:} In the Polygraph MPNN, the full 768-dimensional final-layer token hidden state is appended to the base representation. Thus, each node carries the structural context plus the token’s semantic embedding. The hidden-state variant is used for the primary internal detector.
+% \end{itemize}
+
+% \subsection{Evidence-Flow Edge Features}
+% For the edge representations, our complete topological representation (the Polygraph MPNN) extracts the evidence flow, expanding beyond raw attention scores. Each directed edge $j \rightarrow i$ incorporates:
+% \begin{itemize}
+%     \item \textbf{Raw Attention:} The raw per-head attention weights.
+%     \item \textbf{Message Magnitude:} The transformed message magnitude, capturing the norm of the value vectors projected by the output weights.
+%     \item \textbf{Class Direction Proxy:} A predicted-versus-runner-up class direction proxy, mapping the value vectors onto the classification head's decision boundary.
+% \end{itemize}
+
+% \subsection{Detector Architecture and Conditional Gating}
+% To process the attributed graph, we use a two-layer TransformerConv graph encoder over token hidden states and evidence-flow edge attributes. The encoder aggregates information from neighboring tokens according to learned attention weights and edge-conditioned messages, producing a graph-level embedding that is projected to a scalar internal error logit. We then apply a leakage-controlled conditional mixture gate that combines this internal graph signal with a strict full-logit MLP expert. The combined model is trained with class-weighted binary cross-entropy on the exact error target
+
+% $$Y_{\mathrm{err}}(x) = \mathbf{1}\big[\arg\max f(x) \neq y(x)\big]$$
+
+% This gating mechanism adapts the final prediction to the reliability of each source: when the output-logit expert is confident, the model relies primarily on the full-logit branch, while the graph-based branch is emphasized when the structural evidence indicates that the classifier is likely to fail.
+
+\section{Methodology}
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=\textwidth]{model_scheme_gnn_course.png}
+    \caption{
+    \textbf{Overview of Polygraph.}
+    A frozen ViT provides both final-block internal representations and output logits.
+    The graph branch constructs an attributed token graph from the final Transformer block,
+    processes it with a two-layer edge-gated MPNN, and applies graph readout to produce an internal error score $s_g$.
+    In parallel, a logit-based MLP produces an output-based error score $s_o$.
+    A conditional mixture gate combines the two experts into the final failure score.
+    }
+    \label{fig:polygraph-overview}
+\end{figure*}
+
+Polygraph combines two complementary error detectors: one operates on the
+ViT's internal attention graph, while the other operates on its output logits.
+The two experts are trained independently and are subsequently combined by a
+learned, image-dependent mixture.
+
+\subsection{Final-Block Attention Graph}
+
+For an image $x$, let the frozen ViT produce class logits
+$\boldsymbol{\ell}=f(x)\in\mathbb{R}^{C}$. We construct a graph from its final
+Transformer block, containing $N$ tokens and $H$ attention heads. Let
+$\mathcal{V}=\{0,\ldots,N-1\}$ denote the token set, with token $0$ representing
+CLS. For head $h$, $A_{ij}^{(h)}$ denotes the attention assigned by query token
+$i$ to key token $j$. We orient the corresponding edge as $j\rightarrow i$.
+
+We retain an edge whenever it receives sufficiently high attention in at least
+one head:
+\begin{equation}
+\mathcal{E}
+=
+\left\{
+(j,i):
+j\neq i,\;
+\max_h A_{ij}^{(h)}>\tau
+\right\}
+\label{eq:edge-set}
+\end{equation}
+
+Self-edges are excluded from $\mathcal{E}$, but their diagonal attention values
+are retained as node attributes.
+
+For each token $i$, the node feature $\mathbf{x}_i$ concatenates its normalized
+patch coordinates, a CLS indicator, the diagonal attention values
+$\{A_{ii}^{(h)}\}_{h=1}^{H}$, and its final-block hidden representation. 
+
+\subsection{Evidence-Flow Edge Features}
+
+Raw attention describes how strongly token $i$ reads from token $j$, but not
+the content or direction of the information being transmitted. We therefore
+augment every retained edge with two additional per-head features.
+
+Let $\mathbf{v}_j^{(h)}$ denote the value vector of source token $j$ in head
+$h$, and let $\mathbf{W}_O^{(h)}$ denote the corresponding part of the
+multi-head output projection. Their product
+\begin{equation}
+\mathbf{u}_j^{(h)}
+=
+\mathbf{W}_O^{(h)}\mathbf{v}_j^{(h)}
+\label{eq:transformed-value}
+\end{equation}
+represents the contribution of that value after projection back into the
+Transformer hidden space.
+
+To measure how strongly this contribution supports the model's current
+decision, let $\hat c$ and $\tilde c$ be the classes with the highest and
+second-highest output logits. If $\mathbf{w}_c$ denotes the frozen classifier
+weight vector for class $c$, we define the normalized predicted-versus-runner-up
+direction
+\begin{equation}
+\mathbf{d}
+=
+\frac{
+\mathbf{w}_{\hat c}-\mathbf{w}_{\tilde c}
+}{
+\left\|
+\mathbf{w}_{\hat c}-\mathbf{w}_{\tilde c}
+\right\|_2
+}
+\label{eq:class-direction}
+\end{equation}
+
+For each retained edge $j\rightarrow i$ and head $h$, we then compute an
+attention-weighted magnitude feature and a signed class-direction feature:
+\begin{equation}
+\begin{aligned}
+m_{ji}^{(h)}
+&=
+\log\!\left(
+1+
+A_{ij}^{(h)}
+\left\|
+\mathbf{u}_j^{(h)}
+\right\|_2
+\right)
+\\
+c_{ji}^{(h)}
+&=
+\operatorname{asinh}\!\left(
+A_{ij}^{(h)}
+\mathbf{d}^{\top}\mathbf{u}_j^{(h)}
+\right)
+\end{aligned}
+\label{eq:evidence-features}
+\end{equation}
+
+The first captures the magnitude of the transmitted contribution, whereas the
+second measures whether it aligns with the classifier's current
+predicted-versus-runner-up direction. The complete edge attribute $\mathbf{e}_{ji}$ concatenates over all heads the described features. No ground-truth label is used in their construction.
+
+\subsection{Edge-Gated Graph Detector}
+
+We process the attributed graph using a two-layer edge-gated MPNN. Node and edge attributes are first mapped by learned projections to a
+shared latent representation.
+
+At message-passing layer $r$, each edge $j\rightarrow i$ produces both a
+candidate message and an element-wise gate:
+\begin{equation}
+\begin{aligned}
+\boldsymbol{\mu}_{ji}^{(r)}
+&=
+M_r\!\left(
+[
+\mathbf{h}_j^{(r-1)}
+\,\|\,
+\widetilde{\mathbf{e}}_{ji}
+]
+\right)
+\\
+\boldsymbol{\gamma}_{ji}^{(r)}
+&=
+\sigma\!\left(
+G_r\!\left(
+[
+\mathbf{h}_j^{(r-1)}
+\,\|\,
+\mathbf{h}_i^{(r-1)}
+\,\|\,
+\widetilde{\mathbf{e}}_{ji}
+]
+\right)
+\right)
+\end{aligned}
+\label{eq:message-gate}
+\end{equation}
+where $\mathbf{h}_i^{(r)}$ is the latent state of node $i$ after layer $r$,
+$\widetilde{\mathbf{e}}_{ji}$ is the projected edge attribute and $M_r$ and $G_r$ are learned affine maps.
+
+For the incoming neighborhood
+$\mathcal{N}_i^-=\{j:(j,i)\in\mathcal{E}\}$, the gated messages are aggregated
+as
+\begin{equation}
+\overline{\boldsymbol{\mu}}_i^{(r)}
+=
+\frac{
+\sum_{j\in\mathcal{N}_i^-}
+\boldsymbol{\gamma}_{ji}^{(r)}
+\odot
+\boldsymbol{\mu}_{ji}^{(r)}
+}{
+\sum_{j\in\mathcal{N}_i^-}
+\boldsymbol{\gamma}_{ji}^{(r)}
+}
+\label{eq:gated-aggregation}
+\end{equation}
+where $\odot$ denotes element-wise multiplication.
+
+Each node is updated from its previous state, the aggregated
+message, and its log-in-degree $\log(1+|\mathcal{N}^{-}_i|)$,
+using an MLP with dropout, a residual connection, LayerNorm,
+and ReLU.
+
+After message passing, we combine the final CLS-node state with a learned
+weighted pooling of all token states. Let $\psi$ be a learned scalar node
+scorer and $\rho$ the final graph decoder. The graph error logit is
+\begin{equation}
+\begin{aligned}
+\beta_i
+&=
+\frac{
+\exp\!\left(\psi(\mathbf{h}_i)\right)
+}{
+\sum_{j\in\mathcal{V}}
+\exp\!\left(\psi(\mathbf{h}_j)\right)
+}
+\\
+s_g(x)
+&=
+\rho\!\left(
+[
+\mathbf{h}_{0}
+\,\|\,
+\sum_{i\in\mathcal{V}}
+\beta_i\mathbf{h}_i
+]
+\right)
+\end{aligned}
+\label{eq:graph-readout}
+\end{equation}
+
+Thus, the detector retains direct access to the CLS token while also learning
+which patch-token representations are informative for failure prediction.
+
+\subsection{Output Expert and Conditional Fusion}
+
+The second expert operates directly on the complete output-logit vector and
+produces an error logit $s_o(x)$. The output MLP receives the full logit vector, standardized
+per class using detector-training statistics. The graph and output experts are trained
+independently using class-weighted binary cross-entropy against
+\begin{equation}
+Y_{\mathrm{err}}(x)
+=
+1
+\left[
+\hat c\neq y
+\right]
+\label{eq:error-target}
+\end{equation}
+where $y$ is the ground-truth class. 
+
+Once trained, both experts are frozen. Their scores are independently
+calibrated on held-out meta-validation data, producing calibrated logits
+$z_o(x)$ and $z_g(x)$. A small gate receives the standardized pair of expert
+scores and predicts an example-specific graph weight $\lambda(x)\in[0,1]$:
+\begin{equation}
+z_{\mathrm{mix}}(x)
+=
+\left(
+1-\lambda(x)
+\right)z_o(x)
++
+\lambda(x)z_g(x)
+\label{eq:conditional-mixture}
+\end{equation}
+
+Equation~(9) is applied separately in each of five grouped
+meta-validation folds. Each fold fits its score standardizer,
+scalar logistic calibrators, and gate on four folds, using the
+remaining fold for gate early stopping. At test time, we average
+the five mixture logits; both frozen experts are shared across
+folds.
+
+The gate therefore learns when the internal graph signal provides useful
+information beyond the output-logit expert. To avoid leakage, calibration and
+gate fitting are performed only on a disjoint meta-validation split using
+grouped cross-validation by original image.
+
+\paragraph{Implementation details.}
+In our experiments, the ViT has $N=197$ tokens, $H=12$ heads,
+$D=768$, and per-head dimension $64$. We use $\tau=0.02$, resulting in
+approximately $7{,}600$ directed edges per image. Node features contain 16
+base attributes plus the 768-dimensional hidden state, and edge attributes
+contain 36 values (12 attention, 12 magnitude, and 12 class-direction
+features). The graph detector uses latent width 64, two message-passing layers,
+and dropout $0.15$. The output expert has dimensions
+$100\!\rightarrow\!64\!\rightarrow\!32\!\rightarrow\!1$, and the mixture gate
+uses $2\!\rightarrow\!16\!\rightarrow\!1$. We use five grouped folds for
+mixture fitting.
+
+% \section{Methodology}
+
+% Polygraph combines two error detectors: one reads the ViT's internal
+% attention graph, and the other reads its output logits. We train them
+% independently, then learn an image-dependent combination.
+
+% \subsection{Final-Block Attention Graph}
+
+% For an image $x$, the frozen ViT produces logits
+% $\boldsymbol{\ell}=f(x)$. We use only its final
+% Transformer block, with $N$ tokens, $H$ attention heads, and
+% hidden dimension $D$. Let $\mathcal{V}=\{0,\ldots,N-1\}$ index the
+% tokens, with $0$ denoting CLS. In head $h\in\{1,\ldots,H\}$,
+% $A_{ij}^{(h)}$ is the attention weight assigned by query token $i$ to
+% key token $j$. Information therefore flows from $j$ to $i$, giving
+% the directed edge set
+% \begin{equation}
+% \mathcal{E}
+% =
+% \left\{(j,i):j\neq i,\ \max_h A_{ij}^{(h)}>\tau\right\}
+% \label{eq:edge-set}
+% \end{equation}
+% where $i,j\in\mathcal{V}$. This retains interactions
+% that are strong in at least one head. Self-edges are excluded, but
+% their diagonal attention values are preserved as node attributes.
+
+% Each node feature $\mathbf{x}_i\in\mathbb{R}^{784}$ combines a
+% 16-dimensional base descriptor with the token's $D$-dimensional
+% final-block state, taken before the ViT's final LayerNorm. The base descriptor contains two normalized patch coordinates, a CLS-token indicator, the 12 diagonal self-attention values, and a normalized block-index feature. Since the primary model uses only the final block, this block-index feature is constant and equal to 1.
+
+% \subsection{Evidence-Flow Edge Features}
+
+% Beyond raw attention, we describe each contribution by its magnitude
+% and alignment with the predicted-versus-runner-up class direction.
+
+% Let $\mathbf{v}_j^{(h)}\in\mathbb{R}^{64}$ be token $j$'s final-block
+% value vector in head $h$, and
+% $\mathbf{W}_O^{(h)}\in\mathbb{R}^{768\times64}$ its output-projection
+% block. Let $\hat c$ and $\tilde c$ be the highest- and
+% second-highest-logit classes, and $\mathbf{w}_c\in\mathbb{R}^{768}$
+% the frozen classifier-weight vector for class $c$. The transformed
+% value $\mathbf{u}_j^{(h)}$ and normalized class direction
+% $\mathbf{d}$ are
+% \begin{equation}
+% \begin{aligned}
+% \mathbf{u}_j^{(h)}
+% &=\mathbf{W}_O^{(h)}\mathbf{v}_j^{(h)}\\
+% \mathbf{d}
+% &=\frac{\mathbf{w}_{\hat c}-\mathbf{w}_{\tilde c}}
+% {\lVert\mathbf{w}_{\hat c}-\mathbf{w}_{\tilde c}\rVert_2}
+% \end{aligned}
+% \label{eq:transformed-value-direction}
+% \end{equation}
+% The attention-weighted magnitude $m_{ji}^{(h)}$ and direction
+% $c_{ji}^{(h)}$ are
+% \begin{equation}
+% \begin{aligned}
+% m_{ji}^{(h)}
+% &=\log\!\left(
+% 1+A_{ij}^{(h)}\lVert\mathbf{u}_j^{(h)}\rVert_2
+% \right)\\
+% c_{ji}^{(h)}
+% &=\operatorname{asinh}\!\left(
+% A_{ij}^{(h)}\mathbf{d}^{\top}\mathbf{u}_j^{(h)}
+% \right)
+% \end{aligned}
+% \label{eq:evidence-features}
+% \end{equation}
+% The second feature preserves the sign of alignment with the predicted-class direction.
+
+% Concatenating all $H$ raw attention weights, $H$ magnitude features,
+% and $H$ direction features gives $\mathbf{e}_{ji}\in\mathbb{R}^{36}$.
+% Every retained edge therefore preserves all heads. The class
+% direction uses no ground-truth label.
+
+% \subsection{Edge-Gated Graph Detector}
+
+% We process the attributed graph using a two-layer edge-gated message-passing
+% network with hidden dimension 64. Node and edge features are first projected
+% to this shared latent dimension.
+
+% For each edge $j\rightarrow i$, the network computes a candidate message from
+% the source node and edge attributes, and an element-wise gate conditioned on
+% the source node, target node, and edge:
+% \begin{equation}
+% \begin{aligned}
+% \boldsymbol{\mu}_{ji}
+% &=M([\mathbf{h}_j \,\|\, \mathbf{e}_{ji}])\\
+% \boldsymbol{\gamma}_{ji}
+% &=\sigma\!\left(
+% G([\mathbf{h}_j \,\|\, \mathbf{h}_i \,\|\, \mathbf{e}_{ji}])
+% \right)
+% \end{aligned}
+% \label{eq:message-gate}
+% \end{equation}
+% where $\|$ denotes concatenation, $M$ and $G$ are learned affine maps, and
+% $\sigma$ is the element-wise sigmoid.
+
+% For node $i$, gated messages from its incoming neighbors
+% $\mathcal{N}_i^-=\{j:(j,i)\in\mathcal{E}\}$ are combined using
+% \begin{equation}
+% \overline{\boldsymbol{\mu}}_i
+% =
+% \frac{
+% \sum_{j\in\mathcal{N}_i^-}
+% \boldsymbol{\gamma}_{ji}\odot\boldsymbol{\mu}_{ji}
+% }{
+% \sum_{j\in\mathcal{N}_i^-}
+% \boldsymbol{\gamma}_{ji}
+% }
+% \label{eq:gated-aggregation}
+% \end{equation}
+% where $\odot$ denotes element-wise multiplication. Intuitively, the message
+% describes what information a neighboring token provides, while the gate learns
+% how relevant that information is to the receiving token.
+
+% The node is then updated from its previous state, the aggregated message, and
+% its log in-degree using a two-layer MLP, followed by dropout, a residual
+% connection, LayerNorm, and ReLU. We apply this update twice.
+
+% \subsection{Output Expert and Fusion}
+
+% The output expert receives all 100 ViT logits, standardized using
+% training-set statistics. A $100\to64\to32\to1$ MLP with ReLU and
+% dropout ($0.15$) produces its error logit $s_o(x)$. Both experts are
+% trained independently using class-weighted binary cross-entropy
+% against
+% \begin{equation}
+% Y_{\mathrm{err}}(x)=\mathbf{1}[\hat c\neq y]
+% \label{eq:error-target}
+% \end{equation}
+% where $y$ is the true class and $\mathbf{1}[\cdot]$ the indicator.
+% The positive-class weight is the ratio of correct to incorrect
+% training examples; expert selection uses base-validation data.
+
+% We then freeze both experts and learn an image-dependent mixture
+% rather than a fixed average. We use five-fold GroupKFold on
+% disjoint meta-validation data, keeping all corruptions of each
+% original image together.
+
+% In fold $k\in\{1,\ldots,5\}$, separate one-dimensional logistic
+% regressions map $s_o,s_g$ to calibrated logits
+% $z_o^{(k)},z_g^{(k)}$. Let $\widetilde{\mathbf{s}}^{(k)}$ be the pair
+% $(s_o,s_g)$ standardized using that fold's training statistics.
+% A gate MLP $g_k$, with dimensions $2\to16\to1$ and ReLU, predicts
+% graph-expert weight $\lambda^{(k)}$, giving mixture logit
+% $z_{\mathrm{mix}}^{(k)}$:
+% \begin{equation}
+% \begin{aligned}
+% \lambda^{(k)}(x)
+% &=\sigma(g_k(\widetilde{\mathbf{s}}^{(k)}(x)))\\
+% z_{\mathrm{mix}}^{(k)}(x)
+% &=(1-\lambda^{(k)}(x))z_o^{(k)}(x)\\
+% &\quad+\lambda^{(k)}(x)z_g^{(k)}(x)
+% \end{aligned}
+% \label{eq:conditional-mixture}
+% \end{equation}
+% Each fold fits its calibrators and gate on four folds and validates
+% on the fifth. Test scores average the five mixture logits. No test
+% examples are used for expert or mixture selection.
+
+% \subsection{Detector Architecture and Conditional Gating}
+% To process the attributed graph, we use a two-layer TransformerConv graph encoder over token hidden states and evidence-flow edge attributes. The internal expert outputs a scalar error logit from the graph representation. We then apply a leakage-controlled conditional mixture gate that combines this internal logit with a strict full-logit MLP expert using class-weighted binary cross-entropy on the error target. The gate learns when the structural signal should override the output-only detector
+
+
+% \section{Experimental Setup}
+% We evaluate our method using CIFAR-100 and CIFAR-100-C, extracting 75,000 total records (52k train, 6k val, 17k test)[cite: 1, 2]. Our benchmark strictly stratifies subsets to prevent the detector from scoring based purely on corruption strength[cite: 2]. The ViT backbone remains frozen, and the method requires only a single forward pass at inference time[cite: 1].
+
+% \section{Experimental Setup}
+
+% \subsection{Datasets and Splits}
+% We evaluate Polygraph on CIFAR-100 and CIFAR-100-C using the standard frozen-ViT error-detection setup. The classifier is a ViT-B/16 backbone pretrained on ImageNet-21k and fine-tuned on CIFAR-100. We use the main benchmark split as well as the weather-family holdout split to assess robustness under distribution shift. For each split, model selection is performed on the validation set and all reported results correspond to the held-out test set. The binary classification target is the error indicator
+% \[
+% y_{\mathrm{err}}(x) = 1\!\left[\arg\max_c f_c(x) \neq y(x)\right].
+% \]
+
+
+% \subsection{Training Protocol}
+% The internal graph detector is trained with binary cross-entropy on the error target. The final prediction is produced by a leakage-controlled conditional mixture gate that combines the graph score with a strict full-logit expert trained on the classifier outputs. Model selection is performed using validation AUROC, and early stopping is applied on the same criterion. All experiments are repeated across multiple random seeds to reduce sensitivity to initialization and optimization noise.
+
+% \subsection{Baselines}
+% We compare Polygraph against the strongest output-only baselines used in our evaluation protocol. The primary reference is the maximum softmax probability (MSP), which is a standard confidence-based detector for misclassification prediction. We also include a strict output MLP trained on the full class-score vector, which serves as a stronger nonlinear baseline that captures class-specific logit structure beyond scalar confidence heuristics.
+
+% \subsection{Evaluation Metrics}
+% We report AUROC as the primary metric for ranking misclassification likelihood. To capture precision-recall behavior and selective prediction quality, we additionally report AUPRC and AURC. We evaluate on both the main benchmark and the weather-family holdout, and we summarize corruption robustness by severity. For pairwise comparisons, we use seed-matched differences and grouped bootstrap confidence intervals to assess whether improvements over the output baseline are stable.
+
+\section{Experimental Setup}
+
+\subsection{Datasets and Splits}
+We evaluate on CIFAR-100 and CIFAR-100-C using a frozen ViT-B/16
+pretrained on ImageNet-21k and fine-tuned on CIFAR-100. We construct an error-balanced benchmark by sampling equal
+numbers of correct and incorrect predictions within each
+source--severity stratum. All versions of the same original
+image remain in one train/validation/test partition. We consider
+the main benchmark and a weather-family holdout in which selected
+corruption families are excluded from detector training and used to
+evaluate distribution-shift generalization. Model selection uses only
+the corresponding validation split, and all reported results are on
+held-out test data.
+
+\subsection{Training and Baselines}
+We select models by validation AUROC with early stopping and repeat
+all learned detectors over three random seeds. We compare against
+maximum softmax probability (MSP) and a strict output-only MLP trained
+on the complete classifier-logit vector. 
+
+% \subsection{Evaluation}
+% We use AUROC as the primary error-detection metric. We additionally
+% report performance by corruption severity and on the weather-family
+% holdout. Statistical comparisons to the output-only baseline use
+% seed-matched differences and grouped bootstrap confidence intervals.
+
+% \section{Results}
+% \subsection{In-Distribution Error Prediction}
+% Table \ref{tab:results_main} reports AUROC on the main CIFAR-100 error-detection benchmark. The standard MSP baseline achieves 0.8651 AUROC. The strict output MLP, trained on the full 100-dimensional logit vector, reaches 0.8794 AUROC on average across seeds, establishing that the raw output distribution contains nonlinear class-specific signal beyond simple confidence heuristics.
+
+% The standalone graph-based evidence-flow detector improves to 0.8857 AUROC on average across seeds. When combined with the strict output expert through the leakage-controlled conditional gate, Polygraph reaches 0.8913 AUROC. This is a consistent improvement over the strongest output-only baseline, indicating that the graph signal captures complementary information that is not fully represented in the classifier logits alone.
+
+% \begin{table}[h]
+%   \centering
+%   \resizebox{\columnwidth}{!}{%
+%   \begin{tabular}{lcc}
+%     \toprule
+%     \textbf{Method} & \textbf{AUROC} \\
+%     \midrule
+%     MSP & 0.8651 \\
+%     Strict Output MLP & 0.8794 $\pm$ 0.0009 \\
+%     Graph-based Evidence-Flow Detector & 0.8857 $\pm$ 0.0006 \\
+%     \textbf{Polygraph (graph detector + output gate)} & \textbf{0.8913 $\pm$ 0.0015} \\
+%     \bottomrule
+%   \end{tabular}%
+%   }
+%   \caption{Error prediction performance on the main CIFAR-100 test split.}
+%   \label{tab:results_main}
+% \end{table}
+
+% The improvement is particularly visible under moderate and severe corruptions, where the output confidence becomes less reliable and the structural evidence-flow signal remains informative. This pattern is consistent with the view that the graph signal complements the output branch rather than merely reproducing its confidence ranking.
+
+% \begin{table}[h]
+%   \centering
+%   \resizebox{\columnwidth}{!}{%
+%   \begin{tabular}{lcccccc}
+%     \toprule
+%     \textbf{Severity} & \textbf{Clean / 0} & \textbf{1} & \textbf{2} & \textbf{3} & \textbf{4} & \textbf{5} \\
+%     \midrule
+%     MSP & 0.9206 & 0.8928 & 0.8904 & 0.8727 & 0.8537 & 0.8184 \\
+%     Strict Output MLP & 0.9118 & 0.8965 & 0.8973 & 0.8789 & 0.8732 & 0.8547 \\
+%     \textbf{Polygraph} & \textbf{0.9020} & \textbf{0.8990} & \textbf{0.9032} & \textbf{0.8863} & \textbf{0.8841} & \textbf{0.8608} \\
+%     \bottomrule
+%   \end{tabular}%
+%   }
+%   \caption{AUROC by corruption severity for MSP, the strict output MLP, and Polygraph.}
+  
+% \end{table}
+
+
+% \subsection{Cross-Dataset Generalization}
+% To evaluate robustness under distribution shift, we test Polygraph on a weather-family holdout containing visually distinct corruptions not seen during training, including snow, frost, fog, and brightness perturbations. Table \ref{tab:results_weather} summarizes the results on the all-weather test set and the held-out weather-plus-extra subset.
+
+% On the all-weather split, the strict output MLP reaches 0.8690 AUROC on average across seeds, while the fused Polygraph model reaches 0.8784 AUROC. This corresponds to a mean gain of +0.0094 over the matched output expert. On the held-out weather-plus-extra subset, Polygraph reaches 0.8884 AUROC on average, outperforming both the strict output MLP (0.8816 AUROC) and MSP (0.8844 AUROC). These results indicate that the graph-based signal remains useful under a distribution shift and does not collapse when the underlying visual conditions change.
+
+% \begin{table}[h]
+%   \centering
+%   \resizebox{\columnwidth}{!}{%
+%   \begin{tabular}{lcc}
+%     \toprule
+%     \textbf{Method} & \textbf{Weather AUROC} & \textbf{Held-out Weather + Extras AUROC} \\
+%     \midrule
+%     MSP & 0.8625 & 0.8844 \\
+%     Strict Output MLP & 0.8690 $\pm$ 0.0017 & 0.8816 $\pm$ 0.0028 \\
+%     Graph-based Evidence-Flow Detector & 0.8707 $\pm$ 0.0025 & 0.8790 $\pm$ 0.0030 \\
+%     \textbf{Polygraph (graph detector + output gate)} & \textbf{0.8784 $\pm$ 0.0017} & \textbf{0.8884 $\pm$ 0.0022} \\
+%     \bottomrule
+%   \end{tabular}%
+%   }
+%   \caption{Weather-family generalization results. The fused model remains above the output-only baseline on the weather split and on the held-out weather-plus-extra subset.}
+%   \label{tab:results_weather}
+% \end{table}
+
+% \subsection{Complementarity and Statistical Significance}
+% To understand the source of Polygraph's performance gains, we compare the graph-based detector against the strongest output-only baseline. The graph signal is complementary to the output branch: the fused model improves over the strict output MLP while the standalone graph detector remains a smaller but consistent improvement over the same baseline. This indicates that the structural signal captures information not fully represented in the final logits.
+
+% To assess statistical reliability, we performed 2,000 paired base-photo-group bootstrap repetitions. Polygraph achieves a mean AUROC gain of +0.0119 over the strict output baseline across the three seeds, with all bootstrap intervals remaining strictly above zero. This result indicates that the observed improvement is stable across seeds and is not driven by a single run or a narrow subset of examples.
+
+% \section{Results}
+
+% \subsection{Main Error Detection}
+% Table~\ref{tab:results_main} compares detectors on the balanced main
+% CIFAR-100/CIFAR-100-C test split. Polygraph improves mean AUROC over
+% the strict full-logit MLP by 0.0145, while also improving AUPRC and
+% AURC. The standalone graph expert provides a smaller mean AUROC
+% gain of 0.0089.
+
+% \begin{table}[t]
+%   \centering
+%   \small
+%   \setlength{\tabcolsep}{3pt}
+%   \begin{tabular}{@{}lccc@{}}
+%     \toprule
+%     Method & AUROC $\uparrow$ & AUPRC $\uparrow$ & AURC $\downarrow$ \\
+%     \midrule
+%     MSP
+%       & 0.8651
+%       & 0.8345
+%       & 0.2218 \\
+%     Output MLP
+%       & $0.8794 \pm 0.0009$
+%       & 0.8583
+%       & 0.2158 \\
+%     Graph expert
+%       & $0.8883 \pm 0.0023$
+%       & 0.8682
+%       & 0.2105 \\
+%     Polygraph
+%       & $\mathbf{0.8939 \pm 0.0004}$
+%       & \textbf{0.8748}
+%       & \textbf{0.2071} \\
+%     \bottomrule
+%   \end{tabular}
+%   \caption{Main-test performance. Values are three-seed means;
+%   AUROC also includes the standard deviation. Bold marks the
+%   best value in each column.}
+%   \label{tab:results_main}
+% \end{table}
+
+% Using 2,000 paired bootstrap repetitions grouped by original image,
+% the 95\% confidence interval for the Polygraph--output AUROC
+% difference lies above zero in every seed. The standalone graph
+% improvement is less certain: one of its three intervals includes
+% zero. Nevertheless, at equal 50\% flagging budgets, the graph expert
+% detects 37.4\% of the errors missed by the output MLP, demonstrating
+% complementary error-detection behavior.
+
+% \subsection{Held-Out Corruption Generalization}
+% Under the weather-family holdout, Polygraph improves over the
+% output MLP on both the complete test set and the subset containing
+% only unseen weather and extra corruptions
+% (Table~\ref{tab:results_weather}). The corresponding mean AUROC
+% gains are 0.0130 and 0.0096, respectively, indicating that the
+% benefit extends to corruption types excluded from detector training.
+
+% \begin{table}[t]
+%   \centering
+%   \small
+%   \setlength{\tabcolsep}{4pt}
+%   \begin{tabular}{@{}lcc@{}}
+%     \toprule
+%     Method & All test & Unseen \\
+%     \midrule
+%     MSP
+%       & 0.8625
+%       & 0.8844 \\
+%     Output MLP
+%       & $0.8690 \pm 0.0017$
+%       & $0.8816 \pm 0.0028$ \\
+%     Graph expert
+%       & $0.8764 \pm 0.0021$
+%       & $0.8840 \pm 0.0030$ \\
+%     Polygraph
+%       & $\mathbf{0.8820 \pm 0.0017}$
+%       & $\mathbf{0.8912 \pm 0.0020}$ \\
+%     \bottomrule
+%   \end{tabular}
+%   \caption{Weather-holdout AUROC, reported as three-seed
+%   mean $\pm$ standard deviation. All test includes both seen
+%   and unseen corruption families; Unseen contains the held-out
+%   weather and extra corruptions.}
+%   \label{tab:results_weather}
+% \end{table}
+
+% The main-split severity breakdown also favors Polygraph at every
+% corruption severity from 1 to 5. At severity 5, its AUROC is 0.8707,
+% compared with 0.8537 for the output MLP and 0.8184 for MSP.
+% The improvement is therefore not confined to a single severity.
+
+% \subsection{Representation and Topology Ablations}
+% The earlier TransformerConv feature study
+% (Table~\ref{tab:ablations}, top) shows that class-direction features
+% provide substantially more signal than raw attention, whereas
+% message magnitude alone adds little. With hidden-node inputs held
+% fixed, replacing raw-attention edges with full evidence-flow
+% features increases AUROC from 0.8754 to 0.8863.
+
+% \begin{table}[t]
+%   \centering
+%   \small
+%   \setlength{\tabcolsep}{3pt}
+%   \begin{tabular}{@{}lc@{}}
+%     \toprule
+%     Variant & AUROC $\uparrow$ \\
+%     \midrule
+%     \multicolumn{2}{@{}l}{\textit{Feature study:
+%     TransformerConv, seed 7}} \\
+%     Attention, base nodes
+%       & 0.8348 \\
+%     Attention + magnitude
+%       & 0.8369 \\
+%     Attention + class direction
+%       & 0.8660 \\
+%     Full edge evidence, base nodes
+%       & 0.8655 \\
+%     Full edge evidence, compact nodes
+%       & 0.8773 \\
+%     Attention, hidden nodes
+%       & 0.8754 \\
+%     Full edge evidence, hidden nodes
+%       & \textbf{0.8863} \\
+%     \midrule
+%     \multicolumn{2}{@{}l}{\textit{Strict protocol:
+%     hidden-node inputs}} \\
+%     TransformerConv
+%       & $0.8845 \pm 0.0009$ \\
+%     Token set, no edges$^\dagger$
+%       & 0.8838 \\
+%     Node/edge sets, no incidence
+%       & $0.8834 \pm 0.0016$ \\
+%     Endpoint sets, no message passing
+%       & $0.8813 \pm 0.0005$ \\
+%     Edge-gated MPNN
+%       & $\mathbf{0.8883 \pm 0.0023}$ \\
+%     \bottomrule
+%   \end{tabular}
+%   \caption{Main-test ablations. Top: original-validation
+%   feature study. Bottom: strict base-validation protocol,
+%   with three-seed mean $\pm$ standard deviation except
+%   $^\dagger$ (seed 7 only). Full edge evidence includes
+%   attention, magnitude, and class direction. Bold marks
+%   the best result within each block.}
+%   \label{tab:ablations}
+% \end{table}
+
+% Under the strict protocol, non-graph controls nearly match
+% TransformerConv. In particular, the seed-matched bootstrap
+% intervals for its gain over endpoint sets all include zero.
+% Permuting edge targets or shuffling edge attributes at inference
+% reduces the fixed seed-7 TransformerConv's AUROC by 0.0039 and
+% 0.0059, respectively. These results indicate sensitivity to
+% connectivity and edge alignment, but do not establish graph
+% message passing as necessary.
+
+% \paragraph{Architecture and depth.}
+% Validation screening favored the edge-gated MPNN over residual
+% TransformerConv, GINE, and GATv2. Two message-passing layers
+% outperformed one and four, with validation AUROCs of
+% 0.8849, 0.8792, and 0.8789, respectively (seed 7).
+% Extending the representation to the final four ViT blocks did
+% not help in the tested token-trajectory and union-graph variants:
+% their test AUROCs were 0.8771 and 0.8820, versus 0.8894 for the
+% final-block edge-gated detector at the same seed.
+
+
+% Vertically centered cell: mean above, standard deviation below.
+\newcommand{\pgscore}[2]{%
+  \begingroup
+  \renewcommand{\arraystretch}{0.85}%
+  \begin{tabular}[c]{@{}c@{}}%
+    #1\\
+    {\scriptsize\(\pm\,#2\)}%
+  \end{tabular}%
+  \endgroup
+}
+
+\section{Results}
+
+\subsection{Main Error Detection}
+Table~\ref{tab:results_main} compares detectors on the main
+CIFAR-100/CIFAR-100-C test split. Polygraph improves mean AUROC over
+the strict full-logit MLP, while also improving AUPRC and
+AURC. The standalone graph expert provides a smaller mean AUROC
+gain. Throughout this section, \emph{graph expert} denotes
+the selected two-layer edge-gated MPNN, and \emph{Polygraph} denotes
+its conditional fusion with the output MLP.
+
+\begin{table}[!htbp]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xccc@{}}
+    \toprule
+    Method & AUROC $\uparrow$ & AUPRC $\uparrow$ & AURC $\downarrow$ \\
+    \midrule
+    MSP          & 0.8651          & 0.8345          & 0.2218 \\
+    Output MLP   & 0.8794          & 0.8583          & 0.2158 \\
+    Graph expert & 0.8883          & 0.8682          & 0.2105 \\
+    Polygraph    & \textbf{0.8939} & \textbf{0.8748} & \textbf{0.2071} \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Main-test performance, averaged over three seeds for
+  learned detectors. MSP is deterministic. Bold marks the best
+  result in each column.}
+  \label{tab:results_main}
+\end{table}
+
+Using 2,000 paired bootstrap repetitions grouped by original image,
+the 95\% confidence interval for the Polygraph--output AUROC
+difference lies above zero in all three seeds. The standalone graph
+improvement is less certain, although at an equal flagging budget of 50\% of test examples per
+detector, the graph expert identifies 37.4\% of the true errors
+missed by the output MLP, averaged across seeds. These distinct error sets
+support using the graph score as complementary evidence.
+
+\paragraph{Corruption severity.}
+Table~\ref{tab:results_severity} reports the main-test breakdown
+by corruption severity. Polygraph has the highest mean AUROC at
+each severity from 1 to 5. The graph expert alone
+also exceeds the output MLP at every reported severity.
+
+\begin{table}[!htbp]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.16}
+  \begin{tabularx}{\columnwidth}{@{}c*{4}{>{\centering\arraybackslash}X}@{}}
+    \toprule
+    Severity & MSP & \shortstack{Output\\MLP}
+      & \shortstack{Graph\\expert} & Polygraph \\
+    \midrule
+    1 & 0.8928 & 0.8967 & 0.8978 & \textbf{0.9065} \\
+    2 & 0.8904 & 0.8977 & 0.9047 & \textbf{0.9115} \\
+    3 & 0.8727 & 0.8804 & 0.8905 & \textbf{0.8957} \\
+    4 & 0.8537 & 0.8743 & 0.8857 & \textbf{0.8907} \\
+    5 & 0.8184 & 0.8537 & 0.8673 & \textbf{0.8707} \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Main-test AUROC by corruption severity, pooling
+  corruption types within each severity. Learned-detector values
+  are three-seed means.}
+  \label{tab:results_severity}
+\end{table}
+
+\subsection{Held-Out Corruption Generalization}
+Under the weather-family holdout, Polygraph improves over the
+output MLP on both the complete test set and the subset containing
+only unseen weather and extra corruptions
+(Table~\ref{tab:results_weather}). On the unseen subset, Polygraph also
+exceeds MSP, whereas the standalone graph expert and the
+output MLP do not exceed MSP. Thus, conditional fusion retains
+its benefit for corruption types excluded from detector training.
+
+\begin{table}[!htbp]
+  \centering
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xcc@{}}
+    \toprule
+    Method
+      & \shortstack{Full test\\AUROC $\uparrow$}
+      & \shortstack{Unseen only\\AUROC $\uparrow$} \\
+    \midrule
+    MSP          & 0.8625          & 0.8844 \\
+    Output MLP   & 0.8690          & 0.8816 \\
+    Graph expert & 0.8764          & 0.8840 \\
+    Polygraph    & \textbf{0.8820} & \textbf{0.8912} \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Weather-holdout AUROC, averaged over three seeds for
+  learned detectors. Full test includes seen and unseen corruption
+  families; Unseen only contains the held-out weather and extra
+  corruptions.}
+  \label{tab:results_weather}
+\end{table}
+
+\subsection{Representation and Topology Ablations}
+\paragraph{Feature ablations.}
+The TransformerConv feature study (Table~\ref{tab:ablations})
+separates the effects of node and edge attributes. With base node
+features, adding class direction raises AUROC substantially, whereas message magnitude alone adds little. Combining
+magnitude with direction does not improve over direction alone.
+With full hidden-node inputs held fixed, replacing raw-attention
+edges with full evidence-flow features additionally increases AUROC.
+
+\begin{table}[!htbp]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.12}
+  \begin{tabularx}{\columnwidth}{@{}l>{\raggedright\arraybackslash}Xr@{}}
+    \toprule
+    Nodes & Edge features & AUROC $\uparrow$ \\
+    \midrule
+    Base    & Attention             & 0.8348 \\
+    Base    & Attention + magnitude & 0.8369 \\
+    Base    & Attention + direction & 0.8660 \\
+    Base    & Full evidence flow    & 0.8655 \\
+    \addlinespace[3pt]
+    Compact & Full evidence flow    & 0.8773 \\
+    \addlinespace[3pt]
+    Hidden  & Attention             & 0.8754 \\
+    Hidden  & Full evidence flow    & \textbf{0.8863} \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Feature ablations with TransformerConv (seed 7,
+  original validation split). Compact nodes add class-conditioned
+  summaries; hidden nodes add full token states. Full evidence
+  flow includes attention, magnitude, and class direction.}
+  \label{tab:ablations}
+\end{table}
+
+\paragraph{Non-graph controls.}
+Table~\ref{tab:topology} compares models under disjoint validation data for expert selection and
+fusion. All models receive the same hidden-node inputs. The
+node/edge-set control pools node and edge features separately,
+without retaining their incidence; the endpoint-set control
+retains local source--target--edge records but performs no message passing. Both nearly match TransformerConv. The edge-gated MPNN has the highest mean AUROC.
+
+\begin{table}[!htbp]
+  \centering
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \renewcommand{\arraystretch}{1.08}
+  \begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xc@{}}
+    \toprule
+    Internal detector & AUROC $\uparrow$ \\
+    \midrule
+    TransformerConv                 & 0.8845 \\
+    Token set, no edges$^{\dagger}$ & 0.8838 \\
+    Node/edge sets, no incidence    & 0.8834 \\
+    Endpoint sets, no message passing & 0.8813 \\
+    Edge-gated MPNN                 & \textbf{0.8883} \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Main-test topology controls under the strict validation
+  protocol. All models use hidden-node inputs. Values are three-seed
+  means except $^{\dagger}$, which uses seed 7 only.}
+  \label{tab:topology}
+\end{table}
+
+% \paragraph{Rewiring.}
+% Permuting edge targets or shuffling edge attributes at inference
+% reduces the fixed seed-7 TransformerConv's AUROC by 0.0039 and
+% 0.0059, respectively. These perturbations show sensitivity to
+% connectivity and edge alignment, but the modest changes and
+% strong set-based controls do not support attributing the main
+% gain to topology alone.
+
+\subsection{Architecture and Depth}
+Validation screening favored the edge-gated MPNN over the tested  TransformerConv, GINE, and GATv2 variants. Their validation AUROCs were 0.8849, 0.8763, 0.8753, and 0.8759,
+respectively. The selected edge-gated model has 132k parameters,
+compared with 191k for the TransformerConv model.
+For the edge-gated architecture, two message-passing layers
+achieved 0.8849 validation AUROC, compared with 0.8792 for one
+layer and 0.8789 for four.
+
+Extending the representation to the final four ViT blocks did
+not improve the tested models. 4-layer variants achieved test AUROCs of 0.8771 and 0.8820,
+respectively, versus 0.8894 for the final-block edge-gated expert
+at the same seed. These results support the selected configuration within the evaluated
+architectures.
+
+\section{Conclusion}
+
+We introduced Polygraph, a graph-based framework for error detection in Vision Transformers that models token interactions as an evidence-flow graph and combines this internal signal with the classifier output through a conditional gate. The resulting model improves over the strongest output-only baseline and remains competitive under distribution shift. These results suggest that structural routing patterns provide complementary information to output confidence and can improve failure prediction in vision transformers.
+
+\bibliography{custom}
+\end{document}

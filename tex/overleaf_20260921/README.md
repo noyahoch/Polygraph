@@ -1,52 +1,50 @@
-# Overleaf proposal and controlled follow-ups - September 21, 2026
+# *ACL Paper Styles
 
-This folder contains **Project Proposal: Machine Learning with Graphs**, with
-its original bibliography and a locally compiled PDF. The original download was
-preserved in local commit `0304212`. The subsequent contribution-specific revision
-adds a separate completed-follow-up section and a few scope clarifications;
-it retains the colleagues' original proposal rather than rewriting it as the
-implementation used in the follow-ups.
+This directory contains the latest LaTeX templates for *ACL conferences.
 
-- `project_template.tex`: revised document source.
-- `references.bib`: unchanged original bibliography.
-- [project_template.pdf](project_template.pdf): compiled current document, 7 pages.
-- `build.sh`: reproducible build command; temporary files stay in ignored `.build/`.
-- [CONTRIBUTION_SOURCES.md](CONTRIBUTION_SOURCES.md): source-to-claim mapping,
-  integration edits, verification boundaries and remaining document issues.
+## Instructions for authors
 
-## Source identity
+Paper submissions to *ACL conferences must use the official ACL style
+templates.
 
-The user supplied `/Users/omrifahn/Downloads/overleaf/sep21th - Project_Proposal_GNN/`.
-During import, the download was moved to
-`/Users/omrifahn/Downloads/overleaf/21th 1821/`. The two files were copied from
-that location and checked against the corresponding members of
-`Project_Proposal_GNN.zip` there.
+The LaTeX style files are available
 
-Original import SHA-256 values (the current TeX is intentionally revised):
+- as an [Overleaf template](https://www.overleaf.com/latex/templates/association-for-computational-linguistics-acl-conference/jvxskxpnznfj)
+- in this repository
+- as a [.zip file](https://github.com/acl-org/acl-style-files/archive/refs/heads/master.zip)
 
-```text
-a95061134da9a9b58b411e99f4f6b19cd87a3000eec370f571d8aa82bff84501  project_template.tex
-aba7be15d880a5f68c8d2e55fad815f41289e81b8df1ccaf224b956204baa3c3  references.bib
-```
+Please see [`acl_latex.tex`](https://github.com/acl-org/acl-style-files/blob/master/acl_latex.tex) for detailed instructions on using the LaTeX style.  This file also serves as a template document for use with LaTeX and pdfLaTeX.  The file  [`acl_lualatex.tex`](https://github.com/acl-org/acl-style-files/blob/master/acl_lualatex.tex) serves as a template document for use with both XeLaTeX and LuaLaTeX. 
 
-## Build
+Please follow the paper formatting guidelines general to *ACL
+conferences:
 
-From this folder, run:
+- [Paper formatting guidelines](https://acl-org.github.io/ACLPUB/formatting.html)
 
-```sh
-./build.sh
-```
+Authors may not modify these style files or use templates designed for
+other conferences.
 
-Requires `latexmk`, pdfLaTeX, BibTeX, the `acmart` class and
-`ACM-Reference-Format` bibliography style. Built with TeX Live 2025,
-latexmk 4.86a and acmart 2.12. Shell escape is disabled.
+## Instructions for publications chairs
 
-The original ACM template emits nonfatal metadata/one-sided-header warnings.
-These do not prevent PDF generation. The contribution update checks new claims
-against the preserved experiment reports and implementation; it does not
-fact-check or revise the original literature discussion. No new experiment is
-part of this manuscript revision.
+To adapt the style files for your conference, please fork this repository and
+make necessary changes. Minimally, you'll need to update the name of
+the conference and rename the files.
 
-The revised build resolves all citations and cross-references and has no
-overfull boxes. All seven rendered pages were visually inspected. The inherited
-template warnings and underfull-page warnings do not indicate clipped content.
+If you make improvements to the templates that should be propagated to
+future conferences, please submit a pull request. Thank you in
+advance!
+
+In older versions of the templates, authors were asked to fill in the
+START submission ID so that it would be stamped at the top of each
+page of the anonymized version. This is no longer needed, because it
+is now possible to do this stamping automatically within
+START. Currently, the way to do this is for the program chair to email
+support@softconf.com and request it.
+
+## Instructions for making changes to style files
+
+- merge pull request in github, or push to github
+- git pull from github to a local repository
+- then, git push from your local repository to overleaf project 
+    - Overleaf project is https://www.overleaf.com/project/5f64f1fb97c4c50001b60549
+    - Overleaf git url is https://git.overleaf.com/5f64f1fb97c4c50001b60549
+- then, click "Submit" and then "Submit as Template" in overleaf in order to ask overleaf to update the overleaf template from the overleaf project 
