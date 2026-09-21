@@ -29,6 +29,16 @@ model loading. The closing Git receipt/session update follows this immutable
 review snapshot and records its revision; it does not change the scientific
 results or the audit disposition.
 
+The September 21 completion audit and updated English/Hebrew reports are
+preserved separately at revision `7656f8b19e4b51d12ea2ed21ae3bc04a4dcc67fd`,
+prefix `logit_dynamics_20260919_114500/replay_completion_20260921`.
+[Browse the completed verification](https://huggingface.co/omrifahn/polygraph-experiments/tree/7656f8b19e4b51d12ea2ed21ae3bc04a4dcc67fd/logit_dynamics_20260919_114500/replay_completion_20260921).
+All 88 files including its manifest were checksum-verified; both previous
+snapshots and every pre-existing repository file remained unchanged. The
+addendum includes all 13 new replay/bootstrap evidence files and the exact
+verification source. The original artifact revision remains the model-loading
+target. The new audit's numerical findings and limits appear below.
+
 For each `SEED` in `7`, `17`, `27`, paths relative to the prefix include:
 
 - `runs/seedSEED/heads/model.safetensors`: twelve auxiliary class heads.

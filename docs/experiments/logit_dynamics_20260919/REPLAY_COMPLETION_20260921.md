@@ -38,6 +38,27 @@ case and numerical difference. Private preservation of these new records and
 the updated reports follows as a separate addendum; it must not change earlier
 Hub snapshots. No numerical work remains queued within this scope.
 
+## Private preservation completed — 12:42:15 Israel
+
+New immutable revision: `7656f8b19e4b51d12ea2ed21ae3bc04a4dcc67fd` in private
+`omrifahn/polygraph-experiments`, prefix
+`logit_dynamics_20260919_114500/replay_completion_20260921`.
+[Browse the pinned verification addendum](https://huggingface.co/omrifahn/polygraph-experiments/tree/7656f8b19e4b51d12ea2ed21ae3bc04a4dcc67fd/logit_dynamics_20260919_114500/replay_completion_20260921).
+
+All 87 manifest-listed files and the manifest itself were fetched and
+checksum-verified at this revision. Manifest SHA-256:
+`8d925851f63419139137f8a5316494af87ac20937f91bc1689454d8c7d24deed`.
+The addendum preserves current reports/review, exact audit code, configurations,
+receipts and all 13 new NPZ evidence files. It references the original model
+revision rather than duplicating weights. All 1,303 existing repository files,
+including both previous snapshots and the root README, remained unchanged.
+
+Local manifest, scoped README and exact publication receipt are under
+`run_records/replay_completion_20260921/`. The backed-up documents are frozen
+at local commit `693c2bd`; this publication-pointer update follows that backup.
+All delivery steps are complete. The heartbeat remains paused, no scientific
+work or upload is pending, and no branch push or merge occurred.
+
 ## Scope and reason
 
 The original CPU audit stopped at its first score-tolerance failure, before

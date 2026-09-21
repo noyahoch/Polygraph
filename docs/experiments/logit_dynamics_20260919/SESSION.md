@@ -14,8 +14,16 @@ against pinned hashes. Independent review found no unresolved evidence blocker.
 The GPU audit added 283 seconds; total allocated GPU time is now 14,659 seconds
 (4:04:19). CPU used 279 seconds without a GPU. No numerical jobs remain queued
 in the 12:31:25 reconciliation. The previous heartbeat remains paused. Updated
-reports and a new private verification addendum preserve this completed check;
-the publication receipt is recorded after upload. This is cached-CLS replay in
+reports and a new private verification addendum preserve this completed check.
+The addendum was verified at 12:42:15 Israel, revision
+`7656f8b19e4b51d12ea2ed21ae3bc04a4dcc67fd`, prefix
+`logit_dynamics_20260919_114500/replay_completion_20260921` in private
+`omrifahn/polygraph-experiments`. All 88 files including the manifest matched;
+all 1,303 pre-existing repository files remained unchanged, including the 296
+original snapshot blobs and 38 review blobs. Receipt:
+`run_records/replay_completion_20260921/publication_receipt_20260921.json`.
+The replay, independent review and preservation are complete. No further job
+or upload is pending; the heartbeat remains paused. This is cached-CLS replay in
 the existing environment, not clean-install or raw-image end-to-end reproduction.
 
 ### Reopening and submission record
