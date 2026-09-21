@@ -1,8 +1,10 @@
 # Manuscript versions and integration evidence
 
-## Current manuscript: user-supplied shortened version
+## Current manuscript: user-supplied revision preserving original tables
 
-On September 21, 2026, the user supplied `/Users/omrifahn/Downloads/polygraph_five_pages.tex` and requested that it replace the active manuscript. It was copied byte-for-byte to [acl_latex.tex](acl_latex.tex), without further editorial changes. Source SHA-256: `ac074fd5aba09d14a3f1ee14c33e30fe13e651aa7d0a70bed783dddefaaa7fef`.
+On September 21, 2026, the user supplied `/Users/omrifahn/Downloads/polygraph_five_pages_preserved_tables.tex` and requested that it replace the active manuscript. It was copied byte-for-byte to [acl_latex.tex](acl_latex.tex), without further editorial changes. Source SHA-256: `33d4fc7e2cf28cdc16af0f522f397207242c733e8787f003029b873200452d1f`.
+
+This supersedes the first shortened import at `9e87e8e`. All five original active table blocks (main results, severity, weather, feature ablations and topology controls) are byte-identical to the colleagues' version in `418652a`; the new fusion table is additional.
 
 The existing `./build.sh` produced [acl_latex.pdf](acl_latex.pdf): **six pages, comprising five main-text pages and one references page**. All six pages were rendered and visually inspected. All internal references and citation keys resolve; required figure, bibliography and style assets exist. No overfull boxes or unresolved references/citations occurred; nonfatal underfull-box and disabled-shell-escape warnings remain. No experiments were run.
 

@@ -312,7 +312,31 @@ its conditional fusion with the output MLP.
 
 Paired photo-group bootstrap (2,000 draws) gives positive 95\% intervals for Polygraph--output AUROC in each seed. At a 50\% flagging budget per detector, the graph expert detects 37.4\% of errors missed by the output MLP (seed mean), supporting fusion despite less certain standalone AUROC gains.
 
-Polygraph has the highest mean AUROC at all five corruption severities; the standalone graph expert also exceeds the output MLP at each severity.
+\paragraph{Corruption severity.}
+Polygraph has the highest mean AUROC at all five severities; the graph expert also exceeds the output MLP at each (Table~\ref{tab:results_severity}).
+
+\begin{table}[!htbp]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.16}
+  \begin{tabularx}{\columnwidth}{@{}c*{4}{>{\centering\arraybackslash}X}@{}}
+    \toprule
+    Severity & MSP & \shortstack{Output\\MLP}
+      & \shortstack{Graph\\expert} & Polygraph \\
+    \midrule
+    1 & 0.8928 & 0.8967 & 0.8978 & \textbf{0.9065} \\
+    2 & 0.8904 & 0.8977 & 0.9047 & \textbf{0.9115} \\
+    3 & 0.8727 & 0.8804 & 0.8905 & \textbf{0.8957} \\
+    4 & 0.8537 & 0.8743 & 0.8857 & \textbf{0.8907} \\
+    5 & 0.8184 & 0.8537 & 0.8673 & \textbf{0.8707} \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Main-test AUROC by corruption severity, pooling
+  corruption types within each severity. Learned-detector values
+  are three-seed means.}
+  \label{tab:results_severity}
+\end{table}
 
 \subsection{Held-Out Corruption Generalization}
 Under the weather-family holdout, conditional Polygraph exceeds the output MLP on both the full test and unseen-corruption subset (Table~\ref{tab:results_weather}). On the unseen subset, it also exceeds MSP, unlike either standalone expert. This is corruption-family generalization within the original benchmark.
@@ -343,7 +367,34 @@ Under the weather-family holdout, conditional Polygraph exceeds the output MLP o
 
 \subsection{Representation and Topology Ablations}
 \paragraph{Feature ablations.}
-In the single-seed TransformerConv validation study, adding class direction to base-node/raw-attention inputs raised AUROC from 0.8348 to 0.8660; magnitude alone gave 0.8369, and both gave 0.8655. With hidden-node inputs, full edge features scored 0.8863 versus 0.8754 for raw attention.
+Table~\ref{tab:ablations} reports the single-seed TransformerConv validation study. Class direction improves base-node performance; magnitude alone adds little. With hidden nodes fixed, full evidence-flow edges improve over raw attention.
+
+\begin{table}[!htbp]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.12}
+  \begin{tabularx}{\columnwidth}{@{}l>{\raggedright\arraybackslash}Xr@{}}
+    \toprule
+    Nodes & Edge features & AUROC $\uparrow$ \\
+    \midrule
+    Base    & Attention             & 0.8348 \\
+    Base    & Attention + magnitude & 0.8369 \\
+    Base    & Attention + direction & 0.8660 \\
+    Base    & Full evidence flow    & 0.8655 \\
+    \addlinespace[3pt]
+    Compact & Full evidence flow    & 0.8773 \\
+    \addlinespace[3pt]
+    Hidden  & Attention             & 0.8754 \\
+    Hidden  & Full evidence flow    & \textbf{0.8863} \\
+    \bottomrule
+  \end{tabularx}
+  \caption{Feature ablations with TransformerConv (seed 7,
+  original validation split). Compact nodes add class-conditioned
+  summaries; hidden nodes add full token states. Full evidence
+  flow includes attention, magnitude, and class direction.}
+  \label{tab:ablations}
+\end{table}
 
 \paragraph{Non-graph controls.}
 Table~\ref{tab:topology} compares models under disjoint validation data for expert selection and
@@ -382,40 +433,35 @@ Validation screening selected the two-layer edge-gated MPNN over tested Transfor
 \section{Controlled Follow-up Studies}
 \label{sec:controlled-followups}
 
-These exploratory studies reuse 800 previously examined development photographs, each with nine views: clean, plus Gaussian noise, motion blur, fog, and JPEG at severities 3/5. Unlike the original benchmark, this cohort is not error-balanced. We average seed-specific AUROCs over seeds 7/17/27; these are not independent confirmation.
+These exploratory studies reuse 800 previously examined, non-error-balanced development photographs, with nine grouped views: clean and Gaussian noise, motion blur, fog and JPEG at severities 3/5. We report mean AUROC over seeds 7/17/27.
 
-\paragraph{Models and protocols.}
-$G$ averages four separately trained two-layer edge-gated detectors at attention layers 3/6/9/12; $S$ uses similarly sized set detectors. Within each layer, both arms share H12-based 784-dimensional node values and 12 attention-edge values (zeroed at or below $0.02$). Sets pool nodes/edges without incidence. Existing fits used 1,600/400 training/selection photographs and 20 epochs. Unlike the joint multi-block models above, these combine scores: $G$ reaches 0.8889 versus 0.8831 for one final-layer detector, without isolating layer diversity from generic ensembling.
-
-The fixed ViT-B LogitDynamics adaptation ($D$)~\citep{Beigelman2026} uses auxiliary linear CLS class heads and a linear error readout. Its allocation is 1,200/800/400/800 photographs for head fitting/readout fitting/checkpoint selection/evaluation. Heads train for 16 epochs; readouts for 100, selected by validation AP. On all 800 evaluation photographs, $D$ reaches 0.8981 versus 0.8889 for $G$; $G-D=-0.00917$ (95\% interval $[-0.01587,-0.00236]$). Inputs, supervision and budgets differ; this does not compare $D$ with the original conditional Polygraph.
+\paragraph{Models.}
+$G/S$ average four preserved graph/set detectors at attention layers 3/6/9/12, trained for 20 epochs on 1,600 photographs with 400 for selection. Both receive H12-based 784-dimensional node values and 12 attention-edge values; sets discard incidence. The fixed ViT-B LogitDynamics adaptation ($D$)~\citep{Beigelman2026} uses 12 auxiliary CLS class heads and a linear error readout. It allocates 1,200/800/400 photographs to head fitting/readout fitting/checkpoint selection, with 16/100 training epochs and validation-AP readout selection. Budgets and supervision differ from $G/S$; these are not comparisons with original conditional Polygraph.
 
 \paragraph{Complementarity.}
-A fixed 400/400 subdivision fits and assesses standardized L2 logistic combinations of preserved scores; scaling and fitting use only the first half. These are not the original nonlinear mixture gate. $G/S$ are mean probabilities; $D$ is its uncalibrated error logit. $D'$ uses another LD seed with cyclic, overlapping pairings. Table~\ref{tab:followup-fusion} shows that weaker standalone scores nevertheless improve LD: $DG-D=+0.007203$, adjusted interval $[0.003415,0.011330]$. The graph--set fusion difference is only $+0.000043$, interval $[-0.001311,0.001508]$: no graph-specific advantage is demonstrated, nor is equivalence. The secondary $DG-DD'$ difference is $+0.005213$ (95\% $[0.001942,0.008673]$), favoring graph fusion over this two-seed LD control, not generic ensembling generally; costs are unmatched.
+Standardized L2 logistic combiners are fitted on a fixed 400-photo subset and evaluated on the other 400, unlike the original mixture gate. $G/S$ are mean probabilities; $D$ is its preserved error logit. $D'$ pairs another LD seed cyclically; pairs overlap. Table~\ref{tab:followup-fusion} shows $D$ outperforming $G/S$ individually, yet $DG-D=+0.007203$ (adjusted interval $[0.003415,0.011330]$). The graph--set fusion difference is $+0.000043$ ($[-0.001311,0.001508]$): no demonstrated graph-specific advantage, not equivalence. The two-seed LD control is not compute-matched.
 
 \begin{table}[!htbp]
   \centering
   \small
-  \begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xr@{}}
+  \begin{tabularx}{\columnwidth}{@{}XrXr@{}}
     \toprule
-    Detector & AUROC \\
+    Score & AUROC & Fusion & AUROC \\
     \midrule
-    LD $D$ & 0.9001 \\
-    Graph ensemble $G$ & 0.8956 \\
-    Set ensemble $S$ & 0.8950 \\
-    $D+G$ & 0.9073 \\
-    $D+S$ & 0.9073 \\
-    $D+D'$ & 0.9021 \\
+    $D$ & 0.9001 & $D+G$ & 0.9073 \\
+    $G$ & 0.8956 & $D+S$ & 0.9073 \\
+    $S$ & 0.8950 & $D+D'$ & 0.9021 \\
     \bottomrule
   \end{tabularx}
-  \caption{Mean seed-specific AUROC on 400 fusion-assessment photographs. Do not compare with the separate 800-photo evaluation or original benchmark.}
+  \caption{Mean AUROC on 400 fusion-assessment photographs, distinct from the original benchmark and 800-photo readout evaluation.}
   \label{tab:followup-fusion}
 \end{table}
 
-\paragraph{LD decomposition.}
-Reusing the auxiliary heads, three readouts are fitted with the original recipe. Six original-classifier features ($A$) yield 0.8636; adding the final-layer auxiliary block ($B$), 0.8948; all 12 auxiliary numeric blocks plus $A$ ($C$), 0.8990; adding dynamics (preserved $D$), 0.8981. Each head supplies its logit for the original classifier's predicted class and its five largest logits for other classes. $A$ is not the full-logit MLP. $C-B=+0.004135$, adjusted interval $[0.000428,0.007911]$, supports a small intermediate-layer contribution. The largest observed increment is $B-A$; dynamics, including class-identity features, did not improve this recipe. These ablations do not causally explain the LD--GNN gap.
+\paragraph{LD readout ablation.}
+On all 800 evaluation photographs, six original-classifier features yield 0.8636; adding the final-layer auxiliary block ($B$) yields 0.8948; adding intermediate numeric blocks ($C$), 0.8990. With heads fixed and the same readout recipe, $C-B=+0.004135$ ($[0.000428,0.007911]$). The preserved full $D$, including class-identity dynamics, achieves 0.8981. The six-feature baseline is not the full-logit MLP; these increments do not causally explain the LD--GNN gap.
 
 \paragraph{Uncertainty.}
-The new studies use 2,000 paired photo-group bootstrap draws, sharing views and draws across methods/seeds. Fusion resamples fitting and assessment photographs and refits combiners; decomposition resamples evaluation only. Bonferroni adjustment over $DG-D$, $DG-DS$, and $C-B$ gives individual $98\frac{1}{3}\%$ percentile intervals. Fusion intervals condition on base detectors and the partition; decomposition intervals on all fitted readouts. Neither corrects prior development exposure.
+We use 2,000 paired photo-group bootstrap draws shared across methods/seeds. Fusion resamples fitting and assessment photographs, refitting combiners; the ablation resamples evaluation only. Bonferroni adjustment across $DG-D$, $DG-DS$ and $C-B$ gives individual $98\frac{1}{3}\%$ percentile intervals. These condition on base detectors or fitted readouts, respectively; they do not correct development-data exposure.
 
 \section{Conclusion}
 Polygraph combines a graph-based internal detector with a full-logit expert, improving original-benchmark error detection and retaining its benefit under corruption-family holdout. Exploratory follow-ups find complementary value from graph/set scores alongside LD, without demonstrating a graph-specific fusion advantage. Intermediate auxiliary-head projections also improve the tested LD readout. These findings support useful internal signals without establishing topology's necessity.
