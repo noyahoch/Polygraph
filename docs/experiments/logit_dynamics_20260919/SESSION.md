@@ -12,6 +12,14 @@ The operator must reconcile current jobs and new submission receipts before
 launching anything. Historical job IDs below must not be treated as live jobs.
 The September 19 closure remains preserved below as a dated record.
 
+Submission checkpoint: at 12:25:09 Israel, the sole operator submitted CPU
+audit **915652** and CUDA audit **915653** once. At 12:25:57 both were running,
+on rack-iscb-31 and s-005 respectively, user `omrifahn`, account `gpu-students`.
+The CPU job has a 20-minute cap; the one-GPU job has a 15-minute cap. Neither
+trains or changes an existing model. See the replay-completion document for
+the approved code/configuration hashes. Reconcile identities before any action;
+job IDs alone are not evidence of current status. The heartbeat remains paused.
+
 ## Completed — September 19, 16:15 Israel
 
 **The scientific comparison, independent saved-result review, private model and

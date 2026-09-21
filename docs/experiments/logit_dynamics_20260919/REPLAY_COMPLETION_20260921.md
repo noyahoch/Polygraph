@@ -74,8 +74,7 @@ At preparation time, the first SSH check timed out before authentication.
 Omri then confirmed VPN reconnection. Reconcile fresh connectivity, source and
 data availability, existing intents and exact job identities before submitting.
 The new audit script requires root review of its exact hash and commands before
-launch. No new job has been submitted at this documentation checkpoint.
-The previous continuation heartbeat remains paused.
+launch. The previous continuation heartbeat remains paused.
 
 Read-only reconciliation at 12:20:11 Israel confirmed restored access and an
 empty user queue, with no September 21 audit namespace or prior submission.
@@ -83,3 +82,23 @@ All 133 frozen source files and all 44 published input files matched their
 recorded hashes. The original checkpoints, reference predictions, scores,
 bootstrap artifact, Python environment and 28,800-row CLS index were available.
 This is readiness evidence, not evidence that the new replay has run.
+
+## Submitted — September 21, 12:25:09 Israel
+
+The reviewed audit was committed locally as `42ef421` and submitted once.
+Do not submit it again from this note; reconcile the receipts and live queue.
+
+| Verification | Slurm job | Allocation | Started |
+| --- | --- | --- | --- |
+| Six CPU replays and independent bootstrap | 915652 | 20 minutes, 6 CPUs, 16 GB | 12:25:10, rack-iscb-31 |
+| Six CUDA replays | 915653 | 15 minutes, 1 RTX 2080 GPU, 6 CPUs, 16 GB | 12:25:09, s-005 |
+
+Both jobs belong to user `omrifahn`, account `gpu-students`, and exclude s-004.
+These are submission/start facts, not completion claims. The exact job names
+and submission records are in the operator namespace above.
+
+- Audit source SHA-256: `582a308a4b8b0ba4f1ef0f0114129761989434d2768f5d663e8bc589ab3dde55`.
+- Approved configuration SHA-256: `8f03bcfeeba2bef3e8544d46ec12be37336000eb1da70dfbe74759c989f137d7`.
+- New remote receipts: `audit/replay_completion_20260921_cpu_v1.json` and
+  `audit/replay_completion_20260921_cuda_v1.json` under the experiment root.
+- Original scientific outputs, failed audit and diagnostic remain unchanged.

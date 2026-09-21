@@ -1,0 +1,7 @@
+{
+  "finished_utc": "2026-09-21T09:25:09.192334+00:00",
+  "configuration_sha256": "8f03bcfeeba2bef3e8544d46ec12be37336000eb1da70dfbe74759c989f137d7",
+  "returncode": 0,
+  "stdout": "{\"stage\": \"replay_completion_20260921_cpu_v1\", \"job_id\": \"915652\", \"afterok\": []}\n{\"stage\": \"replay_completion_20260921_cuda_v1\", \"job_id\": \"915653\", \"afterok\": []}\n",
+  "stderr": ""
+}
