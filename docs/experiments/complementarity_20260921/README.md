@@ -1,5 +1,12 @@
 # Complementarity and LogitDynamics decomposition
 
+**Completed September 21, 2026.** All planned fits, 2,000 bootstrap draws,
+checks and private backup finished. No further jobs are pending.
+
+- [Concise Hebrew findings](SUMMARY_HE.md)
+- [Full results, all seeds and diagnostics](results/report/REPORT.md)
+- [Immutable backup and validation scope](PRESERVATION.md)
+
 Read [PROTOCOL.md](PROTOCOL.md) for the frozen scientific definitions and
 [SESSION.md](SESSION.md) for current ownership and restart instructions.
 
@@ -14,7 +21,7 @@ comparisons to the preserved September 19 experiment:
 
 These are different assessment cohorts. Keep their result tables separate.
 
-## Required execution order
+## Recorded execution order (completed)
 
 Every numerical command, including preparation of split/draw manifests and
 synthetic tests, runs inside a Slurm allocation. The entrypoint is

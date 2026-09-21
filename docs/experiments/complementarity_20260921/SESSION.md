@@ -1,10 +1,50 @@
 # Complementarity follow-up — September 21, 2026
 
-Omri explicitly authorized implementing the final two-experiment plan. Read
-PROTOCOL.md before any numerical work. Both scientific definitions were frozen
-before new result inspection. The initial DAG was submitted on September 21;
-read the execution checkpoint below and reconcile live operator records before
-acting. Earlier pre-submission notes are historical.
+**Current state: COMPLETED. No numerical work or further submission is pending.**
+Both authorized experiments, their fixed 2,000 bootstrap draws, report and
+verified private backup finished on September 21. Read [SUMMARY_HE.md](SUMMARY_HE.md)
+for the findings and [PRESERVATION.md](PRESERVATION.md) for artifacts and limits.
+The implementation and execution checkpoints below are historical; they are
+not instructions to resume the completed DAG.
+
+Omri explicitly authorized the two-experiment plan. Both scientific definitions
+were frozen before new result inspection. PROTOCOL.md remains unchanged.
+
+## Completion checkpoint — September 21, 2026
+
+- All initial jobs 915915–915924 completed. The durable controller submitted
+  915946 (remaining statistics), 915947 (report), and 915948 (backup) once at
+  14:12:13 Israel after its timing gate. These also completed successfully.
+- The final backup verification finished at 14:22:42 Israel; the recorded queue
+  was empty at 14:23:30. Historical IDs are bound to user `omrifahn`, account
+  `gpu-students`, prefix `comp0921-135802` and exact timestamps in
+  [resource_ledger_final.json](results/ops/resource_ledger_final.json).
+- Total elapsed time from the first job was 17m24s. Consumed resources were
+  382 GPU-seconds and 816 cumulative CPU-job wall-seconds, below the respective
+  7,200 and 14,400 second ceilings. No retries, changed settings or replacement
+  draws were required.
+- All nine A/B/C readouts completed 100 epochs; all nine fusion models fitted.
+  Semantic cache checks, original D replay from the new cache, weighted/literal
+  duplication, serialization and continuation fixtures passed in Slurm.
+  All 2,000 planned bootstrap draws are valid for every reported contrast.
+- Private HF revision `769e8b48c9e33edaebac81e97405945197054c11` was downloaded
+  and verified, including all 2,429 archive members. All 1,391 previous Hub files
+  retained their identities. See the [publication receipt](results/publication/receipt.json).
+- Post-run artifact reviews found no blocking discrepancy. These inspect code,
+  receipts, hashes and saved results; they do not constitute independent
+  numerical recomputation or fresh-environment/raw-image reproduction.
+- The `monitor-polygraph-slurm-continuation` heartbeat has been paused after
+  completion and review. No new experimental work launches automatically.
+- [Full results](results/report/REPORT.md) retain the 400-photo fusion and
+  800-photo decomposition tables separately. The main findings are DG−D
+  +0.007203, DG−DS +0.000043 (no established advantage), and C−B +0.004135.
+  Keep the frozen uncertainty definitions and development-data limitations.
+
+The compact closure receipt was produced before final local reviews and still
+labels root review as pending. This session and the subsequent review notes
+record that later work; the original receipt is preserved byte-for-byte.
+Local completion notes/reviews postdate the immutable backup and are not claimed
+to be inside it. Commits remain local; no push, merge or Overleaf edit occurred.
 
 ## Ownership
 
@@ -99,8 +139,8 @@ that the experiment completed. Match timestamps/account/names as well as IDs.
 The durable timing controller owns submission of the remaining 1,950 draws,
 report and private backup. Do not submit that phase independently. The existing
 `monitor-polygraph-slurm-continuation` heartbeat is now active for this new
-scope only and should stay quiet on unchanged state. Pause it after validated
-results, preservation and the final concise Hebrew report.
+scope only and should stay quiet on unchanged state. This historical instruction
+was fulfilled: the monitor is now paused following completion and review.
 
 Submission, staging and scheduler evidence are in the operator directory:
 `submission_stdout_v1.jsonl`, `staging_receipt.json`, and `status_initial.json`.
