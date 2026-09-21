@@ -6,7 +6,8 @@ import time
 from pathlib import Path
 
 from .common import atomic_json, atomic_npz, load_campaign, lock, read, require_slurm, sha, verify_receipt
-from .fusion import ARMS, SEEDS, FitFailure, check_gate, design, fit_combiner, numerical, parent_scores, predict_combiner
+from .fusion import (ARMS, SEEDS, FitFailure, check_gate, design, fit_combiner, numerical,
+                     parent_scores, predict_combiner, preserve_unsealed)
 
 DRAWS = 2000
 PRIMARY_QUANTILES = (0.0083333333, 0.9916666667)
@@ -419,6 +420,8 @@ def run(root, stop_after=None):
         timing_path = directory / "timing_50.json"
         if not timing_path.exists():
             atomic_json(timing_path, timing)
+        elif read(timing_path).get("identity") != identity:
+            raise RuntimeError("Retained timing receipt identity changed")
         if stop_after == 50:
             print(json.dumps({key: timing[key] for key in ("completed_draws", "newly_computed_count_this_invocation", "elapsed_seconds", "estimated_remaining_seconds", "effects_omitted")}), flush=True)
             return timing
@@ -429,6 +432,7 @@ def run(root, stop_after=None):
                   "ablation_uncertainty": "Assessment-photograph sampling conditional on the fitted readouts and auxiliary heads",
                   "failed_fit_draw_ids": [row["draw_id"] for row in completed if row["failures"]],
                   "draw_identity": read(directory / "draw_manifest.json")}
+        preserve_unsealed(root, [directory / "results.json"], "statistics-results")
         atomic_json(directory / "results.json", result)
         paths = [directory / "results.json", equivalence_path, directory / "draw_manifest.json", directory / "draw_manifest.npz", timing_path]
         paths += [directory / "draws" / f"{draw:04d}.json" for draw in range(DRAWS)]
