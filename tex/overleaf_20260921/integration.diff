@@ -1,0 +1,118 @@
+diff --git a/tex/overleaf_20260921/acl_latex.tex b/tex/overleaf_20260921/acl_latex.tex
+index fa63c1a..d9947ab 100644
+--- a/tex/overleaf_20260921/acl_latex.tex
++++ b/tex/overleaf_20260921/acl_latex.tex
+@@ -37,7 +37,7 @@
+ % Detecting when an image classifier fails is a fundamental challenge for the safe deployment of Vision Transformers (ViTs). Standard error detection mechanisms depend almost exclusively on the network's final output logits, fundamentally ignoring the complex token-to-token routing dynamics that construct the prediction. Drawing inspiration from hallucination detection in large language models, we hypothesize that ViTs exhibit recurring topological signatures when forming incorrect predictions. In this work, we introduce Polygraph, a framework that models a frozen ViT's attention mechanism as a directed graph to capture these latent failure patterns. By deploying an edge-gated Message Passing Neural Network (MPNN) across the final $L$ layers, we extract structural evidence-flow features entirely within a single forward pass. These topological signals are then fused with the full-logit vector via a leakage-controlled conditional mixture gate. Evaluated on CIFAR-100 and CIFAR-100-C, Polygraph significantly outperforms representation baselines and LogitDynamics, demonstrating high robustness to entirely unseen visual corruptions.
+ % \end{abstract}
+ \begin{abstract}
+-Detecting when an image classifier fails is a fundamental challenge for the safe deployment of Vision Transformers (ViTs). Standard error detection mechanisms often depend primarily on the network's final output logits, largely ignoring the complex token-to-token routing dynamics that construct the prediction. Drawing inspiration from hallucination detection in large language models, we hypothesize that ViTs exhibit recurring topological signatures when forming incorrect predictions. In this work, we introduce Polygraph, a framework that models a frozen ViT's attention mechanism as a directed graph to capture these latent failure patterns. By deploying an edge-gated MPNN over the final transformer layer, we extract structural evidence-flow features within a single forward pass. These internal signals are then fused with the full-logit vector via a mixture gate. Evaluated on CIFAR-100-C, the graph model provides complementary predictive signal to strong output- and representation-based baselines, while topology ablations indicate a modest additional benefit from explicit graph structure. The combined Polygraph detector achieves the strongest error-detection performance and retains its advantage on corruption families entirely unseen during detector training.
++Detecting when an image classifier fails is a fundamental challenge for the safe deployment of Vision Transformers (ViTs). Standard error detection mechanisms often depend primarily on the network's final output logits, largely ignoring the complex token-to-token routing dynamics that construct the prediction. Drawing inspiration from hallucination detection in large language models, we hypothesize that ViTs exhibit recurring topological signatures when forming incorrect predictions. In this work, we introduce Polygraph, a framework that models a frozen ViT's attention mechanism as a directed graph to capture these latent failure patterns. By deploying an edge-gated MPNN over the final transformer layer, we extract structural evidence-flow features within a single forward pass. These internal signals are then fused with the full-logit vector via a mixture gate. Evaluated on CIFAR-100-C, the graph model provides complementary predictive signal to strong output- and representation-based baselines, while topology ablations indicate a modest additional benefit from explicit graph structure. The combined Polygraph detector achieves the strongest error-detection performance among methods evaluated in the original benchmark and retains its advantage on corruption families entirely unseen during detector training. In exploratory follow-ups, graph-score fusion improves a fitted LogitDynamics adaptation, while matched set-score fusion attains almost the same point estimate; intermediate auxiliary-head projections provide a smaller improvement within the adaptation.
+ \end{abstract}
+ 
+ 
+@@ -76,6 +76,8 @@ While recent approaches such as LogitDynamics \citep{Beigelman2026} track the la
+ % \paragraph{Graph-Based Error Detection.}
+ % Natural language processing provides the closest precedents for learning failure signals from Transformer attention graphs. Earlier approaches construct handcrafted structural descriptors: \citet{Kushnareva2021} use topological features of attention maps for artificial-text detection, while \citet{Binkowski2025} use spectral features of attention graphs for hallucination detection. HalluZig \citep{Samaga2026} models the evolution of attention-graph topology across layers using zigzag persistence. More recent approaches learn directly from attributed token graphs. HaluGNN \citep{Kong2026b} uses hidden states as node features and attention values as weighted edges, while CHARM \citep{Frasca2026} jointly represents activations and attention in a token graph and applies edge-aware message passing; its ablations demonstrate an advantage of preserving graph connectivity over a corresponding set-based model. CausalGaze \citep{Kong2026a} further refines attention graphs using gradient-guided counterfactual sensitivity of attention edges. To our knowledge, no prior work applies graph-based message passing to per-image ViT patch-attention graphs for predicting visual classification failures. Polygraph studies this vision-specific setting and, through matched non-graph and rewiring ablations, explicitly evaluates how much predictive value is attributable to graph structure itself.
+ 
++We extend these findings with controlled follow-ups testing competitiveness against a fixed LogitDynamics adaptation, score complementarity, and graph specificity. These studies use distinct development protocols and complement the original non-graph controls.
++
+ \section{Related Work}
+ 
+ \paragraph{ViT Reliability and Attention-Based Diagnostics.}
+@@ -567,6 +569,8 @@ mixture fitting.
+ 
+ \section{Experimental Setup}
+ 
++This section describes the original Polygraph experiments; the follow-ups use the distinct protocols in Section~\ref{sec:controlled-followups}.
++
+ \subsection{Datasets and Splits}
+ We evaluate on CIFAR-100 and CIFAR-100-C using a frozen ViT-B/16
+ pretrained on ImageNet-21k and fine-tuned on CIFAR-100. We construct an error-balanced benchmark by sampling equal
+@@ -576,7 +580,7 @@ image remain in one train/validation/test partition. We consider
+ the main benchmark and a weather-family holdout in which selected
+ corruption families are excluded from detector training and used to
+ evaluate distribution-shift generalization. Model selection uses only
+-the corresponding validation split, and all reported results are on
++the corresponding validation split, and results for these original experiments are on
+ held-out test data.
+ 
+ \subsection{Training and Baselines}
+@@ -1030,9 +1034,74 @@ respectively, versus 0.8894 for the final-block edge-gated expert
+ at the same seed. These results support the selected configuration within the evaluated
+ architectures.
+ 
++\section{Controlled Follow-up Studies}
++\label{sec:controlled-followups}
++
++We retain the frozen ViT-B and group each source photograph's nine views: clean, plus Gaussian noise, motion blur, fog, and JPEG at severities 3/5. Unlike the original benchmark, these cohorts are not error-balanced. Subsequent comparisons reuse examined development data; they are exploratory, not independent confirmation.
++
++\paragraph{When does graph processing help?}
++A separate five-seed study found a rich36 graph--set AUROC difference of $+0.006233$ (95\% interval $[0.002618,0.009836]$), versus $-0.003686$ ($[-0.008349,0.001045]$) with attention-only inputs. Rich36 combines per-head attention, projected-message magnitude, and signed predicted-versus-runner-up class support. A later raw12 study instead trains separate detectors on attention layers 3/6/9/12, all sharing H12 token states. Both arms receive identical 784-dimensional node values and 12 attention edge values; retained edges zero-fill head values at or below $0.02$, unlike the original all-head representation. The graph arm uses two width-64 edge-gated blocks with CLS/gated pooling; the width-84 set arm pools node/edge values separately, discarding endpoint associations. Parameters are closely matched (130,434/131,126), but endpoint treatment and pooling differ.
++
++The later detectors complete 20 epochs on 1,600 training photographs, selecting by AUROC on 400 others. Their within-seed mean sigmoid scores define $G$ and $S$; prior graph fits are reused. Their AUROC gap is $+0.000336$ (six-contrast-adjusted $99\frac{1}{6}\%$ interval $[-0.002800,0.003409]$); $G$ reaches $0.888895$, versus $0.883127$ for the fitted single-final-layer control. Separate detectors followed by score combination differ from the joint multi-block representations above. No matched four-model final-layer ensemble isolates layer diversity. Cohorts, features, budgets and constructions differ across studies, precluding a controlled replication comparison or attribution of the changed gap to richness or ensembling.
++
++\paragraph{LD comparison and readout decomposition.}
++Our fixed LogitDynamics (LD) adaptation~\citep{Beigelman2026} trains linear class heads on all 12 CLS layers, then a standardized linear error readout. This is a ViT-Base adaptation, not a reproduction of the published ViT-Large study or the earlier local CLS-sequence GRU baseline. We allocate 1,200/800/400/800 source photographs to head fitting/readout fitting/checkpoint selection/development evaluation. Heads complete 16 epochs; readouts complete 100 with validation average-precision (AP) selection. Seeds are 7/17/27. The shared evaluation has 7,200 views and 2,271 errors; families differ in inputs, supervision, parameters and budgets.
++
++\begin{table}[!htbp]
++  \centering
++  \small
++  \begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xr@{}}
++    \toprule
++    Model & AUROC \\
++    \midrule
++    \multicolumn{2}{@{}l}{\textit{Preserved comparator families}} \\
++    Graph-score ensemble $G$ & 0.8889 \\
++    Set-score ensemble $S$ & 0.8886 \\
++    Full-logit MLP $O$ & 0.8757 \\
++    \midrule
++    \multicolumn{2}{@{}l}{\textit{Nested LD readouts}} \\
++    $A$: six original-classifier features & 0.8636 \\
++    $B$: $A$ + layer-12 auxiliary block & 0.8948 \\
++    $C$: all 12 auxiliary blocks + original & 0.8990 \\
++    $D$: $C$ + seven dynamics features & 0.8981 \\
++    \bottomrule
++  \end{tabularx}
++  \caption{Mean seed-specific AUROC on the same 800 development photographs. Comparator families are not matched to the nested LD ablation. Only readouts $A/B/C$ are newly fitted; auxiliary heads and full $D$ are preserved.}
++  \label{tab:followup-ld}
++\end{table}
++
++Each numeric block contains the original classifier's predicted-class logit and five largest competing logits. $A$ is therefore not full-logit MLP $O$. Only $A/B/C$ are newly fitted, reusing heads and full adaptation $D$ (Table~\ref{tab:followup-ld}). The earlier $G-D$ contrast is $-0.009171$ (ordinary 95\% interval $[-0.015874,-0.002361]$), favoring LD over this preserved ensemble, not comparing LD to original rich conditional Polygraph. $B-A=+0.031233$ is the largest observed ablation increment. Intermediate projections add $C-B=+0.004135$ (adjusted $[0.000428,0.007911]$), with a lower bound close to zero. $D-C=-0.000900$ (secondary 95\% $[-0.001750,-0.000048]$): the dynamics block, including class-identity information, did not improve this fitted recipe. These increments neither isolate supervision causally nor explain the entire LD--GNN gap.
++
++\paragraph{Do weaker scores still complement LD?}
++We split the examined 800 photographs into 400 for combiner fitting and 400 for assessment, preserving all views. For each seed, identical standardized L2 logistic regressions combine $D+G$, $D+S$, or $D+D'$. Scaling/fitting use only the fitting subset. $D$ is the preserved pre-sigmoid error logit, left uncalibrated; $G/S$ are mean probabilities. This is not the original calibrated nonlinear five-fold mixture gate. Cyclic $D'$ pairs (7--17, 17--27, 27--7) overlap and are not independent repetitions.
++
++\begin{table}[!htbp]
++  \centering
++  \small
++  \begin{tabularx}{\columnwidth}{@{}>{\raggedright\arraybackslash}Xr@{}}
++    \toprule
++    Model & AUROC \\
++    \midrule
++    LD $D$ & 0.9001 \\
++    Graph ensemble $G$ & 0.8956 \\
++    Set ensemble $S$ & 0.8950 \\
++    $D+G$ & 0.9073 \\
++    $D+S$ & 0.9073 \\
++    $D+D'$ & 0.9021 \\
++    \bottomrule
++  \end{tabularx}
++  \caption{Original fitted models' mean seed-specific AUROC on the separate 400-photo fusion assessment (3,600 views). Values are not directly comparable with Table~\ref{tab:followup-ld} or the original benchmark.}
++  \label{tab:followup-fusion}
++\end{table}
++
++Graph fusion improves LD by $+0.007203$ (adjusted $[0.003415,0.011330]$), despite weaker standalone $G$. However, $DG-DS=+0.000043$ (adjusted $[-0.001311,0.001508]$) shows no demonstrated graph-specific benefit (Table~\ref{tab:followup-fusion}). In the secondary comparison, graph--LD fusion also outperformed the tested two-seed LD combination: $DG-DD'=+0.005213$ (95\% $[0.001942,0.008673]$). This control is not compute-matched and establishes neither superiority over generic ensembling generally nor a graph-specific benefit.
++
++\paragraph{Uncertainty and scope.}
++AUROC treats error as positive and averages seed-specific metrics, not merged predictions. Resampling pairs source photographs, retaining nine views and shared draws across methods/seeds. The two new studies use 2,000 draws: fusion independently resamples fitting/assessment photographs and refits combiners; decomposition resamples evaluation only. Intervals condition on fixed base detectors/partition or all fitted readouts, respectively. Bonferroni adjustment across $DG-D$, $DG-DS$, and $C-B$ yields individual $98\frac{1}{3}\%$ percentile intervals; secondary 95\% intervals are descriptive. Neither correction nor additional seeds remove development-data exposure. Nonsignificance is not equivalence, and complementarity does not establish topology's necessity.
++
+ \section{Conclusion}
+ 
+-We introduced Polygraph, a graph-based framework for error detection in Vision Transformers that models token interactions as an evidence-flow graph and combines this internal signal with the classifier output through a conditional gate. The resulting model improves over the strongest output-only baseline and remains competitive under distribution shift. These results suggest that structural routing patterns provide complementary information to output confidence and can improve failure prediction in vision transformers.
++We introduced Polygraph, a graph-based framework for error detection in Vision Transformers that models token interactions as an evidence-flow graph and combines this internal signal with the classifier output through a conditional gate. The resulting model improves over the strongest output-only baseline and remains competitive under distribution shift. Exploratory follow-ups show graph/set scores complementing LD without a demonstrated graph-specific fusion advantage. Together, these results suggest that the tested internal-feature scores provide complementary information to output confidence and can improve failure prediction in vision transformers.
+ 
+ \bibliography{custom}
+-\end{document}
+\ No newline at end of file
++\end{document}
