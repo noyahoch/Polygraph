@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 
 from .common import COLUMNS, atomic_bytes, load_campaign, parent_modules, receipt, require, require_slurm
-from .cache import expected_names, reference_features, semantic_indices
+from .cache import check_metadata, expected_names, reference_features, semantic_indices
 
 
 def run_tests(root, cuda=False):
@@ -49,8 +49,25 @@ def run_tests(root, cuda=False):
                 'source_id': np.asarray([0, 0, 1, 1, 2, 2, 3, 3, 4, 4]),
                 'severity': np.asarray([0, 0, 3, 5, 3, 5, 3, 5, 3, 5])}
     require(set(semantic_indices(metadata)) == set(range(10)), 'Semantic selection must retain9conditions+knownedgecase')
+    conditions = [(0, 0)] + [(source, severity) for source in range(1, 5) for severity in (3, 5)]
+    role = {'record_id': np.arange(18, dtype=np.int64), 'image_id': np.repeat([10, 20], 9),
+            'source_id': np.asarray([source for source, _ in conditions] * 2, dtype=np.int64),
+            'severity': np.asarray([severity for _, severity in conditions] * 2, dtype=np.int64),
+            'split_id': np.zeros(18, dtype=np.int64), 'label': np.zeros(18, dtype=np.int64),
+            'pred': np.zeros(18, dtype=np.int64), 'y': np.zeros(18, dtype=np.int64)}
+    spec = {'record_ids': list(range(18)), 'photo_ids': [10, 20]}
+    check_metadata(role, spec)
+    invalid = {key: value.copy() for key, value in role.items()}
+    invalid['source_id'][1], invalid['severity'][1] = 0, 0
+    try:
+        check_metadata(invalid, spec)
+    except RuntimeError:
+        pass
+    else:
+        raise RuntimeError('Nine records with a duplicated condition were incorrectly accepted')
     details = {'feature_names': True, 'tied_logit_semantics': True, 'column_slices': True,
-               'population_normalization_and_zero_scale': True, 'semantic_row_selection': True}
+               'population_normalization_and_zero_scale': True, 'semantic_row_selection': True,
+               'exact_nine_condition_groups': True}
     if cuda:
         require(torch.cuda.is_available(), 'GPU preflight requires its own allocated CUDA device')
         original.initialize(7)

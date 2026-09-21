@@ -68,8 +68,14 @@ def check_metadata(metadata, spec):
     import numpy as np
     require(metadata['record_id'].tolist() == spec['record_ids'], 'Role records differ')
     require(all(metadata[key].dtype == np.int64 for key in METADATA), 'Metadata dtype differs')
+    require(len(np.unique(metadata['record_id'])) == len(metadata['record_id']), 'Repeated record IDs')
     photos, counts = np.unique(metadata['image_id'], return_counts=True)
     require(photos.tolist() == sorted(spec['photo_ids']) and np.all(counts == 9), 'Nine-view source groups differ')
+    conditions = {(0, 0)} | {(source, severity) for source in range(1, 5) for severity in (3, 5)}
+    for photo in photos:
+        rows = metadata['image_id'] == photo
+        require(set(zip(metadata['source_id'][rows].tolist(), metadata['severity'][rows].tolist())) == conditions,
+                'A photograph lacks the exact nine input conditions')
     require(np.array_equal(metadata['y'], (metadata['pred'] != metadata['label']).astype(np.int64)), 'Error label changed')
 
 
@@ -98,6 +104,8 @@ def build(root):
     root = Path(root).resolve()
     campaign = load_campaign(root)
     verify_receipt(root, 'statistics/draw_manifest.json')
+    for name in ('cpu_tests.json', 'gpu_tests.json', 'statistics_tests.json'):
+        verify_receipt(root, root / 'preflight' / name)
     directory = root / 'cache'
     with lock(directory, 'build'):
         if (directory / 'complete.json').exists():
