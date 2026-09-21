@@ -1,4 +1,14 @@
-# Focused integration of completed experiments
+# Manuscript versions and integration evidence
+
+## Current manuscript: user-supplied shortened version
+
+On September 21, 2026, the user supplied `/Users/omrifahn/Downloads/polygraph_five_pages.tex` and requested that it replace the active manuscript. It was copied byte-for-byte to [acl_latex.tex](acl_latex.tex), without further editorial changes. Source SHA-256: `ac074fd5aba09d14a3f1ee14c33e30fe13e651aa7d0a70bed783dddefaaa7fef`.
+
+The existing `./build.sh` produced [acl_latex.pdf](acl_latex.pdf): **six pages, comprising five main-text pages and one references page**. All six pages were rendered and visually inspected. All internal references and citation keys resolve; required figure, bibliography and style assets exist. No overfull boxes or unresolved references/citations occurred; nonfatal underfull-box and disabled-shell-escape warnings remain. No experiments were run.
+
+The evidence map and page/word counts below describe the **earlier expanded integration**, not this shortened revision. Its retained [integration.diff](integration.diff) is a historical record of commit `b2ace68`; table numbering there refers to that version. Both earlier expanded and original colleague versions remain in Git history.
+
+## Earlier focused integration of completed experiments
 
 This update starts from the unchanged September 21, 20:50 colleagues' export in local commit `418652a`. The active entrypoint is [acl_latex.tex](acl_latex.tex), not the earlier proposal or commented drafts. It integrates completed experiments only; no new scientific computation or external publication was performed.
 
