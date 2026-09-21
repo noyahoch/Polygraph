@@ -1,0 +1,287 @@
+{
+  "all_unchanged": true,
+  "bound_parent_checks": {
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/final_comparison_20260916_215019/campaign.json": {
+      "expected_sha256": "56d58f138bbf28eb001e068f87e39f81aae04b7561569964a623df3f3547220d",
+      "observed_sha256": "56d58f138bbf28eb001e068f87e39f81aae04b7561569964a623df3f3547220d",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/final_comparison_20260916_215019/evaluation/complete.json": {
+      "expected_sha256": "24dae88f64290852264890e457b046b373646cd7d8dd7883d3fcea1291543aa3",
+      "observed_sha256": "24dae88f64290852264890e457b046b373646cd7d8dd7883d3fcea1291543aa3",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/final_comparison_20260916_215019/evaluation/scores.npz": {
+      "expected_sha256": "98a5e716d6123006ec222110df02096660d0f09d9a6d97072e1b014714790f92",
+      "observed_sha256": "98a5e716d6123006ec222110df02096660d0f09d9a6d97072e1b014714790f92",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/final_comparison_20260916_215019/role_map.json": {
+      "expected_sha256": "52f4004765fd6f080c671fd081c4436a6e30eb650f25202fe470edf0be427e63",
+      "observed_sha256": "52f4004765fd6f080c671fd081c4436a6e30eb650f25202fe470edf0be427e63",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/campaign.json": {
+      "expected_sha256": "f133671b92871129a0e859e47188c316e8ef535634a1fda33a9efa287dfa094f",
+      "observed_sha256": "f133671b92871129a0e859e47188c316e8ef535634a1fda33a9efa287dfa094f",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/cls/manifest.json": {
+      "expected_sha256": "9358a39f19c00068aa3f29030e90a3a53fede91172b81077822a053430ff5877",
+      "observed_sha256": "9358a39f19c00068aa3f29030e90a3a53fede91172b81077822a053430ff5877",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/evaluation/complete.json": {
+      "expected_sha256": "bd0420af3b123b2286721c05672ef20674223e9796808620aa549d90ddab96f5",
+      "observed_sha256": "bd0420af3b123b2286721c05672ef20674223e9796808620aa549d90ddab96f5",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/evaluation/scores.npz": {
+      "expected_sha256": "8b17c6a55c26beb0dc9ac54c574849b61d93c8feedd576677f5e96c20f6dff75",
+      "observed_sha256": "8b17c6a55c26beb0dc9ac54c574849b61d93c8feedd576677f5e96c20f6dff75",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/evaluation_gate.json": {
+      "expected_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0",
+      "observed_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370/source_manifest.json": {
+      "expected_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+      "observed_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/role_map.json": {
+      "expected_sha256": "7df831d2e9de37fe2a5792a409949cbd7d46a9f24adc4ed16239f2b91fdeca3b",
+      "observed_sha256": "7df831d2e9de37fe2a5792a409949cbd7d46a9f24adc4ed16239f2b91fdeca3b",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/heads/checkpoint.pt": {
+      "expected_sha256": "93f980923078eea1ff13f300c04cc54729ad6095751b334edb9c7d3cb44c9996",
+      "observed_sha256": "93f980923078eea1ff13f300c04cc54729ad6095751b334edb9c7d3cb44c9996",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/heads/complete.json": {
+      "expected_sha256": "4163b852895bf17dbf79f5cf4013d9cbf4f066d012bd5a22280be8e119dc5b06",
+      "observed_sha256": "4163b852895bf17dbf79f5cf4013d9cbf4f066d012bd5a22280be8e119dc5b06",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/heads/config.json": {
+      "expected_sha256": "bb088e88164a85a61515dce5eb340d3a2b4f82ce163cfdad37717834c9a9e9ab",
+      "observed_sha256": "bb088e88164a85a61515dce5eb340d3a2b4f82ce163cfdad37717834c9a9e9ab",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/heads/model.safetensors": {
+      "expected_sha256": "1d8b8b71f526e9082821dadf6e284ccf17a60bba057eeb320d7635321a00bb5c",
+      "observed_sha256": "1d8b8b71f526e9082821dadf6e284ccf17a60bba057eeb320d7635321a00bb5c",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/predictions/dev_eval.npz": {
+      "expected_sha256": "40e991f4e2ed00ceb2a6a7b9b93db4fde459f8630c4e24df9583ec42a73d1963",
+      "observed_sha256": "40e991f4e2ed00ceb2a6a7b9b93db4fde459f8630c4e24df9583ec42a73d1963",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/probe/checkpoint.pt": {
+      "expected_sha256": "046a0984f48d111f4a2a14b0331738885838438cd1fa133b93c99081563bdca6",
+      "observed_sha256": "046a0984f48d111f4a2a14b0331738885838438cd1fa133b93c99081563bdca6",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/probe/complete.json": {
+      "expected_sha256": "503301900b031d413f4306b7673747c61d1dac2daebe159f7508f21cc036713a",
+      "observed_sha256": "503301900b031d413f4306b7673747c61d1dac2daebe159f7508f21cc036713a",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/probe/config.json": {
+      "expected_sha256": "dd4701139fe11d146fe7dcb5046ac793b6a260c5f8edec2f5d54054cde0f7617",
+      "observed_sha256": "dd4701139fe11d146fe7dcb5046ac793b6a260c5f8edec2f5d54054cde0f7617",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/probe/model.safetensors": {
+      "expected_sha256": "4d5b9864e1812961965ac60fe67133521c76d9c5b25d660f1b322042608a09fb",
+      "observed_sha256": "4d5b9864e1812961965ac60fe67133521c76d9c5b25d660f1b322042608a09fb",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/probe/normalizer.json": {
+      "expected_sha256": "74db985850f776ed9ac98f8772ba3e648d123280e0ae16c2ef7fc2a280e78a65",
+      "observed_sha256": "74db985850f776ed9ac98f8772ba3e648d123280e0ae16c2ef7fc2a280e78a65",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed17/probe/validation.npz": {
+      "expected_sha256": "06439a130ca93dd94c190f44b240ea1f7da463f972e39d5567bac042f9e8eaa9",
+      "observed_sha256": "06439a130ca93dd94c190f44b240ea1f7da463f972e39d5567bac042f9e8eaa9",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/heads/checkpoint.pt": {
+      "expected_sha256": "b07192d9b4e00ca22d0ce6be9132f199a6acc5ce71f9773b63e1c584cdb9a7be",
+      "observed_sha256": "b07192d9b4e00ca22d0ce6be9132f199a6acc5ce71f9773b63e1c584cdb9a7be",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/heads/complete.json": {
+      "expected_sha256": "e80cbd40416f61bbedd51368c8e7ef04536c525a16408fdd31a1dd8204aee22c",
+      "observed_sha256": "e80cbd40416f61bbedd51368c8e7ef04536c525a16408fdd31a1dd8204aee22c",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/heads/config.json": {
+      "expected_sha256": "d32a6dd88cc1aabd362eba00efc22fc98c27dc08a3650fe38b8521dad74a8821",
+      "observed_sha256": "d32a6dd88cc1aabd362eba00efc22fc98c27dc08a3650fe38b8521dad74a8821",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/heads/model.safetensors": {
+      "expected_sha256": "88b69eee7a50bc411abbb3ca2b93c049ef063e70d531914602164a709aca35a0",
+      "observed_sha256": "88b69eee7a50bc411abbb3ca2b93c049ef063e70d531914602164a709aca35a0",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/predictions/dev_eval.npz": {
+      "expected_sha256": "fdd8b2a53895a46eb3b4010aa92c65b1290c2969f8ac1cd89427c99fe1f65679",
+      "observed_sha256": "fdd8b2a53895a46eb3b4010aa92c65b1290c2969f8ac1cd89427c99fe1f65679",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/probe/checkpoint.pt": {
+      "expected_sha256": "297edbbbb2280ba27d024d9142872da50fea25d2319776f75be1710e88d42d5b",
+      "observed_sha256": "297edbbbb2280ba27d024d9142872da50fea25d2319776f75be1710e88d42d5b",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/probe/complete.json": {
+      "expected_sha256": "21f57df73feb14d6ae173635fe50c921678849e6bae125de5c99d9c1872fc805",
+      "observed_sha256": "21f57df73feb14d6ae173635fe50c921678849e6bae125de5c99d9c1872fc805",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/probe/config.json": {
+      "expected_sha256": "ee6b4ac58b03ac2bbf53b5dc1acb7d749fef2a71d2ec2dc05ae4e510d4aafae4",
+      "observed_sha256": "ee6b4ac58b03ac2bbf53b5dc1acb7d749fef2a71d2ec2dc05ae4e510d4aafae4",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/probe/model.safetensors": {
+      "expected_sha256": "f8056fb51e51feea0243a66fd9b174e89af0074877c13115269a653560cff9bc",
+      "observed_sha256": "f8056fb51e51feea0243a66fd9b174e89af0074877c13115269a653560cff9bc",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/probe/normalizer.json": {
+      "expected_sha256": "4702f84040b29ff2c8bb023ee5f397f25b7dd527f47d8901b094ab29431a84a5",
+      "observed_sha256": "4702f84040b29ff2c8bb023ee5f397f25b7dd527f47d8901b094ab29431a84a5",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed27/probe/validation.npz": {
+      "expected_sha256": "89ae1a8d064c7674997b3387b4fbf0c936b7a7e5d4ffc2f45f808181e05ce267",
+      "observed_sha256": "89ae1a8d064c7674997b3387b4fbf0c936b7a7e5d4ffc2f45f808181e05ce267",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/heads/checkpoint.pt": {
+      "expected_sha256": "77d6278e358e7d79f3bdda7df6a5f46d8443816ac0775bb2757da79a1b1958a0",
+      "observed_sha256": "77d6278e358e7d79f3bdda7df6a5f46d8443816ac0775bb2757da79a1b1958a0",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/heads/complete.json": {
+      "expected_sha256": "b3817623d4692ed4fe6fe1ad71beb6c94303d2c56b7fd748402496ae78374648",
+      "observed_sha256": "b3817623d4692ed4fe6fe1ad71beb6c94303d2c56b7fd748402496ae78374648",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/heads/config.json": {
+      "expected_sha256": "3e7e9294de0e5a62b61a3389448dc189ffda0d61c436a3b0623ee4e78db6afd3",
+      "observed_sha256": "3e7e9294de0e5a62b61a3389448dc189ffda0d61c436a3b0623ee4e78db6afd3",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/heads/model.safetensors": {
+      "expected_sha256": "3626238807e51870dc7695c914203f68fdf12b08a3237d19aeb761425b13fca3",
+      "observed_sha256": "3626238807e51870dc7695c914203f68fdf12b08a3237d19aeb761425b13fca3",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/predictions/dev_eval.npz": {
+      "expected_sha256": "5fbc2fe334546a84a49efd6e753d1615854fde4abd0dc228e876846dbc06d738",
+      "observed_sha256": "5fbc2fe334546a84a49efd6e753d1615854fde4abd0dc228e876846dbc06d738",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/probe/checkpoint.pt": {
+      "expected_sha256": "26bba85b28fffb61423efca9c49729b26fda62e44f3c5c6e34eaf334d46598e1",
+      "observed_sha256": "26bba85b28fffb61423efca9c49729b26fda62e44f3c5c6e34eaf334d46598e1",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/probe/complete.json": {
+      "expected_sha256": "7eb54feaf2e1b2a690a74e01814f108f4f9ad17d17c65a2c4bcd572b803728fe",
+      "observed_sha256": "7eb54feaf2e1b2a690a74e01814f108f4f9ad17d17c65a2c4bcd572b803728fe",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/probe/config.json": {
+      "expected_sha256": "7a04808ade249b6eb7d9600bb972313d001ab7411f6ac13410732614f1321267",
+      "observed_sha256": "7a04808ade249b6eb7d9600bb972313d001ab7411f6ac13410732614f1321267",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/probe/model.safetensors": {
+      "expected_sha256": "ff97902d1580e1c430d353f0e55fd3db414065c9ef13bc279856bbfc2b1c7791",
+      "observed_sha256": "ff97902d1580e1c430d353f0e55fd3db414065c9ef13bc279856bbfc2b1c7791",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/probe/normalizer.json": {
+      "expected_sha256": "c74c588dbd7629edace85613897570aec622c5cf134f690dcfc2b0816660ad12",
+      "observed_sha256": "c74c588dbd7629edace85613897570aec622c5cf134f690dcfc2b0816660ad12",
+      "unchanged": true
+    },
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/runs/seed7/probe/validation.npz": {
+      "expected_sha256": "bd1ac13af3a1124761c6cce89b31354f574bcb45438729e47dda261d23338b7d",
+      "observed_sha256": "bd1ac13af3a1124761c6cce89b31354f574bcb45438729e47dda261d23338b7d",
+      "unchanged": true
+    }
+  },
+  "checked_utc": "2026-09-21T11:18:53.694637+00:00",
+  "note": "Byte checks only, after all new fits and predictions completed",
+  "numerical_work": false,
+  "original_checks": {
+    "audit/cpu_precision_diagnostic_v1.json": {
+      "expected_sha256": "9c6ddea512a82f0624eed238d8100d23e0c0b1e4eb016c49563bd380a82c2343",
+      "observed_sha256": "9c6ddea512a82f0624eed238d8100d23e0c0b1e4eb016c49563bd380a82c2343",
+      "unchanged": true
+    },
+    "audit/replay_completion_20260921_cpu_v1.json": {
+      "expected_sha256": "8ad1cd139368bb3ae1f3c59efb52b74951baeeef790fb8d4a6985e17245eb3f9",
+      "observed_sha256": "8ad1cd139368bb3ae1f3c59efb52b74951baeeef790fb8d4a6985e17245eb3f9",
+      "unchanged": true
+    },
+    "audit/replay_completion_20260921_cuda_v1.json": {
+      "expected_sha256": "9cdb7815b05bb51945c1b7dd5e8578746d64ea29a1dcdd85e144f400f485d57a",
+      "observed_sha256": "9cdb7815b05bb51945c1b7dd5e8578746d64ea29a1dcdd85e144f400f485d57a",
+      "unchanged": true
+    },
+    "audit/reproducibility_cpu_v1.json": {
+      "expected_sha256": "68caa27e659bbe46f7d71c2e5e8d6bcf2a2f15065a32662c0194fe369e5c0d53",
+      "observed_sha256": "68caa27e659bbe46f7d71c2e5e8d6bcf2a2f15065a32662c0194fe369e5c0d53",
+      "unchanged": true
+    },
+    "campaign.json": {
+      "expected_sha256": "f133671b92871129a0e859e47188c316e8ef535634a1fda33a9efa287dfa094f",
+      "observed_sha256": "f133671b92871129a0e859e47188c316e8ef535634a1fda33a9efa287dfa094f",
+      "unchanged": true
+    },
+    "evaluation/bootstrap.npz": {
+      "expected_sha256": "05c34965ce00ddef29abbd6af92022acdf4ef8a44c33e9833a7fd1658f920e46",
+      "observed_sha256": "05c34965ce00ddef29abbd6af92022acdf4ef8a44c33e9833a7fd1658f920e46",
+      "unchanged": true
+    },
+    "evaluation/complete.json": {
+      "expected_sha256": "bd0420af3b123b2286721c05672ef20674223e9796808620aa549d90ddab96f5",
+      "observed_sha256": "bd0420af3b123b2286721c05672ef20674223e9796808620aa549d90ddab96f5",
+      "unchanged": true
+    },
+    "evaluation/report.json": {
+      "expected_sha256": "d8daf3374f3fb2bb5279b6383a48a933ce26a1126d7efe66bddb2b9a2ff79112",
+      "observed_sha256": "d8daf3374f3fb2bb5279b6383a48a933ce26a1126d7efe66bddb2b9a2ff79112",
+      "unchanged": true
+    },
+    "evaluation/scores.npz": {
+      "expected_sha256": "8b17c6a55c26beb0dc9ac54c574849b61d93c8feedd576677f5e96c20f6dff75",
+      "observed_sha256": "8b17c6a55c26beb0dc9ac54c574849b61d93c8feedd576677f5e96c20f6dff75",
+      "unchanged": true
+    },
+    "evaluation_gate.json": {
+      "expected_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0",
+      "observed_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0",
+      "unchanged": true
+    },
+    "role_map.json": {
+      "expected_sha256": "7df831d2e9de37fe2a5792a409949cbd7d46a9f24adc4ed16239f2b91fdeca3b",
+      "observed_sha256": "7df831d2e9de37fe2a5792a409949cbd7d46a9f24adc4ed16239f2b91fdeca3b",
+      "unchanged": true
+    }
+  },
+  "parent_source_failures": [],
+  "parent_source_files": 133
+}
