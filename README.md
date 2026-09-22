@@ -1,5 +1,16 @@
 # Polygraph
 
+## Start here: project results through September 22
+
+The [team report](docs/reports/PROJECT_SYNTHESIS_2026-09-22.md) explains the research
+questions, colleagues' work, Omri's follow-up experiments, results and limitations,
+with links to protocols and preserved evidence. It includes an executive overview
+and keeps the different evaluation cohorts separate.
+
+Current manuscript: [PDF](tex/overleaf_20260921/acl_latex.pdf) ·
+[TeX](tex/overleaf_20260921/acl_latex.tex) — five main-text pages plus references.
+The sections below retain the original pipeline description and earlier run guides.
+
 Can a GNN reading a frozen ViT's attention graphs predict the ViT's classification
 errors — especially under unseen corruptions — better than output-, representation-, and
 non-graph baselines? (Project proposal: Lavi, Hochwald, Fahn, Kramf.)
