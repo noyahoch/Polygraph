@@ -1,0 +1,25 @@
+{
+  "authorization_source": "Root collaboration message approving phase=full after independent runtime and resource review",
+  "config_sha256": "38bd1734a7a45e7e0a4c5e5ffadc1b54f0a9c493902678d41a7b10b646c3da4c",
+  "cpu_wall_ceiling_seconds": 7200,
+  "full_parity_gate_required": true,
+  "gpu_ceiling_seconds": 43200,
+  "max_concurrent_gpus": 3,
+  "no_scientific_or_tolerance_changes": true,
+  "phase": "full",
+  "preflight_job": "924803",
+  "recorded_utc": "2026-09-24T06:52:19.796156+00:00",
+  "source_manifest_sha256": "7949aa99337f4f81e60827f64284c0e04da1456ab8ca78dbe532d0d13c74f50f",
+  "stages": [
+    "extract",
+    "fit1",
+    "fit2",
+    "fit7",
+    "freeze",
+    "predict1",
+    "predict2",
+    "predict7",
+    "evaluate",
+    "backup"
+  ]
+}

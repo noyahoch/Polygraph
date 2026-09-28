@@ -1,0 +1,40 @@
+{
+  "all_existing_files_unchanged": true,
+  "archive_members_verified": true,
+  "archived_file_count": 2361,
+  "configuration_sha256": "38bd1734a7a45e7e0a4c5e5ffadc1b54f0a9c493902678d41a7b10b646c3da4c",
+  "files": {
+    "BACKUP_MANIFEST.json": {
+      "bytes": 904,
+      "sha256": "6ebc3cfe529d61da7cc84b33e2c95e120d5d75d3a2b6ab8d769d80fad0db53c6"
+    },
+    "FILE_MANIFEST.json": {
+      "bytes": 392642,
+      "sha256": "fca471481e47bd28ed085a0fdd5f01b4cebe3c5369db28be5491b6c22853021a"
+    },
+    "PROTOCOL.md": {
+      "bytes": 17669,
+      "sha256": "a4d48caac007b9237324d5b572f44d8f48f11aa1fb7c45d27d0c631444edaaaa"
+    },
+    "README.md": {
+      "bytes": 1040,
+      "sha256": "d2678489bbc54bfedb87a26bbfd9cb4ba209fdc0da7e00f0dee26c6efddbb47b"
+    },
+    "campaign.json": {
+      "bytes": 5434,
+      "sha256": "f489a75f558d7588b946ebf5f5586e418b5473c156c6a5b88a4a071118a65268"
+    },
+    "scientific_state.tar.gz": {
+      "bytes": 152412506,
+      "sha256": "d9961fe12c22585ae0d72afcecdc5ccd0658163a7d17ac110405d98e84fc3958"
+    }
+  },
+  "finished_utc": "2026-09-24T07:25:27.862682+00:00",
+  "prefix": "canonical_ld_20260924_085200/snapshot_v1",
+  "previous_file_count": 1399,
+  "private": true,
+  "repo_id": "omrifahn/polygraph-experiments",
+  "revision": "903edb4f409a8a1af7617a991d2f3462dce9fb6d",
+  "status": "verified",
+  "uncompressed_bytes": 373569189
+}

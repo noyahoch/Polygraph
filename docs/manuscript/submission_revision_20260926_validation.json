@@ -1,0 +1,54 @@
+{
+  "date": "2026-09-26",
+  "base_commit": "99c4951fc710d82a62692e29f190b049bd098ee5",
+  "scope": "Five remaining prose changes versus99c4951; original intro and first two conclusion sentences restored after review.",
+  "course_rule": {
+    "path": "/Users/omrifahn/Desktop/University/Master - Courses/Graphs ML/Lectures/Lec8- Project.pdf",
+    "pdf_page": 27,
+    "text": "The report should be limited to 5 pages (not including references)."
+  },
+  "pdf_pages": 6,
+  "main_text_final_page": 5,
+  "references_start_page": 6,
+  "references_only_pages": [
+    6
+  ],
+  "unchanged_tables": 5,
+  "unchanged_display_equations": 9,
+  "all_numeric_tokens_unchanged": true,
+  "ld_method_and_result_paragraphs_unchanged": true,
+  "comments_unchanged": true,
+  "preamble_unchanged": true,
+  "original_no_newline_eof_preserved": true,
+  "support_file_matches": {
+    "README.md": true,
+    "acl.sty": true,
+    "acl_lualatex.tex": true,
+    "acl_natbib.bst": true,
+    "anthology.bib.txt": true,
+    "custom.bib": true,
+    "formatting.md": true,
+    "model_scheme_gnn_course.png": true,
+    "tests/regression/run_tests.py": true
+  },
+  "undefined_references_or_citations": false,
+  "overfull_boxes": false,
+  "known_nonblocking_warning": "epstopdf shell escape disabled",
+  "scientific_review": "bundle_protocol_audit passed final two-hunk restoration versus a42bd78 and five remaining prose changes versus99c4951. No superiority/equivalence or LD weather/severity claim introduced.",
+  "visual_review": "final_manuscript_editor inspected all six restored-prose final PNGs; root independently inspected pages1,5,6. Main text ends page5; references startpage6; no clipping/overlap.",
+  "artifacts": {
+    "tex/overleaf_20260921/acl_latex.tex": {
+      "bytes": 58856,
+      "sha256": "478eb0b0633663625b78e6dd53de01875ddc1f98c993301c808d2a0e81ca71bb"
+    },
+    "tex/overleaf_20260921/acl_latex.pdf": {
+      "bytes": 1150377,
+      "sha256": "f7c78e3382c1267ab8fedabcecebd4dba7c721424ee033e15317e16fe9a1c7b2"
+    }
+  },
+  "restoration_base_commit": "a42bd788938146ab0ba695701737ecd7e2fbdb70",
+  "restored_verbatim": [
+    "Original introduction opening paragraph",
+    "Original first two conclusion sentences"
+  ]
+}

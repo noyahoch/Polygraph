@@ -1,0 +1,39 @@
+requested_utc=2026-09-24T06:31:59Z
+authorization=root operational extension total20min; unchanged frozen source/config; maximum campaign12GPUh
+command=scontrol update JobId=924786 TimeLimit=00:20:00
+Access/permission denied for job 924786
+amendment_exit_code=1
+JobId=924786 JobName=canonical0924-085200-preflight_r1
+   UserId=omrifahn(23721) GroupId=math1(1199) MCS_label=N/A
+   Priority=100018758 Nice=0 Account=gpu-students QOS=normal
+   JobState=RUNNING Reason=None Dependency=(null)
+   Requeue=0 Restarts=0 BatchFlag=1 Reboot=0 ExitCode=0:0
+   RunTime=00:08:27 TimeLimit=00:10:00 TimeMin=N/A
+   SubmitTime=2026-09-24T09:22:49 EligibleTime=2026-09-24T09:23:32
+   AccrueTime=2026-09-24T09:23:32
+   StartTime=2026-09-24T09:23:32 EndTime=2026-09-24T09:33:32 Deadline=N/A
+   PreemptEligibleTime=2026-09-24T09:23:32 PreemptTime=None
+   SuspendTime=None SecsPreSuspend=0 LastSchedEval=2026-09-24T09:23:32 Scheduler=Main
+   Partition=studentbatch AllocNode:Sid=ubuntu:35180
+   ReqNodeList=(null) ExcNodeList=s-004
+   NodeList=s-005
+   BatchHost=s-005
+   NumNodes=1 NumCPUs=4 NumTasks=1 CPUs/Task=4 ReqB:S:C:T=0:0:*:*
+   ReqTRES=cpu=4,mem=16000M,node=1,billing=8,gres/gpu=1
+   AllocTRES=cpu=4,mem=16000M,node=1,billing=8,gres/gpu=1,gres/gpu:geforce_rtx_2080=1
+   Socks/Node=* NtasksPerN:B:S:C=0:0:*:* CoreSpec=*
+   MinCPUsNode=4 MinMemoryNode=16000M MinTmpDiskNode=0
+   Features=geforce_rtx_2080 DelayBoot=00:00:00
+   OverSubscribe=OK Contiguous=0 Licenses=(null) Network=(null)
+   Command=(null)
+   WorkDir=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v2
+   Comment=***TEST_COMMENT*** 
+   StdErr=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logs/preflight_r1_924786.err
+   StdIn=/dev/null
+   StdOut=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logs/preflight_r1_924786.out
+   Power=
+   KillOInInvalidDependent=Yes
+   MemPerTres=gpu:2000
+   TresPerJob=gres:gpu:1
+   
+

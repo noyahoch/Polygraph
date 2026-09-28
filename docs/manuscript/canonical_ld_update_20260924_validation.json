@@ -1,0 +1,41 @@
+{
+  "date": "2026-09-24",
+  "baseline_commit": "da2cb097697409eaa5d3295faba70628ea7a88c1",
+  "supersedes_broader_edit_commit": "87f17e8",
+  "scope": "Three LogitDynamics insertions only; original colleague content unchanged.",
+  "diff_addition_hunks": 3,
+  "added_lines": 16,
+  "removed_original_lines": 0,
+  "original_source_unchanged_after_removing_three_insertions": true,
+  "baseline_tex_sha256": "da875b6b469b9518b19262af3e646f63aab5d71dca1c2cc2699d5d442e496937",
+  "support_files_match_import": {
+    "README.md": true,
+    "acl.sty": true,
+    "acl_lualatex.tex": true,
+    "acl_natbib.bst": true,
+    "anthology.bib.txt": true,
+    "custom.bib": true,
+    "formatting.md": true,
+    "model_scheme_gnn_course.png": true,
+    "tests/regression/run_tests.py": true
+  },
+  "pdf_pages": 6,
+  "main_text_final_page": 6,
+  "references_start_page": 6,
+  "undefined_references_or_citations": false,
+  "overfull_boxes": false,
+  "known_nonblocking_warnings": "epstopdf shell escape disabled; underfull boxes in build log.",
+  "visual_review": "Root inspected current pages 4-6; current pages 1-3 are byte-identical rendered PNGs to the previously inspected version. All six renders remained identical after restoring original EOF.",
+  "independent_scope_review": "bundle_protocol_audit approved concise wording and two-passage scope; reported EOF newline was restored, and final byte-level validation confirms exactly three insertion hunks against colleague baseline.",
+  "artifacts": {
+    "tex/overleaf_20260921/acl_latex.tex": {
+      "bytes": 59622,
+      "sha256": "2d79ece1303c303b975091a3d0d1b9b67147564db2c0d06f3c46ccb92e0a15b6"
+    },
+    "tex/overleaf_20260921/acl_latex.pdf": {
+      "bytes": 1150967,
+      "sha256": "28cb2e4c1612ef166dd5c7291b17ad5899821df3ff38f781234ed6bcec3c6efe"
+    }
+  },
+  "latest_revision": "User-requested concise LD method and removal of final replication/topology disclaimer sentence only."
+}

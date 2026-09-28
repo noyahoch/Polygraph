@@ -1,0 +1,24 @@
+{
+  "campaign_sha256": "f489a75f558d7588b946ebf5f5586e418b5473c156c6a5b88a4a071118a65268",
+  "capture_manifest_sha256": "600cd5dd00c7a5981926791fa0ea1013ebd51970e415867b8d97e1bf3bbe522e",
+  "capture_records": 496,
+  "checks": {
+    "finite_gradients": true,
+    "resume_exact": true,
+    "resume_identity_rejected": true,
+    "save_load": true,
+    "scientific_feature_checks": 6,
+    "semantic_order": true,
+    "test_output": "test_commitment_is_start_of_final_unbroken_suffix (pilots.logit_dynamics_20260919.test_science.PaperFeatureCases.test_commitment_is_start_of_final_unbroken_suffix) ... ok\ntest_full_contract_dimensions_and_all_tied_class_order (pilots.logit_dynamics_20260919.test_science.PaperFeatureCases.test_full_contract_dimensions_and_all_tied_class_order) ... ok\ntest_numeric_exclusion_and_all_seven_dynamics (pilots.logit_dynamics_20260919.test_science.PaperFeatureCases.test_numeric_exclusion_and_all_seven_dynamics) ... ok\ntest_tied_logits_choose_lower_class_id (pilots.logit_dynamics_20260919.test_science.PaperFeatureCases.test_tied_logits_choose_lower_class_id) ... ok\ntest_topk_union_counts_members_even_after_softmax_underflow (pilots.logit_dynamics_20260919.test_science.PaperFeatureCases.test_topk_union_counts_members_even_after_softmax_underflow) ... ok\ntest_train_population_statistics_constant_feature_and_frozen_validation (pilots.logit_dynamics_20260919.test_science.NormalizationCases.test_train_population_statistics_constant_feature_and_frozen_validation) ... ok\n\n----------------------------------------------------------------------\nRan 6 tests in 0.011s\n\nOK\n",
+    "ties": true,
+    "unequal_views": true,
+    "weighted_auc_literal_duplication": true
+  },
+  "complete": true,
+  "elapsed_seconds": 264.04186265030876,
+  "job_id": "924803",
+  "parity": {
+    "confidence_max_abs": 1.0132789611816406e-05,
+    "margin_max_abs": 1.913309097290039e-05
+  }
+}

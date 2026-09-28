@@ -1,0 +1,21 @@
+{
+  "complete": true,
+  "elapsed_seconds": 39.63626384688541,
+  "epochs": 16,
+  "files": {
+    "checkpoint.pt": "09ed7690b6426ad7e87c27ce4b2234a0e37cf5b4e1c52fdc4f61563d57b70c2f",
+    "config.json": "540bb861c8161ab7e2f122e3b9c1699912703d435c6b50735b7805e3f9bbb6ad",
+    "history.json": "4958a7bc5856c2cda424353f44de86c5bf02384714da232b02bc3578fca00a75",
+    "model.safetensors": "4d8ffbeb9c7e9de97fd88fc094a14c62813f25171d001feb4a3e7605de2a5fc0",
+    "resume.pt": "6737210b5c9b35a283fe1a97824a12f82ace9a857963942cbb7f095bdaeb6fee"
+  },
+  "identity": {
+    "campaign_sha256": "f489a75f558d7588b946ebf5f5586e418b5473c156c6a5b88a4a071118a65268",
+    "cls_manifest_sha256": "d79c0bff547e702187e95e237d48010cf92f7703ef35b77c3072480f754b86bd",
+    "seed": 1,
+    "stage": "heads"
+  },
+  "job_id": "924823",
+  "peak_gpu_bytes": 122089984,
+  "selected_epoch": 16
+}

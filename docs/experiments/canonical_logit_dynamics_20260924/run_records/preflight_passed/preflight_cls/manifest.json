@@ -1,0 +1,65 @@
+{
+  "batch_size": 32,
+  "campaign_sha256": "f489a75f558d7588b946ebf5f5586e418b5473c156c6a5b88a4a071118a65268",
+  "complete": true,
+  "completed_records": 496,
+  "data_sha256": "c83f1e96a95521e524cb46032224d5c9d775ea641fe4fcbca7cbd465828eeb11",
+  "dtype": "float16",
+  "elapsed_seconds": 32.73140728008002,
+  "gpu": "NVIDIA GeForce RTX 2080 Ti",
+  "index_sha256": "24f1c86b62876a796de27bc28ae65b58a09b88d74526da211dfa8f91d25f2aa9",
+  "job_id": "924803",
+  "mode": "preflight",
+  "model_provenance_sha256": "a2ab8ebd78965741238ef3abf00d6d7f78259873a14e21d9021932eed7c5d5f1",
+  "parity": {
+    "confidence_atol": 0.0002,
+    "confidence_rtol": 0.0,
+    "labels": "exact",
+    "margin_atol": 0.0002,
+    "margin_rtol": 0.0,
+    "predictions": "exact"
+  },
+  "parity_maximum": {
+    "confidence_max_abs": 1.0132789611816406e-05,
+    "margin_max_abs": 1.913309097290039e-05
+  },
+  "peak_gpu_bytes": 882246656,
+  "processor_sha256": "a34861a24e781942424ad790b82bc99348404a2e64ea882de88c40905851698d",
+  "record_ids_sha256": "2b757b43f970db1fd63a2782acac496d50f2056293fc685dfc0b0d8dfeb8f5b0",
+  "records": 496,
+  "shape_per_record": [
+    12,
+    768
+  ],
+  "shard_size": 128,
+  "shards": [
+    {
+      "path": "shards/shard_00000.pt",
+      "records": 128,
+      "sha256": "587a94a32320c9b5a2dfabb42275aa8fc12dd38cbe49efb998537129113a2bfd"
+    },
+    {
+      "path": "shards/shard_00001.pt",
+      "records": 128,
+      "sha256": "f3b1127c4fcf3f29c053b8b23cfa0c6c503d9e6071a461b1bbadcca8f5cab622"
+    },
+    {
+      "path": "shards/shard_00002.pt",
+      "records": 128,
+      "sha256": "2ec640a2be95d7a1c861a726793312e4873dc2b1d0305f8a41d36f73103f460d"
+    },
+    {
+      "path": "shards/shard_00003.pt",
+      "records": 112,
+      "sha256": "3f0e7c439a004a2fed8c41c0643e6e4be6ca8b7740a99686c9606abd584a65a9"
+    }
+  ],
+  "timing": {
+    "decode_seconds": 11.557796041015536,
+    "inference_seconds": 17.41534813772887,
+    "model_load_seconds": 56.98954669293016,
+    "newly_extracted_records": 496,
+    "parity_seconds": 0.6330884066410363,
+    "total_invocation_seconds": 254.09246916417032
+  }
+}

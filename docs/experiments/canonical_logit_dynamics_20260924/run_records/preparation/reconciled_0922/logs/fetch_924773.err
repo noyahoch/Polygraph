@@ -1,0 +1,32 @@
+/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/bootstrap-source-v1/pilots/canonical_logit_dynamics_20260924/data_sources.py", line 75, in <module>
+    main()
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/bootstrap-source-v1/pilots/canonical_logit_dynamics_20260924/data_sources.py", line 71, in main
+    stage(args.bundle, args.data_root)
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/bootstrap-source-v1/pilots/canonical_logit_dynamics_20260924/data_sources.py", line 47, in stage
+    cached = Path(hf_hub_download(repo, filename, repo_type="dataset", revision=revisions[repo]))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py", line 88, in _inner_fn
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/huggingface_hub/file_download.py", line 1028, in hf_hub_download
+    return _hf_hub_download_to_cache_dir(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/huggingface_hub/file_download.py", line 1251, in _hf_hub_download_to_cache_dir
+    _download_to_tmp_and_move(
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/huggingface_hub/file_download.py", line 1976, in _download_to_tmp_and_move
+    xet_get(
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/huggingface_hub/file_download.py", line 571, in xet_get
+    with session.new_file_download_group(
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: I/O error: I/O error: Disk quota exceeded (os error 122)
+Traceback (most recent call last):
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/bootstrap-source-v1/pilots/canonical_logit_dynamics_20260924/ops/stage_runner.py", line 119, in <module>
+    main()
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/bootstrap-source-v1/pilots/canonical_logit_dynamics_20260924/ops/stage_runner.py", line 108, in main
+    raise RuntimeError('Scientific command failed with code ' + str(result.returncode))
+RuntimeError: Scientific command failed with code 1

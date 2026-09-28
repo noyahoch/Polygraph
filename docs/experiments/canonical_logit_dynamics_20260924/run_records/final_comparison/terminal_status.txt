@@ -1,0 +1,72 @@
+checked_utc=2026-09-24T07:29:35Z
+JobID|JobName|User|Account|State|Submit|Start|End|Elapsed|NodeList
+924822|canonical0924-085200-extract|omrifahn|gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T09:52:21|2026-09-24T10:19:06|00:26:45|s-005
+924822.batch|batch||gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T09:52:21|2026-09-24T10:19:06|00:26:45|s-005
+924823|canonical0924-085200-fit1|omrifahn|gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T10:19:07|2026-09-24T10:21:52|00:02:45|s-005
+924823.batch|batch||gpu-students|COMPLETED|2026-09-24T10:19:07|2026-09-24T10:19:07|2026-09-24T10:21:52|00:02:45|s-005
+924824|canonical0924-085200-fit2|omrifahn|gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T10:19:07|2026-09-24T10:21:49|00:02:42|s-005
+924824.batch|batch||gpu-students|COMPLETED|2026-09-24T10:19:07|2026-09-24T10:19:07|2026-09-24T10:21:49|00:02:42|s-005
+924825|canonical0924-085200-fit7|omrifahn|gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T10:19:07|2026-09-24T10:21:51|00:02:44|s-005
+924825.batch|batch||gpu-students|COMPLETED|2026-09-24T10:19:07|2026-09-24T10:19:07|2026-09-24T10:21:51|00:02:44|s-005
+924826|canonical0924-085200-freeze|omrifahn|gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T10:21:52|2026-09-24T10:22:13|00:00:21|rack-iscb-31
+924826.batch|batch||gpu-students|COMPLETED|2026-09-24T10:21:52|2026-09-24T10:21:52|2026-09-24T10:22:13|00:00:21|rack-iscb-31
+924827|canonical0924-085200-predict1|omrifahn|gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T10:22:13|2026-09-24T10:23:09|00:00:56|s-005
+924827.batch|batch||gpu-students|COMPLETED|2026-09-24T10:22:13|2026-09-24T10:22:13|2026-09-24T10:23:09|00:00:56|s-005
+924828|canonical0924-085200-predict2|omrifahn|gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T10:22:13|2026-09-24T10:23:09|00:00:56|s-005
+924828.batch|batch||gpu-students|COMPLETED|2026-09-24T10:22:13|2026-09-24T10:22:13|2026-09-24T10:23:09|00:00:56|s-005
+924829|canonical0924-085200-predict7|omrifahn|gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T10:22:13|2026-09-24T10:23:10|00:00:57|s-005
+924829.batch|batch||gpu-students|COMPLETED|2026-09-24T10:22:13|2026-09-24T10:22:13|2026-09-24T10:23:10|00:00:57|s-005
+924830|canonical0924-085200-evaluate|omrifahn|gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T10:23:12|2026-09-24T10:23:49|00:00:37|rack-iscb-31
+924830.batch|batch||gpu-students|COMPLETED|2026-09-24T10:23:12|2026-09-24T10:23:12|2026-09-24T10:23:49|00:00:37|rack-iscb-31
+924831|canonical0924-085200-backup|omrifahn|gpu-students|COMPLETED|2026-09-24T09:52:21|2026-09-24T10:23:49|2026-09-24T10:25:27|00:01:38|rack-iscb-31
+924831.batch|batch||gpu-students|COMPLETED|2026-09-24T10:23:49|2026-09-24T10:23:49|2026-09-24T10:25:27|00:01:38|rack-iscb-31
+             JOBID                                     NAME    STATE         TIME     NODELIST(REASON)
+38bd1734a7a45e7e0a4c5e5ffadc1b54f0a9c493902678d41a7b10b646c3da4c  /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/ops/config_science_v4.json
+7949aa99337f4f81e60827f64284c0e04da1456ab8ca78dbe532d0d13c74f50f  /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v2/source_manifest.json
+f489a75f558d7588b946ebf5f5586e418b5473c156c6a5b88a4a071118a65268  /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/campaign.json
+d79c0bff547e702187e95e237d48010cf92f7703ef35b77c3072480f754b86bd  /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/cls/manifest.json
+
+STAGE_PROGRESS fit1_924823
+{"stage": "probe", "seed": 1, "epoch": 100}
+No error marker in stderr
+
+STAGE_PROGRESS fit2_924824
+{"stage": "probe", "seed": 2, "epoch": 100}
+No error marker in stderr
+
+STAGE_PROGRESS fit7_924825
+{"stage": "probe", "seed": 7, "epoch": 100}
+No error marker in stderr
+
+SAVED_ARTIFACT_NAMES
+11113850 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed7/heads/resume.pt
+5914 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed7/heads/history.json
+3698651 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed7/heads/checkpoint.pt
+857 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed7/heads/complete.json
+45561 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed7/probe/resume.pt
+19419 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed7/probe/history.json
+2533 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed7/probe/checkpoint.pt
+1194 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed7/probe/complete.json
+526 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed7/predictions/complete.json
+11113850 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed1/heads/resume.pt
+5925 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed1/heads/history.json
+3698651 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed1/heads/checkpoint.pt
+858 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed1/heads/complete.json
+45561 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed1/probe/resume.pt
+19388 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed1/probe/history.json
+2533 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed1/probe/checkpoint.pt
+1193 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed1/probe/complete.json
+526 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed1/predictions/complete.json
+11113850 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed2/heads/resume.pt
+5924 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed2/heads/history.json
+3698651 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed2/heads/checkpoint.pt
+858 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed2/heads/complete.json
+45561 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed2/probe/resume.pt
+19394 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed2/probe/history.json
+2533 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed2/probe/checkpoint.pt
+1194 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed2/probe/complete.json
+526 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/runs/seed2/predictions/complete.json
+
+LATER_COMPLETION_MARKERS
+-rw-r--r-- 1 omrifahn math1 4648 Sep 24 10:26 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/evaluation_gate.json
+-rw-r--r-- 1 omrifahn math1 1054 Sep 24 10:27 /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/evaluation/complete.json

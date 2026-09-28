@@ -1,0 +1,8 @@
+2026-09-24T08:52:34+03:00
+Authorized incoming canonical-artifact integrity check; no inference or training.
+Account gpu-students; partition cpu-killable; 2 CPUs; 2 GB; 2 minutes; no GPUs.
+Namespace: /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200
+cccf973c67a83dd143ca627902d6ef381ad473a92c6ac90a0e5dae34f377fea7  validate_bundle.py
+35dd6a6d4c32711b5a1a04c0e3a56bb6ba9aa60c298e2b832440aeddf41029c4  canonical_config.py
+4073a234ee27b0b2d8be948eb851dcee069ecba75e07c1bf5708a048b681364a  canonical_evaluate.py
+924758

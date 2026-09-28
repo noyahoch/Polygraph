@@ -1,0 +1,91 @@
+{
+  "description": "Byte-identical compact preflight recovery snapshot. Full role_map omitted; its immutable identity is in campaign.json.",
+  "files": {
+    "config_science_v3.json": {
+      "bytes": 12579,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/config_science_v3.json",
+      "sha256": "7d1b883cdf383b632dcf73bd5ebba559756b492aa5ebab53c6b25f0ab883ae6f"
+    },
+    "config_science_v4.json": {
+      "bytes": 12696,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/config_science_v4.json",
+      "sha256": "38bd1734a7a45e7e0a4c5e5ffadc1b54f0a9c493902678d41a7b10b646c3da4c"
+    },
+    "preflight_r2_phase_submission_receipt.txt": {
+      "bytes": 66,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/preflight_r2_phase_submission_receipt.txt",
+      "sha256": "9c27858ccf21a63c4069047678f5288fb1ace46802828e86ec87186cf60de308"
+    },
+    "runtime_preflight_r1_failed/IO_DIAGNOSIS.md": {
+      "bytes": 1878,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r1_failed/IO_DIAGNOSIS.md",
+      "sha256": "6bd79ece64ac417a0fa19ccc0ccc2ec1798a3164e6cfaa2c8c25fdc51207e132"
+    },
+    "runtime_preflight_r1_failed/logs/preflight_r1_924786.err": {
+      "bytes": 332,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r1_failed/logs/preflight_r1_924786.err",
+      "sha256": "a8ae442a3211d034d30125a4d3d65f56b33b6bf1bddf4cd286e8a536caa8594f"
+    },
+    "runtime_preflight_r1_failed/logs/preflight_r1_924786.out": {
+      "bytes": 0,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r1_failed/logs/preflight_r1_924786.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "runtime_preflight_r1_failed/ops/amendments/preflight_r1_924786_timelimit20.txt": {
+      "bytes": 2043,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r1_failed/ops/amendments/preflight_r1_924786_timelimit20.txt",
+      "sha256": "029614d08d57aa5f58ce37eaa04bd884eff3e88905ff04677c6f30fb523c4961"
+    },
+    "runtime_preflight_r1_failed/ops/stage_receipts/preflight_r1_924786.json": {
+      "bytes": 1006,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r1_failed/ops/stage_receipts/preflight_r1_924786.json",
+      "sha256": "6dfa5ea2a79c7ba5eb30f376895f8f5745f22d8bc2af02a433e0c0210c117727"
+    },
+    "runtime_preflight_r1_failed/terminal_status.txt": {
+      "bytes": 625,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r1_failed/terminal_status.txt",
+      "sha256": "2f129e8cf524064bfbcd8af26be9b4b4e1d3fc68ededf9a2a459ed54390a83ba"
+    },
+    "runtime_preflight_r2/ops/submissions/preflight_r2.intent.json": {
+      "bytes": 1927,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2/ops/submissions/preflight_r2.intent.json",
+      "sha256": "f4653b2c6824f7a6417e31fa03b35128f8dd62176785c6ec1ed0c0ded091f1f8"
+    },
+    "runtime_preflight_r2/ops/submissions/preflight_r2.json": {
+      "bytes": 1973,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2/ops/submissions/preflight_r2.json",
+      "sha256": "cae5bb4ca6dc4542531fdfc0e9da7b315037eb0a1a466e01807cde43cd7f08ad"
+    },
+    "runtime_prepare_r1/campaign.json": {
+      "bytes": 5434,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_prepare_r1/campaign.json",
+      "sha256": "f489a75f558d7588b946ebf5f5586e418b5473c156c6a5b88a4a071118a65268"
+    },
+    "runtime_prepare_r1/logs/prepare_r1_924785.err": {
+      "bytes": 468,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_prepare_r1/logs/prepare_r1_924785.err",
+      "sha256": "d57d9b4ea43ca0c82765ad87bf778faafabaf5cb13bb3a84b925a4d3d514080c"
+    },
+    "runtime_prepare_r1/logs/prepare_r1_924785.out": {
+      "bytes": 715,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_prepare_r1/logs/prepare_r1_924785.out",
+      "sha256": "22b689e84d64ca8150e2f09a048eb8842bbe74d6cc51acb38dce61db7116a13a"
+    },
+    "runtime_prepare_r1/ops/import_check.json": {
+      "bytes": 850,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_prepare_r1/ops/import_check.json",
+      "sha256": "3e03645163f7d4064d6f7b3422ad081a26c304b3d8cdbbff436763e1ca42ac35"
+    },
+    "runtime_prepare_r1/ops/stage_receipts/prepare_r1_924785.json": {
+      "bytes": 2396,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_prepare_r1/ops/stage_receipts/prepare_r1_924785.json",
+      "sha256": "8a0df7ee820e5560a92529044d1bc915955734957f28569861cf9ef35ac607bf"
+    },
+    "runtime_prepare_r1/preflight_records.json": {
+      "bytes": 5520,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_prepare_r1/preflight_records.json",
+      "sha256": "1947612b93a6f1700978a51c1dd79d16d2dc67b958738a1f985288af782a8402"
+    }
+  },
+  "source_root": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924"
+}

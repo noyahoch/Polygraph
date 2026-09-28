@@ -1,0 +1,40 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+        "-B",
+        "-m",
+        "pilots.canonical_logit_dynamics_20260924.data_sources",
+        "--bundle",
+        "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logit_dynamics_reproduction_20260923",
+        "--data-root",
+        "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/data"
+      ],
+      "elapsed_seconds": 446.18919164687395,
+      "returncode": 0
+    }
+  ],
+  "completed_utc": "2026-09-24T06:13:14.837424+00:00",
+  "configuration_sha256": "5691df9bc0a3ea0c61675156b224afd6984599df893ce571d495749c7cfbbdb0",
+  "elapsed_seconds": 447.382925034035,
+  "hostname": "rack-iscb-31",
+  "imports": {
+    "archive_bytes": 55418880,
+    "archive_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+    "local_package_root": "/tmp/canonical-924774-63cj20lm/imports/imports",
+    "native_libraries": "Original pinned environment paths; unchanged",
+    "packages": {
+      "torch-geometric": "2.6.1",
+      "transformers": "5.16.1"
+    },
+    "precedence": "Experiment cwd first for -m; staged package trees precede installed copies",
+    "preparation_seconds": 1.0901454067789018
+  },
+  "job_id": "924774",
+  "source_manifest_sha256": "9094aa09e4ce42971b367610af517eb3cf676f71fcbfe30709dcb9283e50c3d2",
+  "stage": "fetch_r1",
+  "started_utc": "2026-09-24T06:05:47.452200+00:00",
+  "status": "complete",
+  "user": "omrifahn"
+}

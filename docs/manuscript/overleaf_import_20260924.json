@@ -1,0 +1,49 @@
+{
+  "import_date": "2026-09-24",
+  "source": "/Users/omrifahn/Downloads/poly24/overleaf24/Polygraph_report",
+  "destination": "tex/overleaf_20260921",
+  "base_commit": "01aaa729f543c5e08f418d1a99513913db940d50",
+  "scope": "Unmodified colleague Overleaf source. Local build.sh and .gitignore retained as build helpers; obsolete integration notes/diff removed from current manuscript directory. Previous versions remain in Git.",
+  "files": {
+    "README.md": {
+      "bytes": 2417,
+      "sha256": "f5e4fe5096e8bc045b586a2351409f29ce6d55e0268a434602a06011f571d882"
+    },
+    "acl.sty": {
+      "bytes": 11615,
+      "sha256": "19dfeddc2c0e448f3926a0bef048a9db3f3611b46265b760caabd7ada4f361de"
+    },
+    "acl_latex.tex": {
+      "bytes": 58737,
+      "sha256": "da875b6b469b9518b19262af3e646f63aab5d71dca1c2cc2699d5d442e496937"
+    },
+    "acl_lualatex.tex": {
+      "bytes": 3050,
+      "sha256": "0d9987ba833331a996f9abcd1a03eebba7d7ae331145793e7ddb6b5ae8db27b3"
+    },
+    "acl_natbib.bst": {
+      "bytes": 45442,
+      "sha256": "6fbb306202290f4b68e74ac1460a8b27398500cb6dfeb4492e74c457eae7cd1e"
+    },
+    "anthology.bib.txt": {
+      "bytes": 1169,
+      "sha256": "2b78d2d9aeda62e14c4e46099e8225b5fc116387d8e0a54aad776485e249ceff"
+    },
+    "custom.bib": {
+      "bytes": 4283,
+      "sha256": "d67aa574d48952fe188a8a6f9f54e12fd0e3736a254719f17e654aadc5a913fe"
+    },
+    "formatting.md": {
+      "bytes": 17923,
+      "sha256": "9e004a136c5dd43300d97e5bef5eb3a77d0e2a2d3502f0f2436ec011d1c49e9c"
+    },
+    "model_scheme_gnn_course.png": {
+      "bytes": 766357,
+      "sha256": "6d4df034c95e00e7332d7facf4a0270b1b3617f919f447687818097fe98ef211"
+    },
+    "tests/regression/run_tests.py": {
+      "bytes": 8610,
+      "sha256": "f712c240f7a9d3f9fa3936cabb0e124fc07a07dbfdfc2171f216de321cbda64f"
+    }
+  }
+}

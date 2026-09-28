@@ -1,0 +1,86 @@
+{
+  "description": "Byte-identical completed 496-row GPU preflight receipts; no tensors or archive payloads copied and no metrics recomputed.",
+  "files": {
+    "logs/preflight_r2_924803.err": {
+      "bytes": 2034,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/logs/preflight_r2_924803.err",
+      "sha256": "d5b6fef9637a83af642f5bcba9123956f643077115f37e81b9877ee418f90022"
+    },
+    "logs/preflight_r2_924803.out": {
+      "bytes": 2078,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/logs/preflight_r2_924803.out",
+      "sha256": "37d13b5bde929271f5e5874008b80a81a059819a903a7808412f5ea35e8a61f7"
+    },
+    "ops/stage_receipts/preflight_r2_924803.json": {
+      "bytes": 1679,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/ops/stage_receipts/preflight_r2_924803.json",
+      "sha256": "e0613e268f7c14ab7e523c9e40cb35ae5a0ac92f769f63a6fe89ebee899728b8"
+    },
+    "ops/submissions/preflight_r2.json": {
+      "bytes": 1973,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/ops/submissions/preflight_r2.json",
+      "sha256": "cae5bb4ca6dc4542531fdfc0e9da7b315037eb0a1a466e01807cde43cd7f08ad"
+    },
+    "preflight/attempt_924803_1790231871186959302.json": {
+      "bytes": 1904,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight/attempt_924803_1790231871186959302.json",
+      "sha256": "38de29b7aa4950c1e2066ac73e1ddf293d4f47ad072ce731e7c4c670761005b3"
+    },
+    "preflight/complete.json": {
+      "bytes": 1904,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight/complete.json",
+      "sha256": "38de29b7aa4950c1e2066ac73e1ddf293d4f47ad072ce731e7c4c670761005b3"
+    },
+    "preflight_cls/data_provenance.json": {
+      "bytes": 16038,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight_cls/data_provenance.json",
+      "sha256": "cd9c23fc252e01b47105c5ff33f7b70a61c38487d7dfe433ed0a8e936c62ffe1"
+    },
+    "preflight_cls/index.json": {
+      "bytes": 170124,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight_cls/index.json",
+      "sha256": "24f1c86b62876a796de27bc28ae65b58a09b88d74526da211dfa8f91d25f2aa9"
+    },
+    "preflight_cls/manifest.json": {
+      "bytes": 2095,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight_cls/manifest.json",
+      "sha256": "600cd5dd00c7a5981926791fa0ea1013ebd51970e415867b8d97e1bf3bbe522e"
+    },
+    "preflight_cls/model_provenance.json": {
+      "bytes": 4661,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight_cls/model_provenance.json",
+      "sha256": "a2ab8ebd78965741238ef3abf00d6d7f78259873a14e21d9021932eed7c5d5f1"
+    },
+    "preflight_cls/processor.json": {
+      "bytes": 325,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight_cls/processor.json",
+      "sha256": "a34861a24e781942424ad790b82bc99348404a2e64ea882de88c40905851698d"
+    },
+    "preflight_cls/shards/shard_00000.json": {
+      "bytes": 49953,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight_cls/shards/shard_00000.json",
+      "sha256": "40acb12da297e8c138ea0b8226d01de473ade76c6ac98463cb363655c27075d4"
+    },
+    "preflight_cls/shards/shard_00001.json": {
+      "bytes": 50340,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight_cls/shards/shard_00001.json",
+      "sha256": "100c665b63b4452e263bbb6676517f95d15b7314e9bc65229e6c1006efda6946"
+    },
+    "preflight_cls/shards/shard_00002.json": {
+      "bytes": 50054,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight_cls/shards/shard_00002.json",
+      "sha256": "59515deca568cc75d8b5223561ad37ef4006ba597530672e24d3babb1f254f0c"
+    },
+    "preflight_cls/shards/shard_00003.json": {
+      "bytes": 43667,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/preflight_cls/shards/shard_00003.json",
+      "sha256": "9eecd8b868537e567466965f1e44003835d996e6b974ae4526ce41144b3ad5ce"
+    },
+    "terminal_status.txt": {
+      "bytes": 422,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete/terminal_status.txt",
+      "sha256": "412c80e35f6da5a81972a5e09fc7b5b61d76e7965d3a9d0a935777b389568215"
+    }
+  },
+  "source_root": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_preflight_r2_complete"
+}
