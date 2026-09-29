@@ -1,0 +1,45 @@
+{
+  "finished_utc": "2026-09-19T12:31:26.877331+00:00",
+  "approval": {
+    "approved_by": "root coordinator",
+    "recorded_utc": "2026-09-19T12:31:26.699570+00:00",
+    "configuration_sha256": "eae1ca980507606b495fa2aeb03f794dfd87820ca169abe1bab4c7d0d3adb7bc",
+    "submit_helper_sha256": "3a23fda0ba088fe585998c1e80ea5542dd8f0a41f51b23e782d1cbe2cb948d25",
+    "status": "approved_for_immediate_submission_after_final_checks",
+    "worst_case_aggregate_gpu_seconds": 21952,
+    "maximum_concurrent_gpus": 3,
+    "aggregate_gpu_ceiling_seconds": 43200,
+    "old_terminal_states": {
+      "910063": [
+        "910063",
+        "omrifahn",
+        "gpu-students",
+        "ld0919-114500-predictions",
+        "2026-09-19T11:58:38",
+        "TIMEOUT"
+      ],
+      "910064": [
+        "910064",
+        "omrifahn",
+        "gpu-students",
+        "ld0919-114500-analysis",
+        "2026-09-19T11:58:38",
+        "CANCELLED"
+      ],
+      "910065": [
+        "910065",
+        "omrifahn",
+        "gpu-students",
+        "ld0919-114500-backup",
+        "2026-09-19T11:58:39",
+        "CANCELLED"
+      ]
+    },
+    "process_clearance_job_id": "910564",
+    "original_rejected_retry1_intent_preserved": true,
+    "scientific_source_settings_weights_unchanged": true
+  },
+  "returncode": 0,
+  "stdout": "{\"stage\": \"predict7_retry2\", \"job_id\": \"910571\", \"afterok\": []}\n{\"stage\": \"predict17_retry2\", \"job_id\": \"910572\", \"afterok\": []}\n{\"stage\": \"predict27_retry2\", \"job_id\": \"910573\", \"afterok\": []}\n{\"stage\": \"analysis_retry2\", \"job_id\": \"910574\", \"afterok\": [\"910571\", \"910572\", \"910573\"]}\n{\"stage\": \"backup_retry2\", \"job_id\": \"910575\", \"afterok\": [\"910574\"]}\n",
+  "stderr": ""
+}

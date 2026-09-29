@@ -1,0 +1,6 @@
+{
+  "checked_utc": "2026-09-21T09:24:43.543816+00:00",
+  "returncode": 0,
+  "stdout": "{\n  \"staged_utc\": \"2026-09-21T09:24:43.511843+00:00\",\n  \"queue_before_staging\": [],\n  \"files\": {\n    \"audit_replay_completion_20260921_v1.py\": \"582a308a4b8b0ba4f1ef0f0114129761989434d2768f5d663e8bc589ab3dde55\",\n    \"config_replay_completion_20260921_v1.json\": \"8f03bcfeeba2bef3e8544d46ec12be37336000eb1da70dfbe74759c989f137d7\"\n  },\n  \"jobs_submitted\": false\n}\n",
+  "stderr": ""
+}

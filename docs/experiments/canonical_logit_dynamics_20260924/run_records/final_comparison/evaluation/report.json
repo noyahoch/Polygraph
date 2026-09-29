@@ -1,0 +1,123 @@
+{
+  "complete": true,
+  "error_count": 8500,
+  "inputs": {
+    "campaign_sha256": "f489a75f558d7588b946ebf5f5586e418b5473c156c6a5b88a4a071118a65268",
+    "freeze_sha256": "427ac424bb9cf3b7426f19f356c4f1579a3699f0dc1bb8046774afe4bac06a9d",
+    "polygraph_sha256": "186a7b76ad21a4f11fe59f46fbdc9763a3362e157e3be592732d4d0c3e74e737",
+    "seed1": "f5ba07bc8908de546992127ca2e02c1249d3240e373074d8b1fe69979807f3cb",
+    "seed2": "5f71ef5dc5226b7c53e495256134bed4a4a92b5d4a4db5da3578d9943d05252b",
+    "seed7": "c7c944d6fee45f01b5c7585384332d3e1ea5b8512d4399cf8dee2424f63d9446"
+  },
+  "limitations": [
+    "Canonical benchmark was previously used for development; not an untouched-test claim.",
+    "Canonical records were selected using classifier correctness with constructed 50% error prevalence; AP/AURC describe this benchmark, not natural deployment prevalence.",
+    "Fresh LD auxiliary heads and probes use a different supervision allocation from Polygraph.",
+    "Fixed ViT-B adaptation, not full reproduction of the original paper search.",
+    "Photo bootstrap conditions on these fitted models; it does not include configuration-selection or future-seed variability.",
+    "An advantage between these complete recipes does not establish graph-topology necessity."
+  ],
+  "method_summary": {
+    "LogitDynamics": {
+      "aurc": {
+        "mean": 0.20995887474065608,
+        "sd": 0.0004136867399668471
+      },
+      "auroc": {
+        "mean": 0.8902956539792388,
+        "sd": 0.0005391824423679506
+      },
+      "average_precision": {
+        "mean": 0.8733032986338277,
+        "sd": 0.0007565669597819505
+      }
+    },
+    "Polygraph": {
+      "aurc": {
+        "mean": 0.20710602279320625,
+        "sd": 0.00046337357155591506
+      },
+      "auroc": {
+        "mean": 0.8939063783160323,
+        "sd": 0.0004578971410229352
+      },
+      "average_precision": {
+        "mean": 0.874839083136075,
+        "sd": 0.00121376211020235
+      }
+    }
+  },
+  "metric_checks": {
+    "ties": true,
+    "unequal_views": true,
+    "weighted_auc_literal_duplication": true
+  },
+  "per_seed_metrics": {
+    "LogitDynamics": {
+      "1": {
+        "aurc": 0.21030413314598145,
+        "auroc": 0.8901642214532872,
+        "average_precision": 0.8730027185059239
+      },
+      "2": {
+        "aurc": 0.2100721374651066,
+        "auroc": 0.8898343391003459,
+        "average_precision": 0.8727432139694384
+      },
+      "7": {
+        "aurc": 0.20950035361088012,
+        "auroc": 0.8908884013840832,
+        "average_precision": 0.8741639634261207
+      }
+    },
+    "Polygraph": {
+      "1": {
+        "aurc": 0.20753390967247887,
+        "auroc": 0.89388169550173,
+        "average_precision": 0.8751750008883519
+      },
+      "2": {
+        "aurc": 0.20661387137250858,
+        "auroc": 0.8943761176470588,
+        "average_precision": 0.8758495078595939
+      },
+      "7": {
+        "aurc": 0.20717028733463136,
+        "auroc": 0.8934613217993079,
+        "average_precision": 0.8734927406602789
+      }
+    }
+  },
+  "photographs": 1998,
+  "primary": {
+    "complete": true,
+    "conditional_on_fitted_models": true,
+    "contrast": "Polygraph minus LogitDynamics AUROC",
+    "draws": 2000,
+    "estimate": 0.003610724336793473,
+    "group_count": 1998,
+    "group_order_sha256": "3c40df1bb128aaf2edc8b783e43dd732d9e0e194a59982a6646de9eef57002ec",
+    "interpolation": "linear",
+    "interval_95": [
+      -0.0021257525845460624,
+      0.009329021286420967
+    ],
+    "invalid_draw_ids": [],
+    "per_seed": {
+      "1": 0.0037174740484428037,
+      "2": 0.0045417785467128935,
+      "7": 0.002572920415224722
+    },
+    "quantiles": [
+      0.025,
+      0.975
+    ],
+    "seed": 20260924
+  },
+  "records": 17000,
+  "seeds": [
+    1,
+    2,
+    7
+  ]
+}

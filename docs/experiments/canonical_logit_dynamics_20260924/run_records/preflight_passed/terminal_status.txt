@@ -1,0 +1,5 @@
+checked_utc=2026-09-24T06:49:08Z
+JobID|JobName|User|Account|State|Elapsed|Start|End|NodeList
+924803|canonical0924-085200-preflight_r2|omrifahn|gpu-students|COMPLETED|00:06:46|2026-09-24T09:35:52|2026-09-24T09:42:38|s-005
+924803.batch|batch||gpu-students|COMPLETED|00:06:46|2026-09-24T09:35:52|2026-09-24T09:42:38|s-005
+             JOBID                                     NAME    STATE         TIME     NODELIST(REASON)

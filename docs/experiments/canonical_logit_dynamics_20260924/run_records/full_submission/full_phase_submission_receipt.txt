@@ -1,0 +1,10 @@
+{"stage": "extract", "job_id": "924822", "dependencies": []}
+{"stage": "fit1", "job_id": "924823", "dependencies": ["924822"]}
+{"stage": "fit2", "job_id": "924824", "dependencies": ["924822"]}
+{"stage": "fit7", "job_id": "924825", "dependencies": ["924822"]}
+{"stage": "freeze", "job_id": "924826", "dependencies": ["924823", "924824", "924825"]}
+{"stage": "predict1", "job_id": "924827", "dependencies": ["924826"]}
+{"stage": "predict2", "job_id": "924828", "dependencies": ["924826"]}
+{"stage": "predict7", "job_id": "924829", "dependencies": ["924826"]}
+{"stage": "evaluate", "job_id": "924830", "dependencies": ["924827", "924828", "924829"]}
+{"stage": "backup", "job_id": "924831", "dependencies": ["924830"]}

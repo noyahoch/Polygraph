@@ -1,0 +1,61 @@
+{
+  "description": "Byte-identical compact extraction completion and initial fit-state evidence. No experiment metrics recomputed. Excludes archives, tensor payloads and large per-record index arrays.",
+  "files": {
+    "cls/data_provenance.json": {
+      "bytes": 16038,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/cls/data_provenance.json",
+      "sha256": "cd9c23fc252e01b47105c5ff33f7b70a61c38487d7dfe433ed0a8e936c62ffe1"
+    },
+    "cls/manifest.json": {
+      "bytes": 89859,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/cls/manifest.json",
+      "sha256": "d79c0bff547e702187e95e237d48010cf92f7703ef35b77c3072480f754b86bd"
+    },
+    "cls/model_provenance.json": {
+      "bytes": 4661,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/cls/model_provenance.json",
+      "sha256": "a2ab8ebd78965741238ef3abf00d6d7f78259873a14e21d9021932eed7c5d5f1"
+    },
+    "cls/processor.json": {
+      "bytes": 325,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/cls/processor.json",
+      "sha256": "a34861a24e781942424ad790b82bc99348404a2e64ea882de88c40905851698d"
+    },
+    "logs/extract_924822.err": {
+      "bytes": 1192,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/logs/extract_924822.err",
+      "sha256": "78c472bf4623fa60cf64ee851b4663cb5ba6b449f62bed93a7e4de1f7b09a193"
+    },
+    "logs/extract_924822.out": {
+      "bytes": 111038,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/logs/extract_924822.out",
+      "sha256": "db41dbd685346567699e209c1733643f868b874fbb6ec79f570a69f673c492d9"
+    },
+    "ops/stage_receipts/extract_924822.json": {
+      "bytes": 1707,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/ops/stage_receipts/extract_924822.json",
+      "sha256": "98feb51be598bf1ce6fb69485575e43515e39faf3a15dd70adce26f48ff54c6f"
+    },
+    "ops/stage_receipts/fit1_924823.json": {
+      "bytes": 999,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/ops/stage_receipts/fit1_924823.json",
+      "sha256": "5310e1ce6366309e1edf6636e7babda714882c25600a4f52f6d9225869085176"
+    },
+    "ops/stage_receipts/fit2_924824.json": {
+      "bytes": 998,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/ops/stage_receipts/fit2_924824.json",
+      "sha256": "85acced407c61f8518d09457c0dcb2e42a954c6a7bcca3d0ccee1f6a17e9cb90"
+    },
+    "ops/stage_receipts/fit7_924825.json": {
+      "bytes": 999,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/ops/stage_receipts/fit7_924825.json",
+      "sha256": "bcb07e030dad0c24373f223d93e866e962898aec38c68edc4aefb503842cd633"
+    },
+    "scheduler_and_identity_status.txt": {
+      "bytes": 82364,
+      "origin": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete/scheduler_and_identity_status.txt",
+      "sha256": "047ecc23579da5825bd1049fa22e9cc40711d4aaf49a8be8bf38fdb6f5f3fe11"
+    }
+  },
+  "source_root": "/Users/omrifahn/Documents/Codex/2026-09-05/read-this-exported-whatsapp-chat-and/work/canonical-bundle-20260924/runtime_extraction_complete"
+}

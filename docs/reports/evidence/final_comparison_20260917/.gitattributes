@@ -1,0 +1,5 @@
+# Keep the preserved artifacts byte-identical to their receipt hashes.
+REPORT.md -text
+complete.json -text
+method_summary.csv -text
+primary_contrasts.csv -text

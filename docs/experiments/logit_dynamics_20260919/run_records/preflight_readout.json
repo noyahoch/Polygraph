@@ -1,0 +1,281 @@
+{
+  "ops/stage_receipts/preflight_910039.json": {
+    "sha256": "b3aa9810bf6bdadf694d2193e29e27077abdf75c68930a8c221ae53aa7989a4e",
+    "content": {
+      "complete": true,
+      "configuration_sha256": "5ce3f867e1e9b2dbc63083fe13f1c53769e68477a28384433fcc6b4b2f96696f",
+      "elapsed_seconds": 332.4208794105798,
+      "environment": {
+        "imports": {
+          "archive_bytes": 55418880,
+          "archive_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+          "local_package_root": "/tmp/logit-dynamics-910039-nuyt2rv8/import_staging/imports",
+          "native_libraries": "Original pinned environment paths; unchanged",
+          "packages": {
+            "torch-geometric": "2.6.1",
+            "transformers": "5.16.1"
+          },
+          "precedence": "Experiment cwd first for -m; staged package trees precede installed copies",
+          "preparation_seconds": 3.6229580901563168
+        },
+        "overlay_manifest_sha256": "66e9b9f841830177525f5baf7c806713fe23a25de704bdce8ac2c2fcd48fab6c",
+        "python": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+        "scratch": "/tmp/logit-dynamics-910039-nuyt2rv8"
+      },
+      "finished_utc": "2026-09-19T08:55:37.457231+00:00",
+      "gpu": true,
+      "hostname": "s-004",
+      "job_id": "910039",
+      "source_manifest_sha256": "a46c42a7e1ddec698233c5e936b7864a1b73fac1b12b63a7481d8fea8b62c498",
+      "stage": "preflight",
+      "started_utc": "2026-09-19T08:50:04.914169+00:00",
+      "status": "complete"
+    }
+  },
+  "ops/stage_receipts/validation_910041.json": {
+    "sha256": "6dfe93fccd0919c5a018d98c27db6666e6300d856aeaae208ffcbe83dff3a55e",
+    "content": {
+      "complete": false,
+      "configuration_sha256": "e110d596e82ad9181e6df1f99661a23b9b88e5d3a84d7c9a19d43ef56db9f332",
+      "elapsed_seconds": 50.67826209124178,
+      "environment": {
+        "imports": {
+          "archive_bytes": 55418880,
+          "archive_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+          "local_package_root": "/tmp/logit-dynamics-910041-tjwg_pw3/import_staging/imports",
+          "native_libraries": "Original pinned environment paths; unchanged",
+          "packages": {
+            "torch-geometric": "2.6.1",
+            "transformers": "5.16.1"
+          },
+          "precedence": "Experiment cwd first for -m; staged package trees precede installed copies",
+          "preparation_seconds": 3.010405896231532
+        },
+        "overlay_manifest_sha256": "66e9b9f841830177525f5baf7c806713fe23a25de704bdce8ac2c2fcd48fab6c",
+        "python": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+        "scratch": "/tmp/logit-dynamics-910041-tjwg_pw3"
+      },
+      "error": "Command '['/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python', '-B', '-m', 'pytest', '-q', '-p', 'no:cacheprovider', 'pilots/logit_dynamics_20260919']' returned non-zero exit status 1.",
+      "error_type": "CalledProcessError",
+      "finished_utc": "2026-09-19T08:53:29.150421+00:00",
+      "gpu": false,
+      "hostname": "rack-iscb-31",
+      "job_id": "910041",
+      "source_manifest_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+      "stage": "validation",
+      "started_utc": "2026-09-19T08:52:38.467499+00:00",
+      "status": "failed"
+    }
+  },
+  "ops/stage_receipts/validation_v2_910046.json": {
+    "sha256": "c6ead00ffb628dd526ac7b59964e02bb9718d8cc24a1a376f52fa3ac65712d6b",
+    "content": {
+      "complete": true,
+      "configuration_sha256": "936492bef6b24983034990a3109b24a70bdad4655d8351c89d791648729da358",
+      "elapsed_seconds": 23.811809328384697,
+      "environment": {
+        "imports": {
+          "archive_bytes": 55418880,
+          "archive_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+          "local_package_root": "/tmp/logit-dynamics-910046-cmqnxqcr/import_staging/imports",
+          "native_libraries": "Original pinned environment paths; unchanged",
+          "packages": {
+            "torch-geometric": "2.6.1",
+            "transformers": "5.16.1"
+          },
+          "precedence": "Experiment cwd first for -m; staged package trees precede installed copies",
+          "preparation_seconds": 1.1144017549231648
+        },
+        "overlay_manifest_sha256": "66e9b9f841830177525f5baf7c806713fe23a25de704bdce8ac2c2fcd48fab6c",
+        "python": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+        "scratch": "/tmp/logit-dynamics-910046-cmqnxqcr"
+      },
+      "finished_utc": "2026-09-19T08:54:53.478083+00:00",
+      "gpu": false,
+      "hostname": "rack-iscb-31",
+      "job_id": "910046",
+      "source_manifest_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+      "stage": "validation_v2",
+      "started_utc": "2026-09-19T08:54:29.663856+00:00",
+      "status": "complete"
+    }
+  },
+  "ops/baseline_schema_validation.json": {
+    "sha256": "83cf57f070d86c59269f37a15c2b255cf06fa875fe0d41d6faad46d15e496e4b",
+    "content": {
+      "all_keys": [
+        "G_block2/seed7",
+        "G_block2/seed17",
+        "G_block2/seed27",
+        "G_block5/seed7",
+        "G_block5/seed17",
+        "G_block5/seed27",
+        "G_block8/seed7",
+        "G_block8/seed17",
+        "G_block8/seed27",
+        "G_block11/seed7",
+        "G_block11/seed17",
+        "G_block11/seed27",
+        "G_mean/seed7",
+        "G_mean/seed17",
+        "G_mean/seed27",
+        "G_stack/seed7",
+        "G_stack/seed17",
+        "G_stack/seed27",
+        "G_last_only/seed7",
+        "G_last_only/seed17",
+        "G_last_only/seed27",
+        "H_block2/seed7",
+        "H_block2/seed17",
+        "H_block2/seed27",
+        "H_block5/seed7",
+        "H_block5/seed17",
+        "H_block5/seed27",
+        "H_block8/seed7",
+        "H_block8/seed17",
+        "H_block8/seed27",
+        "H_block11/seed7",
+        "H_block11/seed17",
+        "H_block11/seed27",
+        "H_mean/seed7",
+        "H_mean/seed17",
+        "H_mean/seed27",
+        "H_stack/seed7",
+        "H_stack/seed17",
+        "H_stack/seed27",
+        "H_last_only/seed7",
+        "H_last_only/seed17",
+        "H_last_only/seed27",
+        "S_block2/seed7",
+        "S_block2/seed17",
+        "S_block2/seed27",
+        "S_block5/seed7",
+        "S_block5/seed17",
+        "S_block5/seed27",
+        "S_block8/seed7",
+        "S_block8/seed17",
+        "S_block8/seed27",
+        "S_block11/seed7",
+        "S_block11/seed17",
+        "S_block11/seed27",
+        "S_mean/seed7",
+        "S_mean/seed17",
+        "S_mean/seed27",
+        "S_stack/seed7",
+        "S_stack/seed17",
+        "S_stack/seed27",
+        "S_last_only/seed7",
+        "S_last_only/seed17",
+        "S_last_only/seed27",
+        "O/seed7",
+        "O/seed17",
+        "O/seed27",
+        "L",
+        "MSP",
+        "entropy"
+      ],
+      "campaign_sha256": "f133671b92871129a0e859e47188c316e8ef535634a1fda33a9efa287dfa094f",
+      "complete": true,
+      "group": "image_id",
+      "job_id": "910046",
+      "metadata_checked": [
+        "record_id",
+        "image_id",
+        "source_id",
+        "severity",
+        "split_id",
+        "y",
+        "label",
+        "pred"
+      ],
+      "new_logit_dynamics_predictions_read": false,
+      "required_keys": [
+        "G_mean/seed7",
+        "G_mean/seed17",
+        "G_mean/seed27",
+        "S_mean/seed7",
+        "S_mean/seed17",
+        "S_mean/seed27",
+        "O/seed7",
+        "O/seed17",
+        "O/seed27",
+        "MSP",
+        "entropy"
+      ],
+      "roles_sha256": "7df831d2e9de37fe2a5792a409949cbd7d46a9f24adc4ed16239f2b91fdeca3b",
+      "score_sha256": "98a5e716d6123006ec222110df02096660d0f09d9a6d97072e1b014714790f92",
+      "score_shape": [
+        7200,
+        69
+      ],
+      "source_photographs": 800,
+      "views_per_photograph": 9
+    }
+  },
+  "smoke/preflight_v1/preflight_complete.json": {
+    "sha256": "1f89441efe23d8f6ae053dcc26a4fae2c12e5b2df454f5cea8e43c1615f2a9e1",
+    "content": {
+      "campaign_sha256": "dc82f49600fbef585193d8dfbf0a1849a82ad27c6cd80b42b9d02181fc541451",
+      "capture_seconds": 46.72098087333143,
+      "complete": true,
+      "conservative_full_capture_seconds": 14016.294261999428,
+      "diagnostic_only": true,
+      "features": 85,
+      "gpu": "NVIDIA GeForce RTX 2080 Ti",
+      "head_parameters": 922800,
+      "job_id": "910039",
+      "peak_gpu_bytes": 105264640,
+      "probe_parameters": 86,
+      "projection_caveat": "Includes raw-data verification and large original-shard loading; startup is not amortized",
+      "records": 96,
+      "resume_next_step_parity": true,
+      "two_head_updates_probe_update_reload_seconds": 3.3071378916502
+    }
+  },
+  "smoke/preflight_v1/preflight_cls/manifest.json": {
+    "sha256": "cb69bf4b3c22dc54540d9f64b4295eaa7bc5a67491b5bf46b7ed0d9e0f75eb2f",
+    "content": {
+      "cache_manifest_sha256": "3e922dbd97f96cec7f9ecad1279f34feb6c3404ba05be36ee8d535a46ae9072d",
+      "campaign_sha256": "dc82f49600fbef585193d8dfbf0a1849a82ad27c6cd80b42b9d02181fc541451",
+      "complete": true,
+      "completed_records": 96,
+      "dtype": "float16",
+      "elapsed_seconds": 46.72098087333143,
+      "gpu": "NVIDIA GeForce RTX 2080 Ti",
+      "index_sha256": "ae788a2f5d9e77ab470b2d42fd6beb982ac51cab9257654d373040070d140b05",
+      "job_id": "910039",
+      "mode": "preflight",
+      "parity": {
+        "cls12_fp16_atol": 0.0001,
+        "cls12_fp16_rtol": 0.001,
+        "labels": "exact",
+        "logits_atol": 1e-05,
+        "logits_rtol": 1e-05,
+        "predictions": "exact"
+      },
+      "parity_maximum": {
+        "cls12_max_abs": 0.0,
+        "logits_max_abs": 0.0
+      },
+      "peak_gpu_bytes": 440362496,
+      "record_ids_sha256": "0a547322d9c79db3d79be73734c2e6f09507579ef5336e10f900eb0eeda775cd",
+      "records": 96,
+      "shape_per_record": [
+        12,
+        768
+      ],
+      "shards": [
+        {
+          "path": "shards/shard_00000.pt",
+          "records": 48,
+          "sha256": "6e979059ddfed0c1cf4bf93ed56a4a85c437b798d6acda1c4e8398707489fe53"
+        },
+        {
+          "path": "shards/shard_00225.pt",
+          "records": 48,
+          "sha256": "5b96e7be5ee8758efb0f8273c956a525dae4d83a7a336d7a8545517c7b088bf0"
+        }
+      ]
+    }
+  }
+}

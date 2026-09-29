@@ -1,0 +1,26 @@
+checked_utc=2026-09-24T06:52:52Z
+             JOBID                                     NAME    STATE         TIME     NODELIST(REASON)
+            924826              canonical0924-085200-freeze  PENDING         0:00         (Dependency)
+            924831              canonical0924-085200-backup  PENDING         0:00         (Dependency)
+            924830            canonical0924-085200-evaluate  PENDING         0:00         (Dependency)
+            924829            canonical0924-085200-predict7  PENDING         0:00         (Dependency)
+            924828            canonical0924-085200-predict2  PENDING         0:00         (Dependency)
+            924827            canonical0924-085200-predict1  PENDING         0:00         (Dependency)
+            924825                canonical0924-085200-fit7  PENDING         0:00         (Dependency)
+            924824                canonical0924-085200-fit2  PENDING         0:00         (Dependency)
+            924823                canonical0924-085200-fit1  PENDING         0:00         (Dependency)
+            924822             canonical0924-085200-extract  RUNNING         0:31                s-005
+JobID|JobName|User|Account|State|Submit|Start|Timelimit|AllocTRES
+924822|canonical0924-085200-extract|omrifahn|gpu-students|RUNNING|2026-09-24T09:52:21|2026-09-24T09:52:21|07:00:00|billing=14,cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1
+924822.batch|batch||gpu-students|RUNNING|2026-09-24T09:52:21|2026-09-24T09:52:21||cpu=6,gres/gpu:geforce_rtx_2080=1,gres/gpu=1,mem=32000M,node=1
+924823|canonical0924-085200-fit1|omrifahn|gpu-students|PENDING|2026-09-24T09:52:21|Unknown|00:30:00|
+924824|canonical0924-085200-fit2|omrifahn|gpu-students|PENDING|2026-09-24T09:52:21|Unknown|00:30:00|
+924825|canonical0924-085200-fit7|omrifahn|gpu-students|PENDING|2026-09-24T09:52:21|Unknown|00:30:00|
+924826|canonical0924-085200-freeze|omrifahn|gpu-students|PENDING|2026-09-24T09:52:21|Unknown|00:02:00|
+924827|canonical0924-085200-predict1|omrifahn|gpu-students|PENDING|2026-09-24T09:52:21|Unknown|00:20:00|
+924828|canonical0924-085200-predict2|omrifahn|gpu-students|PENDING|2026-09-24T09:52:21|Unknown|00:20:00|
+924829|canonical0924-085200-predict7|omrifahn|gpu-students|PENDING|2026-09-24T09:52:21|Unknown|00:20:00|
+924830|canonical0924-085200-evaluate|omrifahn|gpu-students|PENDING|2026-09-24T09:52:21|Unknown|00:30:00|
+924831|canonical0924-085200-backup|omrifahn|gpu-students|PENDING|2026-09-24T09:52:21|Unknown|00:30:00|
+38bd1734a7a45e7e0a4c5e5ffadc1b54f0a9c493902678d41a7b10b646c3da4c  /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/ops/config_science_v4.json
+7949aa99337f4f81e60827f64284c0e04da1456ab8ca78dbe532d0d13c74f50f  /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v2/source_manifest.json

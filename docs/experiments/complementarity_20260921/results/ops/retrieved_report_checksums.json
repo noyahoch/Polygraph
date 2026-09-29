@@ -1,0 +1,50 @@
+{
+  "all_match_verified_private_snapshot": true,
+  "checks": {
+    "report/REPORT.md": {
+      "expected_sha256": "c37e98fc576bdc1e7f33842851e2de7e995708025dc2f7ad258c0b4d0141a47e",
+      "matches": true,
+      "observed_sha256": "c37e98fc576bdc1e7f33842851e2de7e995708025dc2f7ad258c0b4d0141a47e"
+    },
+    "report/REPORT_HE.md": {
+      "expected_sha256": "961a7c1d3d6107bc6fcb2dd07608e873b0fa771328b335ed4f8296009f8b6a99",
+      "matches": true,
+      "observed_sha256": "961a7c1d3d6107bc6fcb2dd07608e873b0fa771328b335ed4f8296009f8b6a99"
+    },
+    "report/complete.json": {
+      "expected_sha256": "e328586c4a7e9e295c891cf9c33b4d7da6e4ef08fc64c54a92a741f406d81fc7",
+      "matches": true,
+      "observed_sha256": "e328586c4a7e9e295c891cf9c33b4d7da6e4ef08fc64c54a92a741f406d81fc7"
+    },
+    "report/report.json": {
+      "expected_sha256": "1e8d15e152127de7e007448c204b5b65f94c28c59308bdba6271ecdf615cd000",
+      "matches": true,
+      "observed_sha256": "1e8d15e152127de7e007448c204b5b65f94c28c59308bdba6271ecdf615cd000"
+    },
+    "statistics/complete.json": {
+      "expected_sha256": "18726dcb309c8310e977636ab21d1fbfb775eb87f478a64fcc8a80e85e162e12",
+      "matches": true,
+      "observed_sha256": "18726dcb309c8310e977636ab21d1fbfb775eb87f478a64fcc8a80e85e162e12"
+    },
+    "statistics/draw_manifest.json": {
+      "expected_sha256": "30f77d0ba0b149ebb6323da4d1bb46649f6c8ea196a7f399bb923260cbf7b654",
+      "matches": true,
+      "observed_sha256": "30f77d0ba0b149ebb6323da4d1bb46649f6c8ea196a7f399bb923260cbf7b654"
+    },
+    "statistics/results.json": {
+      "expected_sha256": "1e8d15e152127de7e007448c204b5b65f94c28c59308bdba6271ecdf615cd000",
+      "matches": true,
+      "observed_sha256": "1e8d15e152127de7e007448c204b5b65f94c28c59308bdba6271ecdf615cd000"
+    },
+    "statistics/timing_50.json": {
+      "expected_sha256": "4e43fb1fc519cf3b324fa86d672fbdd6f1d987d3871aa3b4ce023da72f9e3658",
+      "matches": true,
+      "observed_sha256": "4e43fb1fc519cf3b324fa86d672fbdd6f1d987d3871aa3b4ce023da72f9e3658"
+    },
+    "statistics/weighted_duplication.json": {
+      "expected_sha256": "2a87bd5dead8932fffad837c41060001e32551cc0180dfdee9a2a6b85de17073",
+      "matches": true,
+      "observed_sha256": "2a87bd5dead8932fffad837c41060001e32551cc0180dfdee9a2a6b85de17073"
+    }
+  }
+}

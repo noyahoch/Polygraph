@@ -1,0 +1,16 @@
+{
+  "complete": true,
+  "files": {
+    "dev_eval.npz": "f5ba07bc8908de546992127ca2e02c1249d3240e373074d8b1fe69979807f3cb"
+  },
+  "identity": {
+    "campaign_sha256": "f489a75f558d7588b946ebf5f5586e418b5473c156c6a5b88a4a071118a65268",
+    "cls_manifest_sha256": "d79c0bff547e702187e95e237d48010cf92f7703ef35b77c3072480f754b86bd",
+    "gate_sha256": "427ac424bb9cf3b7426f19f356c4f1579a3699f0dc1bb8046774afe4bac06a9d",
+    "seed": 1,
+    "stage": "predict"
+  },
+  "job_id": "924827",
+  "records": 17000,
+  "selected_epoch": 78
+}

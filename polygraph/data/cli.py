@@ -1,0 +1,197 @@
+"""`python3 -m polygraph.data <command>` — dataset creation (run once).
+
+    scan     frozen ViT verdicts over clean test + all corruptions, all severities
+    split    group-disjoint stratified train/val/test plan from the scan
+    extract  attention graphs for the plan into the shared key-indexed store
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+from typing import List, Sequence
+
+
+def resolve_sources(names: Sequence[str]) -> List[str]:
+    """Expand shorthands: a family name, 'main', or 'all'."""
+    from ..config import ALL_CORRUPTIONS, CORRUPTION_FAMILIES, MAIN_CORRUPTIONS
+
+    table = {"main": MAIN_CORRUPTIONS, "all": ALL_CORRUPTIONS, **CORRUPTION_FAMILIES}
+    seen: set = set()
+    return [s for n in names for s in table.get(n, (n,)) if not (s in seen or seen.add(s))]
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="polygraph.data", description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    scan = sub.add_parser("scan", help="ViT verdicts over the full corruption grid (resumable)")
+    scan.add_argument("--batch-size", type=int, default=64)
+
+    split = sub.add_parser("split", help="group-disjoint stratified split plan")
+    split.add_argument("--plan", default=None)
+    split.add_argument("--restrict-to-plan", default=None,
+                       help="re-split only keys in an existing plan (for alternate holdouts over "
+                            "the immutable graph-store universe)")
+    split.add_argument("--held-out", nargs="*", default=["extra"],
+                       help="sources or families excluded from train+val, kept in test")
+    for name in ("train", "val", "test"):
+        split.add_argument(f"--{name}-cap", type=int, default=0, help="pairs per class; 0 = all")
+
+    extract = sub.add_parser("extract", help="graphs for every record in the plan (resumable)")
+    extract.add_argument("--plan", default=None)
+    extract.add_argument("--batch-size", type=int, default=32)
+
+    logits = sub.add_parser("logits", help="capture aligned full classifier logits")
+    logits.add_argument("--out-dir", default="data/graph_dataset/sidecars/logits")
+    logits.add_argument("--batch-size", type=int, default=128)
+    logits.add_argument("--benchmark-batches", type=int, default=5)
+    logits.add_argument("--overwrite-corrupt-only", action="store_true")
+
+    message = sub.add_parser("message-stats", help="capture compact per-token/head value statistics")
+    message.add_argument("--layer", type=int, default=11)
+    message.add_argument("--out-dir", default="data/graph_dataset/sidecars/message_stats_l11")
+    message.add_argument("--batch-size", type=int, default=64)
+    message.add_argument("--benchmark-batches", type=int, default=5)
+
+    compact = sub.add_parser("compact-evidence", help="build predicted-class-conditioned token features")
+    compact.add_argument("--hidden-dir", default="data/graph_dataset/hidden12")
+    compact.add_argument("--logits-dir", default="data/graph_dataset/sidecars/logits")
+    compact.add_argument("--out-dir", default="data/graph_dataset/sidecars/compact_evidence_l12")
+    compact.add_argument("--batch-size", type=int, default=128)
+
+    hidden = sub.add_parser("hidden", help="capture per-token hidden states of one ViT layer "
+                                           "for every stored record (variant-2 node features)")
+    hidden.add_argument("--layer", type=int, default=12, help="ViT block output, 12 = final")
+    hidden.add_argument("--batch-size", type=int, default=64)
+
+    last4 = sub.add_parser("last4-sidecars", help="capture missing hidden/message features for blocks 8-10")
+    last4.add_argument("--hidden-out-dir", default="data/graph_dataset/sidecars/hidden_last4_missing")
+    last4.add_argument("--message-out-dir", default="data/graph_dataset/sidecars/message_stats_last4_missing")
+    last4.add_argument("--batch-size", type=int, default=128)
+
+    rewire = sub.add_parser("rewire-cache", help="precompute deterministic final-layer target permutations")
+    rewire.add_argument("--out-dir", default="data/graph_dataset/sidecars/rewire_target_l11")
+    rewire.add_argument("--seed", type=int, default=20260905)
+    rewire.add_argument("--layer", type=int, default=11)
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> None:
+    args = build_parser().parse_args(argv)
+    root = Path.cwd()
+    os.environ.setdefault("HF_HOME", str(root / ".cache" / "huggingface"))
+
+    from ..config import (ALL_CORRUPTIONS, CLEAN_TEST, CLEAN_TRAIN, DEFAULT_TAU,
+                          PLAN_FILE, SCAN_FILE, STORE_DIR)
+    from ..records import read_scan_records
+    from .sources import ensure_downloaded
+
+    data_root = root / "data"
+    scan_path = root / SCAN_FILE
+    plan_path = root / (getattr(args, "plan", None) or PLAN_FILE)
+
+    if args.command == "scan":
+        from .pipeline import FrozenClassifier, scan
+
+        pairs = [(CLEAN_TEST, 0), (CLEAN_TRAIN, 0)] + [(c, s) for c in ALL_CORRUPTIONS
+                                                       for s in (1, 2, 3, 4, 5)]
+        ensure_downloaded(pairs, data_root)
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        scan(classifier, data_root, scan_path, pairs, batch_size=args.batch_size)
+
+    elif args.command == "split":
+        from .splits import SplitPlan, build_plan
+
+        # clean_train is excluded: the ViT was fine-tuned on it (measured 99.45% accuracy,
+        # confidence inflated by memorization), so its records are not comparable.
+        records = [r for r in read_scan_records(scan_path) if r.key.source != CLEAN_TRAIN]
+        if args.restrict_to_plan:
+            universe = SplitPlan.load(root / args.restrict_to_plan)
+            allowed = {key.as_tuple() for values in universe.splits.values() for key in values}
+            records = [record for record in records if record.key.as_tuple() in allowed]
+        plan = build_plan(records, caps={n: getattr(args, f"{n}_cap") for n in ("train", "val", "test")},
+                          held_out=resolve_sources(args.held_out))
+        plan.save(plan_path)
+        print(json.dumps(plan.stats, indent=2))
+
+    elif args.command == "logits":
+        from .pipeline import FrozenClassifier, capture_logits
+
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        n = capture_logits(classifier, data_root, root / STORE_DIR, root / args.out_dir,
+                           batch_size=args.batch_size,
+                           overwrite_corrupt_only=args.overwrite_corrupt_only)
+        print(f"full logits captured for {n} records")
+
+    elif args.command == "compact-evidence":
+        from .pipeline import FrozenClassifier, capture_compact_evidence
+
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        n = capture_compact_evidence(classifier, root / STORE_DIR, root / args.hidden_dir,
+                                     root / args.logits_dir, root / args.out_dir,
+                                     batch_size=args.batch_size)
+        print(f"compact evidence captured for {n} records")
+
+    elif args.command == "message-stats":
+        from .pipeline import FrozenClassifier, capture_message_stats
+
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        n = capture_message_stats(classifier, data_root, root / STORE_DIR, root / args.out_dir,
+                                  layer=args.layer, batch_size=args.batch_size)
+        print(f"message statistics captured for {n} records")
+
+    elif args.command == "hidden":
+        from .pipeline import FrozenClassifier, capture_hidden
+
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        n = capture_hidden(classifier, data_root, root / STORE_DIR,
+                           root / f"data/graph_dataset/hidden{args.layer}", layer=args.layer,
+                           batch_size=args.batch_size)
+        print(f"hidden states captured for {n} records")
+
+    elif args.command == "last4-sidecars":
+        from .pipeline import FrozenClassifier, capture_last4_sidecars
+
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device}", flush=True)
+        n = capture_last4_sidecars(
+            classifier, data_root, root / STORE_DIR, root / args.hidden_out_dir,
+            root / args.message_out_dir, batch_size=args.batch_size)
+        print(f"last-four missing features captured for {n} records")
+
+    elif args.command == "rewire-cache":
+        from .pipeline import capture_rewire_cache
+        n = capture_rewire_cache(root / STORE_DIR, root / args.out_dir, args.seed, args.layer)
+        print(f"cached rewiring for {n} records")
+
+    elif args.command == "extract":
+        from .graphs import ThresholdGraphBuilder
+        from .pipeline import FrozenClassifier, extract
+        from .splits import SplitPlan
+        from .storage import GraphStoreWriter
+
+        plan = SplitPlan.load(plan_path)
+        keys = [k for name in ("test", "val", "train") for k in plan.splits[name]]
+        needed = {k.as_tuple() for k in keys}
+        lookup = {r.key.as_tuple(): r for r in read_scan_records(scan_path) if r.key.as_tuple() in needed}
+        builder = ThresholdGraphBuilder(DEFAULT_TAU)
+        classifier = FrozenClassifier()
+        print(f"device: {classifier.device} | {builder.name}", flush=True)
+        writer = GraphStoreWriter(root / STORE_DIR, shard_size=2000, tau=builder.tau)
+        result = extract(classifier, data_root, builder, keys, lookup, writer,
+                         batch_size=args.batch_size)
+        writer.write_manifest({"model_id": classifier.model_id,
+                               "prediction_drift": result["prediction_drift"]})
+        print(f"store holds {result['written']} records")
+
+
+if __name__ == "__main__":
+    main()

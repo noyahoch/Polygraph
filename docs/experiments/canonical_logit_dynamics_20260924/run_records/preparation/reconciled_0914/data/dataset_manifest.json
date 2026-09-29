@@ -1,0 +1,1068 @@
+{
+  "complete": true,
+  "detector_plan_sha256": "44e1aef95e78be4d82d5582d6629582e09165b996c3f8b4da653ef5bb9be35be",
+  "files": {
+    "cifar100c/brightness/severity_1.parquet": {
+      "bytes": 22589958,
+      "filename": "data/brightness/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "41fd309d7cda9cccee53d3ededb02ddf345bf1e8d6b834411bf7dc5690c313be"
+    },
+    "cifar100c/brightness/severity_2.parquet": {
+      "bytes": 22558921,
+      "filename": "data/brightness/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "3d7ff32e95be4c048eae620f21a173298750b063026c9c558fec1c11de0707ab"
+    },
+    "cifar100c/brightness/severity_3.parquet": {
+      "bytes": 22482360,
+      "filename": "data/brightness/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "e20f70d0c03858c9e9286b5c360c257b8df68dee265756de6fd14cd35f85de97"
+    },
+    "cifar100c/brightness/severity_4.parquet": {
+      "bytes": 22360817,
+      "filename": "data/brightness/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "d83a22c49a5299bd6e6c357ced1e16f00a3b1faeadf23c369fdcec5954e97a4d"
+    },
+    "cifar100c/brightness/severity_5.parquet": {
+      "bytes": 21939301,
+      "filename": "data/brightness/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "caac6fb5a8aaba37a01310ba06d25325348e584e0f4440d6325e098f33c840bb"
+    },
+    "cifar100c/contrast/severity_1.parquet": {
+      "bytes": 21051161,
+      "filename": "data/contrast/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "0e80153f004bbe51dbdfe6aaa9a0f7f9b48ec5bc70615154ae2cd9e7e8f36f9f"
+    },
+    "cifar100c/contrast/severity_2.parquet": {
+      "bytes": 18787443,
+      "filename": "data/contrast/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "800605fc8d0eda5d107c75fdb1497358c2a6e69bdc5991c9c783489f2f5d50ec"
+    },
+    "cifar100c/contrast/severity_3.parquet": {
+      "bytes": 17622604,
+      "filename": "data/contrast/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "e5a26ce9c91fc06835254f1e5ba05688401c8d692b45573c03a3dc7a20f89e13"
+    },
+    "cifar100c/contrast/severity_4.parquet": {
+      "bytes": 16113064,
+      "filename": "data/contrast/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "b5cd1c3182549ee5bd9795ba70ed8d1bf5d97b6ce144dda3153234d4f9880f6d"
+    },
+    "cifar100c/contrast/severity_5.parquet": {
+      "bytes": 12791086,
+      "filename": "data/contrast/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "2741869b16ce2a6c8480170a6777ea376d97efd99fdbe0a6ea86dec74fbfaa20"
+    },
+    "cifar100c/defocus_blur/severity_1.parquet": {
+      "bytes": 22009526,
+      "filename": "data/defocus_blur/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "ae6b9a3ac871b9524e614a1586bd639a19c30b5d4c172964d614e93deb6f1e25"
+    },
+    "cifar100c/defocus_blur/severity_2.parquet": {
+      "bytes": 21131911,
+      "filename": "data/defocus_blur/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "773c43ed0b1a64d7de910b5172dd84addf522c07f373f602cbb17a76c3c0412f"
+    },
+    "cifar100c/defocus_blur/severity_3.parquet": {
+      "bytes": 20343388,
+      "filename": "data/defocus_blur/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "8960d9cb15171c3ec701df72647867a5488ba28790f7ed2d06a77f5ff1cd373f"
+    },
+    "cifar100c/defocus_blur/severity_4.parquet": {
+      "bytes": 19802352,
+      "filename": "data/defocus_blur/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "5d578e1afa2d01655093365990a3d9b4bab1be78901b601700b0a9cb7becfc98"
+    },
+    "cifar100c/defocus_blur/severity_5.parquet": {
+      "bytes": 18756954,
+      "filename": "data/defocus_blur/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "08a780539d11b7166f731b7210c4073bf5b1cc267e3e85125c9e5dcc8e7fca8d"
+    },
+    "cifar100c/elastic_transform/severity_1.parquet": {
+      "bytes": 21598019,
+      "filename": "data/elastic_transform/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "1a467e23a287bf0b08db5a179eaf48c129d983e2de937ebc46db421b4e206034"
+    },
+    "cifar100c/elastic_transform/severity_2.parquet": {
+      "bytes": 21028615,
+      "filename": "data/elastic_transform/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "2198b231c15e0407ac6621f0d940030622bb1ac9925537313037ca62f5ba8c1b"
+    },
+    "cifar100c/elastic_transform/severity_3.parquet": {
+      "bytes": 20679054,
+      "filename": "data/elastic_transform/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "239fd5245cae40c65eeda8a0c5f02bcb17fdf34a0eeb5132534629fa1a0793e6"
+    },
+    "cifar100c/elastic_transform/severity_4.parquet": {
+      "bytes": 21012915,
+      "filename": "data/elastic_transform/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "e9d90c3eff30c623cac239c67afd5ad79ce310398775d671d3be5ff22fd8109c"
+    },
+    "cifar100c/elastic_transform/severity_5.parquet": {
+      "bytes": 21691395,
+      "filename": "data/elastic_transform/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "638a4650b3349d8235f7a5c0a2e6aecb13b6e34df789fa49b722c7e4298e0ce5"
+    },
+    "cifar100c/fog/severity_1.parquet": {
+      "bytes": 21843434,
+      "filename": "data/fog/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "5b54d27132e1905b80fedd98fefa0146797e031e0aa34e2d3077643bc4da22e9"
+    },
+    "cifar100c/fog/severity_2.parquet": {
+      "bytes": 20828456,
+      "filename": "data/fog/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "d567e1e87245f9038e4f21c0ceaa4f939126a7ad0ecbb79699de7c05304fc8b4"
+    },
+    "cifar100c/fog/severity_3.parquet": {
+      "bytes": 20251706,
+      "filename": "data/fog/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "b78308d3fdfa5e3e9538537006918ae7d8c8d178640063af191659824ac2fac6"
+    },
+    "cifar100c/fog/severity_4.parquet": {
+      "bytes": 19994869,
+      "filename": "data/fog/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "4f95500a189d7b30c87da26ca119f22f3bf39c91a09443c29af512a12c19a5a2"
+    },
+    "cifar100c/fog/severity_5.parquet": {
+      "bytes": 19886291,
+      "filename": "data/fog/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "63dbd00dd8bba5e6a05ee72c9cc77f24c47f28abde2af5bb2d54e8d4a3b77602"
+    },
+    "cifar100c/frost/severity_1.parquet": {
+      "bytes": 22976756,
+      "filename": "data/frost/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "c7caafe9d6ca2ffc344224e2ee7bf9acf0d05c7e3c90175202c442fdd0e94a76"
+    },
+    "cifar100c/frost/severity_2.parquet": {
+      "bytes": 22946639,
+      "filename": "data/frost/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "77806404259f1b70ef3003777e9c7d89e61c4d6a76128c47e6a1437637953529"
+    },
+    "cifar100c/frost/severity_3.parquet": {
+      "bytes": 23392086,
+      "filename": "data/frost/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "444e7c97fd87b3c373296241f85ce888a17c38114a7dd05c3ca0cbc7acd6aa3b"
+    },
+    "cifar100c/frost/severity_4.parquet": {
+      "bytes": 23685872,
+      "filename": "data/frost/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "307f853d81531643c362b5509114cdeac620245d3698d153d9442356a50ba569"
+    },
+    "cifar100c/frost/severity_5.parquet": {
+      "bytes": 24151000,
+      "filename": "data/frost/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "44cb331fbe9b414685efa5f2b90931dcc2b7ee0da88af6d2dfd27cbd23e14901"
+    },
+    "cifar100c/gaussian_blur/severity_1.parquet": {
+      "bytes": 22017505,
+      "filename": "data/gaussian_blur/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "ae185afa8b2a96f8f77b4bca8379015333fb6a3edcee287fc1926992d65ac511"
+    },
+    "cifar100c/gaussian_blur/severity_2.parquet": {
+      "bytes": 20373278,
+      "filename": "data/gaussian_blur/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "beb9a983215e0bd1ac427b0206a038ec16d4e9276e990e52f39abbb6369b7179"
+    },
+    "cifar100c/gaussian_blur/severity_3.parquet": {
+      "bytes": 19739856,
+      "filename": "data/gaussian_blur/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "88061cd712ca1b7c44659949bb511ceaf0c1365d9313dd711da8c2c4cf1899c9"
+    },
+    "cifar100c/gaussian_blur/severity_4.parquet": {
+      "bytes": 19217146,
+      "filename": "data/gaussian_blur/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "12f165e6447c4554c129599f1b9b5e06533d5809d745a48dd77931e4ff2d0c8e"
+    },
+    "cifar100c/gaussian_blur/severity_5.parquet": {
+      "bytes": 18323226,
+      "filename": "data/gaussian_blur/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "7a0acae37fd220621f5f2c00556376977840d2d3301904ad3a4fc636129accb6"
+    },
+    "cifar100c/gaussian_noise/severity_1.parquet": {
+      "bytes": 26589891,
+      "filename": "data/gaussian_noise/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "5acfb630bd5ef735f24361495be67e7d90e9282e25eb0d45844d27f28c5e39af"
+    },
+    "cifar100c/gaussian_noise/severity_2.parquet": {
+      "bytes": 27934242,
+      "filename": "data/gaussian_noise/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "564ff73faff8ccf52a0f77191dbaaac40692058531e6e18da483f6236654b506"
+    },
+    "cifar100c/gaussian_noise/severity_3.parquet": {
+      "bytes": 29059618,
+      "filename": "data/gaussian_noise/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "00c007a8e69da919d89fd6364b36697e6c7c46e1c06e96c3d0f34aebe33e195b"
+    },
+    "cifar100c/gaussian_noise/severity_4.parquet": {
+      "bytes": 29503341,
+      "filename": "data/gaussian_noise/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "238eb4b55c70833bea8a7dbf0a19a0a211387ed5fa8974fd2fcee2b580b58893"
+    },
+    "cifar100c/gaussian_noise/severity_5.parquet": {
+      "bytes": 29897330,
+      "filename": "data/gaussian_noise/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "c4cdb3ae0f9f5cf3977faa02750c96556eac6e5262cb90bc2d046e19ca81f081"
+    },
+    "cifar100c/glass_blur/severity_1.parquet": {
+      "bytes": 24002400,
+      "filename": "data/glass_blur/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "696503c7f0e9a5727bc3d4daf7de0ce2a6f5e8b957634b56d9bbbdcfd0202870"
+    },
+    "cifar100c/glass_blur/severity_2.parquet": {
+      "bytes": 23810574,
+      "filename": "data/glass_blur/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "5f3663d74b29a9bd86b245210c76f8332feacbdce67472f77a18e8be73bef661"
+    },
+    "cifar100c/glass_blur/severity_3.parquet": {
+      "bytes": 23398308,
+      "filename": "data/glass_blur/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "618849ab5d8ffd70906c71a0713891a257ec3833c5fa5655d25e899c8d2c7d61"
+    },
+    "cifar100c/glass_blur/severity_4.parquet": {
+      "bytes": 23671087,
+      "filename": "data/glass_blur/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "73ea01392cb808bdfba5fa224f6a3fc504ff3074317363b809b5a2ba35190650"
+    },
+    "cifar100c/glass_blur/severity_5.parquet": {
+      "bytes": 23637245,
+      "filename": "data/glass_blur/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "17a518edd6c5e23dc281c37a3d0b1bbefc5ca235876ca1a0ee2af2570c8b7de7"
+    },
+    "cifar100c/impulse_noise/severity_1.parquet": {
+      "bytes": 23396168,
+      "filename": "data/impulse_noise/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "f5fea51d46bc7d2d9983dd4818070f7f381f4722b71bd0deae08eb731d77a42d"
+    },
+    "cifar100c/impulse_noise/severity_2.parquet": {
+      "bytes": 23958970,
+      "filename": "data/impulse_noise/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "039e69934b110c9762b92e7d2787589e69db752fbbef8c9e3a1434ae0f7a7a85"
+    },
+    "cifar100c/impulse_noise/severity_3.parquet": {
+      "bytes": 24419026,
+      "filename": "data/impulse_noise/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "d0dfa1afd1eee92efdf394a97b6c63b91408639f23effb0884c220eda3ebbe96"
+    },
+    "cifar100c/impulse_noise/severity_4.parquet": {
+      "bytes": 25183037,
+      "filename": "data/impulse_noise/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "66afb5fd1c855818db43d67039e5c85cad7552a186b60b84bd0b3c6a614cf259"
+    },
+    "cifar100c/impulse_noise/severity_5.parquet": {
+      "bytes": 25786795,
+      "filename": "data/impulse_noise/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "b7b377a749d4e9698cfa4b3547c35cfdeab581b4d83919a4b0804393e547ede7"
+    },
+    "cifar100c/jpeg_compression/severity_1.parquet": {
+      "bytes": 23221962,
+      "filename": "data/jpeg_compression/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "e4598d9bf23c2e4f2fee7088410fb881b26a04a24c3c0e9060a3ada1d83f4a01"
+    },
+    "cifar100c/jpeg_compression/severity_2.parquet": {
+      "bytes": 22859532,
+      "filename": "data/jpeg_compression/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "545bb2bcb152f5ff1f53ab613608ad4d50ce9ba5a7d2e08ff8710bdbc42aaf11"
+    },
+    "cifar100c/jpeg_compression/severity_3.parquet": {
+      "bytes": 22707520,
+      "filename": "data/jpeg_compression/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "e9fda772c23602383b3c0d585de0df81b4abceefd63c9e2df5e476dc65c869fb"
+    },
+    "cifar100c/jpeg_compression/severity_4.parquet": {
+      "bytes": 22518517,
+      "filename": "data/jpeg_compression/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "2d8c31aec04a5857b2839ac63f44412572025f3c90a928193f3f022da29c8848"
+    },
+    "cifar100c/jpeg_compression/severity_5.parquet": {
+      "bytes": 22213714,
+      "filename": "data/jpeg_compression/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "858bb6439db521d510d6a7254218dfd0a8a417da4f5fbb97b293ba10c0b57245"
+    },
+    "cifar100c/motion_blur/severity_1.parquet": {
+      "bytes": 21245657,
+      "filename": "data/motion_blur/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "c75c9266efe2e795ba7d5fb7319da66b357ab3d248a53e85c8e4217eb19b7154"
+    },
+    "cifar100c/motion_blur/severity_2.parquet": {
+      "bytes": 20566334,
+      "filename": "data/motion_blur/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "6ca8d91e3d405ecf7666a4cc37e40498c1500f613764c6c97dca467e96e62b44"
+    },
+    "cifar100c/motion_blur/severity_3.parquet": {
+      "bytes": 20043755,
+      "filename": "data/motion_blur/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "37dca4d661d3f4c8634687eb5e356426efb4a0329255df693e396c6e03c0c0ba"
+    },
+    "cifar100c/motion_blur/severity_4.parquet": {
+      "bytes": 20054363,
+      "filename": "data/motion_blur/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "f23bcacee56ef990af7e74c0335ded003154850d25b630fc321dc2c2bf360440"
+    },
+    "cifar100c/motion_blur/severity_5.parquet": {
+      "bytes": 19619884,
+      "filename": "data/motion_blur/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "ddb0dc37f68bdc7ac7613203fcf59bdce67c4759f93694eaeaffa79dc87314d9"
+    },
+    "cifar100c/pixelate/severity_1.parquet": {
+      "bytes": 21068082,
+      "filename": "data/pixelate/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "fdfbf920fa22462c114d02bb00d6de194dee929bc793d5612644c0e004605649"
+    },
+    "cifar100c/pixelate/severity_2.parquet": {
+      "bytes": 19431231,
+      "filename": "data/pixelate/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "115e965eb55d8261031f5c52afd3a00ec9d9c90da00f0eaa6f70f389a6ab722e"
+    },
+    "cifar100c/pixelate/severity_3.parquet": {
+      "bytes": 18597459,
+      "filename": "data/pixelate/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "284e8c58b6b439632e497f7d02f382c06e8797dc79ffb9984d557e39c4320e4e"
+    },
+    "cifar100c/pixelate/severity_4.parquet": {
+      "bytes": 15997501,
+      "filename": "data/pixelate/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "70fd9c0ccab3d83192d934259410549f59decf0ac996d17ec388609c62fd096d"
+    },
+    "cifar100c/pixelate/severity_5.parquet": {
+      "bytes": 12596904,
+      "filename": "data/pixelate/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "13983a725ecd2bda75a8ff8921658d67b44f35f714d6df4a9e84154d4a347e32"
+    },
+    "cifar100c/saturate/severity_1.parquet": {
+      "bytes": 22312257,
+      "filename": "data/saturate/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "13e5f89f0d7c090d3f1ea902f398d3c4cc6d78e85ade3039fbd9ed6213a36176"
+    },
+    "cifar100c/saturate/severity_2.parquet": {
+      "bytes": 21793356,
+      "filename": "data/saturate/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "410dd7852573123ff047f48906b51a7ff9e32a5b7449d1b3972e30d780c00398"
+    },
+    "cifar100c/saturate/severity_3.parquet": {
+      "bytes": 22631693,
+      "filename": "data/saturate/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "d12231578227db42b6bd06f762e6cf1b0dae7b8d653a8bbf4ddfa9da24dfc072"
+    },
+    "cifar100c/saturate/severity_4.parquet": {
+      "bytes": 22423359,
+      "filename": "data/saturate/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "47c986663741bd541974471b21263cc1a6c3e1659196cebae854997daf7a4a33"
+    },
+    "cifar100c/saturate/severity_5.parquet": {
+      "bytes": 22084219,
+      "filename": "data/saturate/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "cd3062060aabe55eea87e39daf2269c7211a3dd1862faf68b3e7e10b54090ab0"
+    },
+    "cifar100c/shot_noise/severity_1.parquet": {
+      "bytes": 25707758,
+      "filename": "data/shot_noise/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "c40417efa194f553ec4576c82cf3dc11705270c3e65fe4f81fdc0ddbd225d622"
+    },
+    "cifar100c/shot_noise/severity_2.parquet": {
+      "bytes": 26665692,
+      "filename": "data/shot_noise/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "b89d7c3696b1e226a02b5cc70744a19c473a52427edde836c65fff5cb291c4b9"
+    },
+    "cifar100c/shot_noise/severity_3.parquet": {
+      "bytes": 26191161,
+      "filename": "data/shot_noise/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "7b985c5246d06556f193b30e6bad6e6d7a9fd5c73e4d38ab4cce15cf1e6a20b3"
+    },
+    "cifar100c/shot_noise/severity_4.parquet": {
+      "bytes": 24981147,
+      "filename": "data/shot_noise/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "f0a0e9609eb36574f343bce0ff04578b573bcb275c64f88d7800b6bc87b65033"
+    },
+    "cifar100c/shot_noise/severity_5.parquet": {
+      "bytes": 23645513,
+      "filename": "data/shot_noise/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "77b79b460e582fc8a0e3578a3d097fcec8f5c3c56a0aee95e5d5201decc79a9d"
+    },
+    "cifar100c/snow/severity_1.parquet": {
+      "bytes": 23281616,
+      "filename": "data/snow/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "1fb7f6b61d339494ed2fead4ecce9b914debec313f5ac9a4df380a8feb52306d"
+    },
+    "cifar100c/snow/severity_2.parquet": {
+      "bytes": 24131994,
+      "filename": "data/snow/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "31fcfbde30a5f0dfb8adc90bfb5fb5814eafdf8591aa31741677e71419ad87ad"
+    },
+    "cifar100c/snow/severity_3.parquet": {
+      "bytes": 23857993,
+      "filename": "data/snow/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "8138a0ea642ec95a229ab465f33e12dccac89691307dd84b7f3c2fec344df4dc"
+    },
+    "cifar100c/snow/severity_4.parquet": {
+      "bytes": 23472901,
+      "filename": "data/snow/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "9706dbe0dcc8d38366557b7b0894adfa66b86fd22e064d3cb6e0f535f450df42"
+    },
+    "cifar100c/snow/severity_5.parquet": {
+      "bytes": 22877230,
+      "filename": "data/snow/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "e321b32fa681f165951adff2a4821d491a618242630fcb86aa816bafe24d0f34"
+    },
+    "cifar100c/spatter/severity_1.parquet": {
+      "bytes": 23394867,
+      "filename": "data/spatter/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "4fad00e9811730196c7a08e7b95e632bda681be65d5b50b8063de579fc437d41"
+    },
+    "cifar100c/spatter/severity_2.parquet": {
+      "bytes": 24132102,
+      "filename": "data/spatter/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "cfb2cc91a8f355fd3d4733eb7b26a3a560abaf8031b3957e1934c5f3042898d3"
+    },
+    "cifar100c/spatter/severity_3.parquet": {
+      "bytes": 24805407,
+      "filename": "data/spatter/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "72c761b3d898049be013d6038b5aeae059225e68effea5d0bfc48a032ab25232"
+    },
+    "cifar100c/spatter/severity_4.parquet": {
+      "bytes": 23626685,
+      "filename": "data/spatter/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "1621010889c2e8366b5799a2b2d5ba350b7421e46320b3940aa205210a9ea89d"
+    },
+    "cifar100c/spatter/severity_5.parquet": {
+      "bytes": 24295191,
+      "filename": "data/spatter/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "10ddfb82be4f1db817cb10764214d65aa7e9f5d3f6343dfc362cff18fd600b02"
+    },
+    "cifar100c/speckle_noise/severity_1.parquet": {
+      "bytes": 25650414,
+      "filename": "data/speckle_noise/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "1f6d0802f30536bf22119d99cd3a130c017be5d2ae165c7712f27d3ce7ad1805"
+    },
+    "cifar100c/speckle_noise/severity_2.parquet": {
+      "bytes": 27048002,
+      "filename": "data/speckle_noise/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "b98d0fc9bd60aab0f80754aaf13a0ba2e8332ad37aa8ce2ea8bb6c4c35105913"
+    },
+    "cifar100c/speckle_noise/severity_3.parquet": {
+      "bytes": 27637176,
+      "filename": "data/speckle_noise/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "01d4b081d13f17b59179960cdae5acf849630542c0573e9ccfd0df6ed36a08b8"
+    },
+    "cifar100c/speckle_noise/severity_4.parquet": {
+      "bytes": 28662540,
+      "filename": "data/speckle_noise/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "3afb8c5bdbca9c1cc132f3d85c6562e71e475cb244f8e9baea342bff08cd3039"
+    },
+    "cifar100c/speckle_noise/severity_5.parquet": {
+      "bytes": 29430370,
+      "filename": "data/speckle_noise/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "fd27f41257086b3429af3eaa3c2ce716089d17b4a95f6f90e2336e37c12a6ff2"
+    },
+    "cifar100c/zoom_blur/severity_1.parquet": {
+      "bytes": 20810837,
+      "filename": "data/zoom_blur/severity_1/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "e8ff7ebff53c415dda02570464f06bce669a0fca64a4c4397b3791ff7cf9bec7"
+    },
+    "cifar100c/zoom_blur/severity_2.parquet": {
+      "bytes": 20390816,
+      "filename": "data/zoom_blur/severity_2/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "112991b50bf1998bc3df581265f4c3762edbac0b601c0c9c0426e9fe65a0bb59"
+    },
+    "cifar100c/zoom_blur/severity_3.parquet": {
+      "bytes": 20056990,
+      "filename": "data/zoom_blur/severity_3/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "f6a911e724c472400176ed27c4502d992d9441946fcb2bd63df1a909b47ddf04"
+    },
+    "cifar100c/zoom_blur/severity_4.parquet": {
+      "bytes": 19765731,
+      "filename": "data/zoom_blur/severity_4/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "f9af4108e802b5ef1ecf3b88266bdee5070bee3aa76c27c65236a4733f85aeb3"
+    },
+    "cifar100c/zoom_blur/severity_5.parquet": {
+      "bytes": 19396467,
+      "filename": "data/zoom_blur/severity_5/data-00000.parquet",
+      "repo": "WNJXYK/TTA-CIFAR-100-C",
+      "revision": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+      "sha256": "c4b2e1bd482bebfa02bff2845a33b0347702f886a1ec023b7d3f4215e793a11b"
+    },
+    "hf_cifar100/cifar100/test-00000-of-00001.parquet": {
+      "bytes": 23772751,
+      "filename": "cifar100/test-00000-of-00001.parquet",
+      "repo": "uoft-cs/cifar100",
+      "revision": "aadb3af77e9048adbea6b47c21a81e47dd092ae5",
+      "sha256": "98776c529bb146a9c791229df74a5cf076be9b43d82dbbd334b6a7788d73dc68"
+    }
+  },
+  "pairs": [
+    [
+      "brightness",
+      1
+    ],
+    [
+      "brightness",
+      2
+    ],
+    [
+      "brightness",
+      3
+    ],
+    [
+      "brightness",
+      4
+    ],
+    [
+      "brightness",
+      5
+    ],
+    [
+      "clean_test",
+      0
+    ],
+    [
+      "contrast",
+      1
+    ],
+    [
+      "contrast",
+      2
+    ],
+    [
+      "contrast",
+      3
+    ],
+    [
+      "contrast",
+      4
+    ],
+    [
+      "contrast",
+      5
+    ],
+    [
+      "defocus_blur",
+      1
+    ],
+    [
+      "defocus_blur",
+      2
+    ],
+    [
+      "defocus_blur",
+      3
+    ],
+    [
+      "defocus_blur",
+      4
+    ],
+    [
+      "defocus_blur",
+      5
+    ],
+    [
+      "elastic_transform",
+      1
+    ],
+    [
+      "elastic_transform",
+      2
+    ],
+    [
+      "elastic_transform",
+      3
+    ],
+    [
+      "elastic_transform",
+      4
+    ],
+    [
+      "elastic_transform",
+      5
+    ],
+    [
+      "fog",
+      1
+    ],
+    [
+      "fog",
+      2
+    ],
+    [
+      "fog",
+      3
+    ],
+    [
+      "fog",
+      4
+    ],
+    [
+      "fog",
+      5
+    ],
+    [
+      "frost",
+      1
+    ],
+    [
+      "frost",
+      2
+    ],
+    [
+      "frost",
+      3
+    ],
+    [
+      "frost",
+      4
+    ],
+    [
+      "frost",
+      5
+    ],
+    [
+      "gaussian_blur",
+      1
+    ],
+    [
+      "gaussian_blur",
+      2
+    ],
+    [
+      "gaussian_blur",
+      3
+    ],
+    [
+      "gaussian_blur",
+      4
+    ],
+    [
+      "gaussian_blur",
+      5
+    ],
+    [
+      "gaussian_noise",
+      1
+    ],
+    [
+      "gaussian_noise",
+      2
+    ],
+    [
+      "gaussian_noise",
+      3
+    ],
+    [
+      "gaussian_noise",
+      4
+    ],
+    [
+      "gaussian_noise",
+      5
+    ],
+    [
+      "glass_blur",
+      1
+    ],
+    [
+      "glass_blur",
+      2
+    ],
+    [
+      "glass_blur",
+      3
+    ],
+    [
+      "glass_blur",
+      4
+    ],
+    [
+      "glass_blur",
+      5
+    ],
+    [
+      "impulse_noise",
+      1
+    ],
+    [
+      "impulse_noise",
+      2
+    ],
+    [
+      "impulse_noise",
+      3
+    ],
+    [
+      "impulse_noise",
+      4
+    ],
+    [
+      "impulse_noise",
+      5
+    ],
+    [
+      "jpeg_compression",
+      1
+    ],
+    [
+      "jpeg_compression",
+      2
+    ],
+    [
+      "jpeg_compression",
+      3
+    ],
+    [
+      "jpeg_compression",
+      4
+    ],
+    [
+      "jpeg_compression",
+      5
+    ],
+    [
+      "motion_blur",
+      1
+    ],
+    [
+      "motion_blur",
+      2
+    ],
+    [
+      "motion_blur",
+      3
+    ],
+    [
+      "motion_blur",
+      4
+    ],
+    [
+      "motion_blur",
+      5
+    ],
+    [
+      "pixelate",
+      1
+    ],
+    [
+      "pixelate",
+      2
+    ],
+    [
+      "pixelate",
+      3
+    ],
+    [
+      "pixelate",
+      4
+    ],
+    [
+      "pixelate",
+      5
+    ],
+    [
+      "saturate",
+      1
+    ],
+    [
+      "saturate",
+      2
+    ],
+    [
+      "saturate",
+      3
+    ],
+    [
+      "saturate",
+      4
+    ],
+    [
+      "saturate",
+      5
+    ],
+    [
+      "shot_noise",
+      1
+    ],
+    [
+      "shot_noise",
+      2
+    ],
+    [
+      "shot_noise",
+      3
+    ],
+    [
+      "shot_noise",
+      4
+    ],
+    [
+      "shot_noise",
+      5
+    ],
+    [
+      "snow",
+      1
+    ],
+    [
+      "snow",
+      2
+    ],
+    [
+      "snow",
+      3
+    ],
+    [
+      "snow",
+      4
+    ],
+    [
+      "snow",
+      5
+    ],
+    [
+      "spatter",
+      1
+    ],
+    [
+      "spatter",
+      2
+    ],
+    [
+      "spatter",
+      3
+    ],
+    [
+      "spatter",
+      4
+    ],
+    [
+      "spatter",
+      5
+    ],
+    [
+      "speckle_noise",
+      1
+    ],
+    [
+      "speckle_noise",
+      2
+    ],
+    [
+      "speckle_noise",
+      3
+    ],
+    [
+      "speckle_noise",
+      4
+    ],
+    [
+      "speckle_noise",
+      5
+    ],
+    [
+      "zoom_blur",
+      1
+    ],
+    [
+      "zoom_blur",
+      2
+    ],
+    [
+      "zoom_blur",
+      3
+    ],
+    [
+      "zoom_blur",
+      4
+    ],
+    [
+      "zoom_blur",
+      5
+    ]
+  ],
+  "revisions": {
+    "WNJXYK/TTA-CIFAR-100-C": "a12f0bcc1da33fa26d8c76ce8c1fb32e6f913bea",
+    "uoft-cs/cifar100": "aadb3af77e9048adbea6b47c21a81e47dd092ae5"
+  }
+}

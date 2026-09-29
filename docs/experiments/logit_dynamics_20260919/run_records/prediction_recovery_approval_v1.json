@@ -1,0 +1,27 @@
+{
+  "additional_root_or_user_approval_required_after_conditions_verified": false,
+  "approved_by": "root coordinator under existing user scope",
+  "budget": {
+    "aggregate_gpu_ceiling_seconds": 43200,
+    "completed_actual_gpu_seconds": 12033,
+    "maximum_concurrent_gpus": 3,
+    "new_retry_reserved_gpu_seconds": 8100,
+    "original_prediction_maximum_seconds": 1800,
+    "worst_case_aggregate_gpu_hms": "6:05:33",
+    "worst_case_aggregate_gpu_seconds": 21933
+  },
+  "conditions": [
+    "Original prediction 910063 has unsuccessfully terminated with exact identity matched",
+    "All original 910063 processes are gone",
+    "Original analysis 910064 and backup 910065 are terminal and cannot execute",
+    "Frozen evaluation gate and source identity match",
+    "No prior recovery submission intents or receipts exist unless reconciled as already submitted identical stages"
+  ],
+  "configuration_sha256": "9d28852754f236f3820a015d6478e94bf1eb682a41e89fc19c42c8965080d181",
+  "original_success_forbids_recovery": true,
+  "recorded_utc": "2026-09-19T12:19:35.323355+00:00",
+  "root_instruction": "Submit conditionally approved recovery once all conditions verified. If original succeeds, never submit recovery. No jobs before conditions. No prolonged waiting or polling.",
+  "scientific_settings_source_weights_unchanged": true,
+  "status": "conditionally_approved",
+  "submit_helper_sha256": "6e00f870501eb8025f0ce7e843590105fa68b9e60f6277808fba2c8e91794228"
+}

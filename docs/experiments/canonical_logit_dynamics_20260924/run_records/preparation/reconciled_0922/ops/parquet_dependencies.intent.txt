@@ -1,0 +1,3 @@
+2026-09-24T09:19:43+03:00
+Preparation repair1: isolated pinned pandas/pyarrow overlay; CPU4/16GB/10min; oldenv/scientificrecipe unchanged.
+00b9e94e2805ea6d8d7dc721607a7f4327e7507dfc3200d52da766b6b73230ca  ops/install_parquet_overlay.py

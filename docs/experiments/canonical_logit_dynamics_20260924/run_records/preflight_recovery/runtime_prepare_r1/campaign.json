@@ -1,0 +1,104 @@
+{
+  "canonical_test_records": 17000,
+  "extraction_records": 71991,
+  "inputs": {
+    "combiner_plan": {
+      "path": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logit_dynamics_reproduction_20260923/runs/research_20260830/combiners/strict/main/combiner_eval_plan.json",
+      "sha256": "e599e06cf2e7a7cad8652e9fc29feae1eca78479c2830263b2a09424d21d2091"
+    },
+    "detector_plan": {
+      "path": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logit_dynamics_reproduction_20260923/runs/research_20260830/combiners/strict/main/detector_train_plan.json",
+      "sha256": "44e1aef95e78be4d82d5582d6629582e09165b996c3f8b4da653ef5bb9be35be"
+    },
+    "polygraph_scores": {
+      "path": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logit_dynamics_reproduction_20260923/runs/topology_depth_last4_20260905/final/best_scores_main.npz",
+      "sha256": "186a7b76ad21a4f11fe59f46fbdc9763a3362e157e3be592732d4d0c3e74e737"
+    },
+    "scan": {
+      "path": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logit_dynamics_reproduction_20260923/data/graph_dataset/scan_records.jsonl",
+      "sha256": "a999d53f7a71f79794f882809fdfa6541126ec55c8c347752d520b7de88dfe4f"
+    }
+  },
+  "model_id": "edumunozsala/vit_base-224-in21k-ft-cifar100",
+  "model_revision": "b0c51e4a5e5bda35cc922419a28df93bb87e6efa",
+  "preflight_sha256": "1947612b93a6f1700978a51c1dd79d16d2dc67b958738a1f985288af782a8402",
+  "processor_id": "google/vit-base-patch16-224-in21k",
+  "processor_revision": "b4569560a39a0f1af58e3ddaf17facf20ab919b0",
+  "protocol_sha256": "a4d48caac007b9237324d5b572f44d8f48f11aa1fb7c45d27d0c631444edaaaa",
+  "recipe": {
+    "K": 5,
+    "L": 12,
+    "bootstrap_draws": 2000,
+    "bootstrap_seed": 20260924,
+    "head": {
+      "batch_size": 512,
+      "epochs": 16,
+      "lr": 0.001,
+      "weight_decay": 0.0
+    },
+    "head_photo_fraction": [
+      3,
+      5
+    ],
+    "head_selection": "final epoch16",
+    "parity": {
+      "confidence_atol": 0.0002,
+      "confidence_rtol": 0.0,
+      "labels": "exact",
+      "margin_atol": 0.0002,
+      "margin_rtol": 0.0,
+      "predictions": "exact"
+    },
+    "primary": "mean within-seed Polygraph minus LogitDynamics AUROC",
+    "probe": {
+      "batch_size": 256,
+      "epochs": 100,
+      "lr": 0.001,
+      "weight_decay": 0.01
+    },
+    "probe_selection": "greatest probe_val average_precision; earliest exact tie",
+    "representation": "raw post-block CLS hidden_states[1..12]; FP16 storage, FP32 heads",
+    "split_salt": "canonical-logit-dynamics-20260924:head-split:v1:"
+  },
+  "records_sha256": "7809b462bde30b256b7e1a0369bb0044f298c1917fc03875579f7a5ee424752a",
+  "roles_sha256": "8548920ea5dc642b9ccb3202971807671a993deec9f15550e966875868d502f6",
+  "root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200",
+  "runtime": {
+    "packages": {
+      "numpy": "2.5.2",
+      "pandas": "2.3.3",
+      "pyarrow": "21.0.0",
+      "safetensors": "0.8.0",
+      "scikit-learn": "1.8.0",
+      "torch": "2.14.0+cu126",
+      "transformers": "5.16.1"
+    },
+    "python": "3.12.13"
+  },
+  "schema_version": 1,
+  "scope_id": "canonical_logit_dynamics_20260924",
+  "seeds": [
+    1,
+    2,
+    7
+  ],
+  "sources": {
+    "pilots/canonical_logit_dynamics_20260924/__init__.py": "8e7c762c43da56a85eb7092865b815ed16bf2410a81265eb289ceefefcf9d94c",
+    "pilots/canonical_logit_dynamics_20260924/data.py": "ecfa9a80e08caff7972dc492aea96375cec75ef045bf912462b812fda1cb7465",
+    "pilots/canonical_logit_dynamics_20260924/data_sources.py": "108f7917c077e2ef7e2b383b3950afbfa13e5e78d3bc621edd4e240ac5dc9b77",
+    "pilots/canonical_logit_dynamics_20260924/evaluate.py": "44dcd8f3db50058b83e2446fd2fbb8ecbc82654042fff470d39823a177d9c6de",
+    "pilots/canonical_logit_dynamics_20260924/extract.py": "57c5a0caa0fb3cbd0b99d649945f693f3db7bb4555e7a91bd803d69592b0d368",
+    "pilots/canonical_logit_dynamics_20260924/features.py": "b2f529aa0b1df07a91e4b31f9bd84170ae253e0a257e4620b74868af6984c979",
+    "pilots/canonical_logit_dynamics_20260924/preflight.py": "8a74fb125a7a285496b55f3fceea1a3c2e3b424ee935c81ecaf5756b9455c8e1",
+    "pilots/canonical_logit_dynamics_20260924/protocol.py": "2c682d4d06f1ed89705ca5829ef977b5debe81301bfb129e28d4f882c4ac39cc",
+    "pilots/canonical_logit_dynamics_20260924/train.py": "3e6e2a8e8eb91bae39af2edabecf6ebdd2414369aee8504a861639f2638135f3",
+    "pilots/logit_dynamics_20260919/features.py": "cc27b67667e64fd2b495c44068b2cca6d541f36ccb1c37765d64883b0cd0ca3a",
+    "pilots/logit_dynamics_20260919/protocol.py": "7ff6b50ffc18a0adc57620d94852fd37eb2d3b3bb1d129853cd7ff4e53c73c1e",
+    "pilots/logit_dynamics_20260919/test_science.py": "3284b850edf1d1db8d5bc292141ae48c9688df29d74605fe1debb079d7b4c681",
+    "pilots/topology_20260910/protocol.py": "e63281a1ba5509dc10a32f5df97b50e9cd62f0107a5cba78a682d244bd831d10",
+    "polygraph/config.py": "35dd6a6d4c32711b5a1a04c0e3a56bb6ba9aa60c298e2b832440aeddf41029c4",
+    "polygraph/data/sources.py": "c6b83bcdbc3b0c88d94c1e6eaac2797e9a4e37d1cedd7757de566273d067b5cb",
+    "polygraph/records.py": "47f39f784f5c459086c8e26f56920406b6dd5272ccaaab70a96537c64bf439ad",
+    "polygraph/training/evaluate.py": "4073a234ee27b0b2d8be948eb851dcee069ecba75e07c1bf5708a048b681364a"
+  }
+}

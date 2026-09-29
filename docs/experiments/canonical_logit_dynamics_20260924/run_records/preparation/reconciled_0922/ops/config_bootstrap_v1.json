@@ -1,0 +1,48 @@
+{
+  "environment": {
+    "hf_hub_cache": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/data/hf_hub_cache",
+    "import_bundle_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+    "overlay_manifest_sha256": "66e9b9f841830177525f5baf7c806713fe23a25de704bdce8ac2c2fcd48fab6c",
+    "pilot_root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914"
+  },
+  "gpu_serial_groups": [],
+  "job_prefix": "canonical0924-085200",
+  "max_concurrent_gpus": 3,
+  "operator_submit_sha256": "6ac46956bc263ca5fdab1001e6c97fe6b80d2208af2f38254eb79e93af950a75",
+  "phases": {
+    "bootstrap": [
+      "fetch"
+    ]
+  },
+  "prior_attempts": {
+    "cpu_wall_seconds": 57,
+    "gpu_seconds": 0
+  },
+  "python": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+  "release": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/bootstrap-source-v1",
+  "root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200",
+  "source_manifest_sha256": "28ca30824598b4dcfd1c669b9d065e3e1fc6cb7894c5acc01f50b84364812b6b",
+  "stages": {
+    "fetch": {
+      "afterok": [],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.canonical_logit_dynamics_20260924.data_sources",
+          "--bundle",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logit_dynamics_reproduction_20260923",
+          "--data-root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/data"
+        ]
+      ],
+      "cpus": 4,
+      "gpu": false,
+      "memory_mb": 16000,
+      "minutes": 30,
+      "numerical_threads": 2,
+      "offline": false
+    }
+  }
+}

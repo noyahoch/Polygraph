@@ -1,0 +1,25 @@
+{
+  "complete": true,
+  "elapsed_seconds": 25.335822098422796,
+  "epochs": 100,
+  "files": {
+    "checkpoint.pt": "965e93d75723bc4476ea52b678f40bcd4e33ee35c9f4683186b59670815cf6bb",
+    "config.json": "257809bb9330ddb91f4d27659927138846d9eace6e188bec45d8afe084aa30c2",
+    "history.json": "4244bec5b64faad765c9158c7cfbdc9600de0f47ce66a9e20dadb108a78421ae",
+    "model.safetensors": "27c36584ca1086dd379e31aed9f3ec4b3ab82a1c134f15bb9d64e93a5f8b5a0f",
+    "normalizer.json": "299b5b3cb94c356c7a37cf30c514b3d4d8f8ec712573f23a55cf7c5a6343d2bb",
+    "resume.pt": "25343ad04a8fdb329008d2c9fb4e7411ef17ceb2938c32ff4a94557ae850cf60",
+    "validation.npz": "c37faeb71b0a07172e56234826dadf97dbb2df596b133e2536c9df820dbb2fe6"
+  },
+  "identity": {
+    "campaign_sha256": "f489a75f558d7588b946ebf5f5586e418b5473c156c6a5b88a4a071118a65268",
+    "cls_manifest_sha256": "d79c0bff547e702187e95e237d48010cf92f7703ef35b77c3072480f754b86bd",
+    "heads_checkpoint_sha256": "59001ad30b07d9c91d513d084417a17e30e7200f60fe25a2eb37bf0e05d16888",
+    "seed": 7,
+    "stage": "probe"
+  },
+  "job_id": "924825",
+  "peak_gpu_bytes": 122089984,
+  "selected_epoch": 96,
+  "validation_average_precision": 0.8610062343046305
+}

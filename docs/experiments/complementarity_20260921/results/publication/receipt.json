@@ -1,0 +1,48 @@
+{
+  "all_existing_files_unchanged": true,
+  "archive_members_verified": true,
+  "archived_file_count": 2429,
+  "configuration_sha256": "19c04dc936a958fa9864a008cf01171d4446a9b55734681294b38b1f6cbe31bd",
+  "files": {
+    "BACKUP_MANIFEST.json": {
+      "bytes": 1245,
+      "sha256": "00c416cf4d90996e77a9b256f629184cfeb85eadaeeafe6b247af3e6db030f2e"
+    },
+    "FILE_MANIFEST.json": {
+      "bytes": 391902,
+      "sha256": "5a62b0d97a95e35639fa318c5067ac05eb71c6eab7f324605cb27b8cfa12b290"
+    },
+    "PROTOCOL.md": {
+      "bytes": 12542,
+      "sha256": "1bf40959841d7a967263913e2e90a42f795844459d1c0ae1e155cf98786730ac"
+    },
+    "README.md": {
+      "bytes": 1069,
+      "sha256": "51dc5fe634fd67db1f689a60d7f3d0468496292d315c2decae31469f3beeba22"
+    },
+    "REPORT.md": {
+      "bytes": 7508,
+      "sha256": "c37e98fc576bdc1e7f33842851e2de7e995708025dc2f7ad258c0b4d0141a47e"
+    },
+    "REPORT_HE.md": {
+      "bytes": 7980,
+      "sha256": "961a7c1d3d6107bc6fcb2dd07608e873b0fa771328b335ed4f8296009f8b6a99"
+    },
+    "campaign.json": {
+      "bytes": 324200,
+      "sha256": "52a9cad66bebfd276ea536d2389a8d5acc04309ed8ae36c0636e94def6671588"
+    },
+    "scientific_state.tar.gz": {
+      "bytes": 48354170,
+      "sha256": "b0022d597ffda2c336e7791526635d7ade601fe184460cecb762b1b64238448c"
+    }
+  },
+  "finished_utc": "2026-09-21T11:22:42.404791+00:00",
+  "prefix": "complementarity_20260921_135802/snapshot_v1",
+  "previous_file_count": 1391,
+  "private": true,
+  "repo_id": "omrifahn/polygraph-experiments",
+  "revision": "769e8b48c9e33edaebac81e97405945197054c11",
+  "status": "verified",
+  "uncompressed_bytes": 65816964
+}

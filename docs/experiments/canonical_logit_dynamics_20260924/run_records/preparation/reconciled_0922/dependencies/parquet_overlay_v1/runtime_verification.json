@@ -1,0 +1,95 @@
+{
+  "canonical_reader": {
+    "index": 0,
+    "label": 49,
+    "mode": "RGB",
+    "size": [
+      32,
+      32
+    ],
+    "source": "clean_test"
+  },
+  "complete": true,
+  "distributions": {
+    "Pillow": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/PIL/__init__.py",
+      "version": "12.3.0"
+    },
+    "huggingface_hub": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/huggingface_hub/__init__.py",
+      "version": "1.30.0"
+    },
+    "numpy": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/numpy/__init__.py",
+      "version": "2.5.2"
+    },
+    "pandas": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/dependencies/parquet_overlay_v1/site/pandas/__init__.py",
+      "version": "2.3.3"
+    },
+    "pyarrow": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/dependencies/parquet_overlay_v1/site/pyarrow/__init__.py",
+      "version": "21.0.0"
+    },
+    "python-dateutil": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/dependencies/parquet_overlay_v1/site/dateutil/__init__.py",
+      "version": "2.9.0.post0"
+    },
+    "pytz": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/dependencies/parquet_overlay_v1/site/pytz/__init__.py",
+      "version": "2025.2"
+    },
+    "safetensors": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/safetensors/__init__.py",
+      "version": "0.8.0"
+    },
+    "scikit-learn": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/dependencies/overlay/site/sklearn/__init__.py",
+      "version": "1.8.0"
+    },
+    "six": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/dependencies/parquet_overlay_v1/site/six.py",
+      "version": "1.17.0"
+    },
+    "torch": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/torch/__init__.py",
+      "version": "2.14.0+cu126"
+    },
+    "torchvision": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/torchvision/__init__.py",
+      "version": "0.29.0+cu126"
+    },
+    "transformers": {
+      "file": "/tmp/canonical-parquet-924784-cmny42zg/imports/imports/transformers/__init__.py",
+      "version": "5.16.1"
+    },
+    "tzdata": {
+      "file": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/dependencies/parquet_overlay_v1/site/tzdata/__init__.py",
+      "version": "2025.2"
+    }
+  },
+  "processor": {
+    "dtype": "torch.float32",
+    "finite": true,
+    "shape": [
+      1,
+      3,
+      224,
+      224
+    ]
+  },
+  "python": "3.12.13 | packaged by conda-forge | (main, Mar  5 2026, 16:50:00) [GCC 14.3.0]",
+  "sys_path": [
+    "",
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v1",
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/dependencies/parquet_overlay_v1/site",
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/dependencies/overlay/site",
+    "/tmp/canonical-parquet-924784-cmny42zg/imports/imports",
+    "/home/yandex/MLWG2026/omrifahn/vit_attn/env/miniforge/envs/vit/lib/python312.zip",
+    "/home/yandex/MLWG2026/omrifahn/vit_attn/env/miniforge/envs/vit/lib/python3.12",
+    "/home/yandex/MLWG2026/omrifahn/vit_attn/env/miniforge/envs/vit/lib/python3.12/lib-dynload",
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/lib/python3.12/site-packages",
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env-overnight-graph/lib/python3.12/site-packages",
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages"
+  ]
+}

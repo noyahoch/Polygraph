@@ -1,0 +1,15 @@
+{
+  "created_utc": "2026-09-21T09:24:59.221173+00:00",
+  "configuration_sha256": "8f03bcfeeba2bef3e8544d46ec12be37336000eb1da70dfbe74759c989f137d7",
+  "command": [
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+    "-B",
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/submit_recovery_v2.py",
+    "--config",
+    "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/config_replay_completion_20260921_v1.json",
+    "--phase",
+    "full",
+    "--approved-config-sha256",
+    "8f03bcfeeba2bef3e8544d46ec12be37336000eb1da70dfbe74759c989f137d7"
+  ]
+}

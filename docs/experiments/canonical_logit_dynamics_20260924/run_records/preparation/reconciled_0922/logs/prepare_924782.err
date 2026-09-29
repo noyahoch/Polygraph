@@ -1,0 +1,36 @@
+/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/env/lib/python3.12/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+Traceback (most recent call last):
+  File "/home/yandex/MLWG2026/omrifahn/vit_attn/env/miniforge/envs/vit/lib/python3.12/importlib/metadata/__init__.py", line 397, in from_name
+    return next(cls.discover(name=name))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+StopIteration
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v1/pilots/canonical_logit_dynamics_20260924/ops/check_imports.py", line 32, in <module>
+    main()
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v1/pilots/canonical_logit_dynamics_20260924/ops/check_imports.py", line 26, in main
+    syntax_files=checked, imported_modules=list(modules), runtime=runtime())
+                                                                  ^^^^^^^^^
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v1/pilots/canonical_logit_dynamics_20260924/protocol.py", line 153, in runtime
+    return {"python": platform.python_version(), "packages": {p: importlib.metadata.version(p) for p in packages}}
+                                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yandex/MLWG2026/omrifahn/vit_attn/env/miniforge/envs/vit/lib/python3.12/importlib/metadata/__init__.py", line 889, in version
+    return distribution(distribution_name).version
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yandex/MLWG2026/omrifahn/vit_attn/env/miniforge/envs/vit/lib/python3.12/importlib/metadata/__init__.py", line 862, in distribution
+    return Distribution.from_name(distribution_name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yandex/MLWG2026/omrifahn/vit_attn/env/miniforge/envs/vit/lib/python3.12/importlib/metadata/__init__.py", line 399, in from_name
+    raise PackageNotFoundError(name)
+importlib.metadata.PackageNotFoundError: No package metadata was found for pandas
+Traceback (most recent call last):
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v1/pilots/canonical_logit_dynamics_20260924/ops/stage_runner.py", line 126, in <module>
+    main()
+  File "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v1/pilots/canonical_logit_dynamics_20260924/ops/stage_runner.py", line 115, in main
+    raise RuntimeError('Scientific command failed with code ' + str(result.returncode))
+RuntimeError: Scientific command failed with code 1

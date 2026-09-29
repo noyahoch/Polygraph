@@ -1,0 +1,10 @@
+{
+  "commit_oid": "86605781c0528e286483e305072f7787393da860",
+  "commit_url": "https://huggingface.co/omrifahn/polygraph-experiments/commit/86605781c0528e286483e305072f7787393da860",
+  "experiment_status": "complete",
+  "manifest_sha256": "f2e17250d314568bf7b5815b5eea7d79720e8c9bb24d35289f58530f974ed572",
+  "private": true,
+  "repo_id": "omrifahn/polygraph-experiments",
+  "snapshot": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/publication/snapshot_910575",
+  "status": "uploaded"
+}

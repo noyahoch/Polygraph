@@ -1,0 +1,39 @@
+{
+  "campaign_sha256": "52a9cad66bebfd276ea536d2389a8d5acc04309ed8ae36c0636e94def6671588",
+  "complete": true,
+  "draw_ids": "0..1999",
+  "draws": 2000,
+  "files": {
+    "statistics/draw_manifest.npz": "c2f11cb1cc9184ec370ed0e0c4a3d241abc635d6a3a28680e8d965693f0256fd"
+  },
+  "photo_order": "ascending numeric image_id",
+  "primary_quantiles": [
+    0.0083333333,
+    0.9916666667
+  ],
+  "secondary_quantiles": [
+    0.025,
+    0.975
+  ],
+  "seed_sequence_entropy": 20260921,
+  "streams": {
+    "ablation_assessment": {
+      "photographs": 800,
+      "spawn_key": [
+        2
+      ]
+    },
+    "fusion_assessment": {
+      "photographs": 400,
+      "spawn_key": [
+        1
+      ]
+    },
+    "fusion_fit": {
+      "photographs": 400,
+      "spawn_key": [
+        0
+      ]
+    }
+  }
+}

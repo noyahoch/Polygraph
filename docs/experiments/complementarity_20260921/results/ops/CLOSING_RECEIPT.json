@@ -1,0 +1,31 @@
+{
+  "status": "OPERATIONALLY_COMPLETE_PENDING_ROOT_SCIENTIFIC_REVIEW",
+  "root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/complementarity_20260921_135802",
+  "configuration_sha256": "19c04dc936a958fa9864a008cf01171d4446a9b55734681294b38b1f6cbe31bd",
+  "source_manifest_sha256": "4f2debe7aaa861c44538240ce624d4ff1ad4e4160dbe538f1f1298e24db08fed",
+  "jobs": ["915915", "915916", "915917", "915918", "915919", "915920", "915921", "915922", "915923", "915924", "915946", "915947", "915948"],
+  "all_jobs_completed": true,
+  "failed_scientific_jobs": [],
+  "queue_empty_at_utc": "2026-09-21T11:23:30.767107+00:00",
+  "gpu_seconds": 382,
+  "cpu_job_wall_seconds": 816,
+  "calendar_seconds": 1044,
+  "all_2000_draws_processed": true,
+  "all_primary_intervals_available": true,
+  "private_backup": {
+    "repository": "omrifahn/polygraph-experiments",
+    "revision": "769e8b48c9e33edaebac81e97405945197054c11",
+    "prefix": "complementarity_20260921_135802/snapshot_v1",
+    "status": "verified",
+    "archive_members_verified": true,
+    "archived_file_count": 2429,
+    "previous_hub_files_unchanged": 1391,
+    "manifest_sha256": "00c416cf4d90996e77a9b256f629184cfeb85eadaeeafe6b247af3e6db030f2e"
+  },
+  "preserved_parent_artifacts_unchanged": true,
+  "retrieved_report_files_match_private_snapshot": true,
+  "scientific_source_or_settings_changed": false,
+  "local_commits_by_operator": false,
+  "push_merge_or_overleaf_edits": false,
+  "further_submissions_pending": false
+}

@@ -1,0 +1,24 @@
+{
+  "commands": [],
+  "configuration_sha256": "38bd1734a7a45e7e0a4c5e5ffadc1b54f0a9c493902678d41a7b10b646c3da4c",
+  "hostname": "s-005",
+  "imports": {
+    "archive_bytes": 55418880,
+    "archive_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+    "local_package_root": "/tmp/canonical-924824-f1uisbw2/imports/imports",
+    "native_libraries": "Original pinned environment paths; unchanged",
+    "packages": {
+      "torch-geometric": "2.6.1",
+      "transformers": "5.16.1"
+    },
+    "precedence": "Experiment cwd first for -m; staged package trees precede installed copies",
+    "preparation_seconds": 1.725835345685482
+  },
+  "job_id": "924824",
+  "parquet_overlay_manifest_sha256": "b8e316b7e55718669695297cd1322fefcfcbbbe00697da2e59ed3439bc8e0008",
+  "source_manifest_sha256": "7949aa99337f4f81e60827f64284c0e04da1456ab8ca78dbe532d0d13c74f50f",
+  "stage": "fit2",
+  "started_utc": "2026-09-24T07:19:08.120988+00:00",
+  "status": "running",
+  "user": "omrifahn"
+}

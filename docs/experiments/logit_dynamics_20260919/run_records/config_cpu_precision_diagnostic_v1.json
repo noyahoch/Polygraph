@@ -1,0 +1,69 @@
+{
+  "aggregate_gpu_hour_ceiling_including_preflight_and_retries": 12,
+  "audit_scope": "Remaining saved metadata/14 point metrics/bootstrap aggregation; seed17 validation violating records and affected-row FP32/FP64 boundaries/contributions. Prior audit failure remains uncleared.",
+  "authorization": {
+    "approved_by": "root coordinator following static review",
+    "approved_scope": "One10-minute CPU diagnostic,6CPU16GB/exclude s-004/noGPU; immutable reviewed script; preserve prior audit failure/tolerance; no scientific-source/model/output mutation",
+    "audit_script_sha256": "7b1ac1267bafb5c13c621a7f487cc723029c253df0206d713f1a7a8d3a3cae1d",
+    "published_revision": "86605781c0528e286483e305072f7787393da860",
+    "recorded_utc": "2026-09-19T13:04:35.484216+00:00"
+  },
+  "environment": {
+    "hf_hub_cache": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/topology_20260910/cache/huggingface/hub",
+    "import_bundle_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+    "overlay_manifest_sha256": "66e9b9f841830177525f5baf7c806713fe23a25de704bdce8ac2c2fcd48fab6c",
+    "pilot_root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914"
+  },
+  "job_prefix": "ld0919-114500",
+  "max_concurrent_gpus": 3,
+  "operational_recovery": {
+    "evaluation_gate_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0"
+  },
+  "operator_submit_sha256": "3a23fda0ba088fe585998c1e80ea5542dd8f0a41f51b23e782d1cbe2cb948d25",
+  "phases": {
+    "full": [
+      "cpu_precision_diagnostic_v1"
+    ]
+  },
+  "python": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+  "release": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370",
+  "root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+  "schema_version": 1,
+  "scientific_compute_policy": "Slurm jobs only; preserve all old artifacts",
+  "scope": "logit_dynamics_20260919",
+  "source_identity_sha256": "400f1fbbc105a370756e5831fe37dda45b7d288cb80f40d848be034d035252da",
+  "source_manifest_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+  "stages": {
+    "cpu_precision_diagnostic_v1": {
+      "afterok": [],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-c",
+          "from pathlib import Path; import hashlib; assert hashlib.sha256(Path('/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/audit_cpu_diagnostic_v1.py').read_bytes()).hexdigest()=='7b1ac1267bafb5c13c621a7f487cc723029c253df0206d713f1a7a8d3a3cae1d'"
+        ],
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/audit_cpu_diagnostic_v1.py",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--release",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370",
+          "--published-dir",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/published_86605781",
+          "--out",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/cpu_precision_diagnostic_v1.json"
+        ]
+      ],
+      "cpus": 6,
+      "exclude_nodes": [
+        "s-004"
+      ],
+      "gpu": false,
+      "memory_mb": 16000,
+      "minutes": 10
+    }
+  }
+}

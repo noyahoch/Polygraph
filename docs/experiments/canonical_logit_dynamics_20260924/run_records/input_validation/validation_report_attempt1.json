@@ -1,0 +1,295 @@
+{
+  "canonical_sources": [
+    "clean_test",
+    "clean_train",
+    "brightness",
+    "contrast",
+    "defocus_blur",
+    "elastic_transform",
+    "fog",
+    "frost",
+    "gaussian_blur",
+    "gaussian_noise",
+    "glass_blur",
+    "impulse_noise",
+    "jpeg_compression",
+    "motion_blur",
+    "pixelate",
+    "saturate",
+    "shot_noise",
+    "snow",
+    "spatter",
+    "speckle_noise",
+    "zoom_blur"
+  ],
+  "checked_at_utc": "2026-09-24T05:52:43.383980+00:00",
+  "checks": {
+    "disjoint_all_four_photo_roles": {
+      "detail": {
+        "base_validation__meta_validation": 0,
+        "base_validation__test": 0,
+        "detector_train__base_validation": 0,
+        "detector_train__meta_validation": 0,
+        "detector_train__test": 0,
+        "meta_validation__test": 0
+      },
+      "passed": true
+    },
+    "file_sha256": {
+      "detail": {
+        "data/graph_dataset/scan_records.jsonl": "a999d53f7a71f79794f882809fdfa6541126ec55c8c347752d520b7de88dfe4f",
+        "runs/research_20260830/combiners/strict/main/combiner_eval_plan.json": "e599e06cf2e7a7cad8652e9fc29feae1eca78479c2830263b2a09424d21d2091",
+        "runs/research_20260830/combiners/strict/main/detector_train_plan.json": "44e1aef95e78be4d82d5582d6629582e09165b996c3f8b4da653ef5bb9be35be",
+        "runs/topology_depth_last4_20260905/final/best_scores_main.npz": "186a7b76ad21a4f11fe59f46fbdc9763a3362e157e3be592732d4d0c3e74e737"
+      },
+      "passed": true
+    },
+    "npz_historical_confidence_exact_storage_dtype": {
+      "detail": {
+        "max_abs_float64_difference": 0.0
+      },
+      "passed": true
+    },
+    "npz_historical_error_labels": {
+      "detail": {
+        "mismatches": 0
+      },
+      "passed": true
+    },
+    "npz_numeric_arrays_finite": {
+      "detail": null,
+      "passed": true
+    },
+    "ordered_base_validation_equals_combiner_train": {
+      "detail": null,
+      "passed": true
+    },
+    "ordered_npz_test_key_alignment": {
+      "detail": null,
+      "passed": true
+    },
+    "ordered_same_test": {
+      "detail": null,
+      "passed": true
+    },
+    "scan_integrity": {
+      "detail": null,
+      "passed": true
+    },
+    "score_seed_set": {
+      "detail": null,
+      "passed": true
+    },
+    "selected_75000_unique_keys": {
+      "detail": 75000,
+      "passed": true
+    },
+    "selected_membership_in_scan": {
+      "detail": null,
+      "passed": true
+    },
+    "selection_metadata": {
+      "detail": null,
+      "passed": true
+    },
+    "split_counts": {
+      "detail": {
+        "combiner": {
+          "test": 17000,
+          "train": 2991,
+          "val": 3009
+        },
+        "detector": {
+          "test": 17000,
+          "train": 52000,
+          "val": 2991
+        }
+      },
+      "passed": true
+    },
+    "unique_keys_within_splits": {
+      "detail": null,
+      "passed": true
+    }
+  },
+  "elapsed_seconds": 14.913960413075984,
+  "exception": "Traceback (most recent call last):\n  File \"/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/validate_bundle.py\", line 158, in main\n    report[\"per_seed_metrics\"] = {str(seed): metrics(data[\"y\"], data[f\"score_seed{seed}\"])\n                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"canonical_evaluate.py::detector_metrics\", line 25, in detector_metrics\nModuleNotFoundError: No module named 'sklearn'\n",
+  "npz_schema": {
+    "confidence": {
+      "dtype": "float32",
+      "shape": [
+        17000
+      ]
+    },
+    "image_id": {
+      "dtype": "int32",
+      "shape": [
+        17000
+      ]
+    },
+    "method_name": {
+      "dtype": "<U17",
+      "shape": []
+    },
+    "score_seed1": {
+      "dtype": "float32",
+      "shape": [
+        17000
+      ]
+    },
+    "score_seed2": {
+      "dtype": "float32",
+      "shape": [
+        17000
+      ]
+    },
+    "score_seed7": {
+      "dtype": "float32",
+      "shape": [
+        17000
+      ]
+    },
+    "selected_by": {
+      "dtype": "<U23",
+      "shape": []
+    },
+    "severity": {
+      "dtype": "int8",
+      "shape": [
+        17000
+      ]
+    },
+    "source_id": {
+      "dtype": "int16",
+      "shape": [
+        17000
+      ]
+    },
+    "store_index": {
+      "dtype": "int64",
+      "shape": [
+        17000
+      ]
+    },
+    "y": {
+      "dtype": "int8",
+      "shape": [
+        17000
+      ]
+    }
+  },
+  "npz_selection": {
+    "method_name": "A_edge_gated_mean",
+    "selected_by": "mean OOF meta_val AUROC"
+  },
+  "passed": false,
+  "photo_counts": {
+    "base_validation": 498,
+    "detector_train": 6985,
+    "meta_validation": 499,
+    "test": 1998
+  },
+  "plan_config": {
+    "combiner": {
+      "base_val_fraction": 0.5,
+      "caps": {
+        "test": 8500,
+        "train": 26000,
+        "val": 3000
+      },
+      "fractions": [
+        0.7,
+        0.1,
+        0.2
+      ],
+      "held_out": [
+        "gaussian_blur",
+        "saturate",
+        "spatter",
+        "speckle_noise"
+      ],
+      "purpose": "strict_combiner_scoring",
+      "seed": 7,
+      "source_plan": "data/graph_dataset/split_plan_main.json",
+      "stratified": true,
+      "strict_meta_seed": 20260830
+    },
+    "detector": {
+      "base_val_fraction": 0.5,
+      "caps": {
+        "test": 8500,
+        "train": 26000,
+        "val": 3000
+      },
+      "fractions": [
+        0.7,
+        0.1,
+        0.2
+      ],
+      "held_out": [
+        "gaussian_blur",
+        "saturate",
+        "spatter",
+        "speckle_noise"
+      ],
+      "purpose": "strict_detector_training",
+      "seed": 7,
+      "source_plan": "data/graph_dataset/split_plan_main.json",
+      "stratified": true,
+      "strict_meta_seed": 20260830
+    }
+  },
+  "role_error_counts": {
+    "base_validation": {
+      "errors": 1456,
+      "n": 2991
+    },
+    "detector_train": {
+      "errors": 26000,
+      "n": 52000
+    },
+    "meta_validation": {
+      "errors": 1544,
+      "n": 3009
+    },
+    "test": {
+      "errors": 8500,
+      "n": 17000
+    }
+  },
+  "root": "logit_dynamics_reproduction_20260923",
+  "scan": {
+    "issues": {},
+    "rows": 1010000,
+    "source_counts": {
+      "brightness": 50000,
+      "clean_test": 10000,
+      "clean_train": 50000,
+      "contrast": 50000,
+      "defocus_blur": 50000,
+      "elastic_transform": 50000,
+      "fog": 50000,
+      "frost": 50000,
+      "gaussian_blur": 50000,
+      "gaussian_noise": 50000,
+      "glass_blur": 50000,
+      "impulse_noise": 50000,
+      "jpeg_compression": 50000,
+      "motion_blur": 50000,
+      "pixelate": 50000,
+      "saturate": 50000,
+      "shot_noise": 50000,
+      "snow": 50000,
+      "spatter": 50000,
+      "speckle_noise": 50000,
+      "zoom_blur": 50000
+    },
+    "unique_keys": 1010000
+  },
+  "slurm_job_id": "924758",
+  "validator_source_sha256": {
+    "canonical_config.py": "35dd6a6d4c32711b5a1a04c0e3a56bb6ba9aa60c298e2b832440aeddf41029c4",
+    "canonical_evaluate.py": "4073a234ee27b0b2d8be948eb851dcee069ecba75e07c1bf5708a048b681364a",
+    "validate_bundle.py": "cccf973c67a83dd143ca627902d6ef381ad473a92c6ac90a0e5dae34f377fea7"
+  }
+}

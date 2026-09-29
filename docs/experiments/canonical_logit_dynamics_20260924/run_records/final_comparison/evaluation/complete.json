@@ -1,0 +1,19 @@
+{
+  "complete": true,
+  "files": {
+    "REPORT.md": "0aae847a1e06ad68facef5f82863a19636429f16bc747543858c0215ea1b8fe7",
+    "bootstrap_draw_manifest.json": "761c568be2576ff151c52f555a18a6b7a6835fb3f390f95ec9c640fddc82ce7e",
+    "bootstrap_groups.json": "d95cc5e317e7993f36818e608d79ec6827eb1c31583c66358ced1c9b1d0fcfa1",
+    "report.json": "8a87c4744a23ad961be76dc12f636f14dfdc0eb75b15ee24dff7a722dc93f454",
+    "scores.npz": "1fd8f1cb6be96c59d73be4913a49ad2316ebcdc0c75db992d3b943141da8abf7"
+  },
+  "inputs": {
+    "campaign_sha256": "f489a75f558d7588b946ebf5f5586e418b5473c156c6a5b88a4a071118a65268",
+    "freeze_sha256": "427ac424bb9cf3b7426f19f356c4f1579a3699f0dc1bb8046774afe4bac06a9d",
+    "polygraph_sha256": "186a7b76ad21a4f11fe59f46fbdc9763a3362e157e3be592732d4d0c3e74e737",
+    "seed1": "f5ba07bc8908de546992127ca2e02c1249d3240e373074d8b1fe69979807f3cb",
+    "seed2": "5f71ef5dc5226b7c53e495256134bed4a4a92b5d4a4db5da3578d9943d05252b",
+    "seed7": "c7c944d6fee45f01b5c7585384332d3e1ea5b8512d4399cf8dee2424f63d9446"
+  },
+  "job_id": "924830"
+}

@@ -1,0 +1,17 @@
+{
+  "audit_execution_complete": true,
+  "checked_utc": "2026-09-21T09:43:19.184501+00:00",
+  "heartbeat_modified": false,
+  "jobs_submitted_this_scope": [
+    "915652",
+    "915653"
+  ],
+  "local_publication_receipt_sha256": "a7ff594a8acf81a4dfc75e6800f422b8c87b67e2be60b86261965da2aeb878c8",
+  "new_gpu_seconds": 283,
+  "new_science_jobs_planned": false,
+  "original_gpu_seconds": 14376,
+  "private_backup_verified": true,
+  "queue": [],
+  "remote_publication_receipt_sha256": "a7ff594a8acf81a4dfc75e6800f422b8c87b67e2be60b86261965da2aeb878c8",
+  "total_gpu_seconds": 14659
+}

@@ -1,0 +1,1 @@
+{"timestamp":"2026-09-24T06:03:34.812291Z","level":"ERROR","fields":{"message":"Error logging to file \"/a/home/cc/students/math/omrifahn/.cache/huggingface/xet/logs/xet_20260924T090334782+0300_2073077.log\" (Disk quota exceeded (os error 122)); falling back to console logging."},"filename":"/home/runner/work/xet-core/xet-core/xet_runtime/src/logging/init.rs","line_number":64}

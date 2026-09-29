@@ -1,0 +1,193 @@
+{
+  "aggregate_gpu_hour_ceiling_including_preflight_and_retries": 12,
+  "authorization": "Prepared for root review; submit only after root approves this exact config hash and original prediction unsuccessfully terminates with all original processes and downstream dependencies reconciled.",
+  "environment": {
+    "hf_hub_cache": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/topology_20260910/cache/huggingface/hub",
+    "import_bundle_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+    "overlay_manifest_sha256": "66e9b9f841830177525f5baf7c806713fe23a25de704bdce8ac2c2fcd48fab6c",
+    "pilot_root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914"
+  },
+  "job_prefix": "ld0919-114500",
+  "max_concurrent_gpus": 3,
+  "operational_recovery": {
+    "complete_predictions_verify_and_skip": true,
+    "evaluation_gate_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0",
+    "exact_original_prediction_commands": true,
+    "existing_freeze_dependency": "Cryptographically verified complete receipt rather than an expired scheduler job dependency",
+    "existing_freeze_job": "910062",
+    "no_training_or_freeze_resubmission": true,
+    "node_exclusion_reason": "Operational workaround following unusually slow s-004 operations and observed RPC wait; s-004 is not a proven root cause.",
+    "original_analysis_job": "910064",
+    "original_backup_job": "910065",
+    "original_config_sha256": "6f9db29db035974c6dc08fc249f694ccea1273abde8078de20a8d96d4fb94194",
+    "original_prediction_job": "910063",
+    "prior_attempt_reconciliation": "No retry jobs in sacct or squeue; predict7_retry1.intent.json is the only rejected submission intent and remains preserved",
+    "prior_rejected_config_sha256": "9d28852754f236f3820a015d6478e94bf1eb682a41e89fc19c42c8965080d181",
+    "required_pre_submission_checks": [
+      "Original 910063 terminal unsuccessfully and identity matched; abandon recovery if it succeeds",
+      "All original 910063 processes gone; no overlap with any retry",
+      "Original analysis/backup dependencies reconciled and no old downstream job can execute concurrently",
+      "All three original fits and freeze receipt still complete with exact bound evaluation gate",
+      "No recovery submission intent or receipt exists unless reconciled as an already submitted identical stage",
+      "Root approved exact configuration hash before submission"
+    ],
+    "scheduler_dependency_amendment": "Remove old completed 910062 scheduler dependency after scheduler validation returned Job dependency problem. Submit helper verifies the sealed gate, and unchanged train.predict validates it again. Analysis still requires success of all three new predictions; backup requires analysis success.",
+    "source_release_unchanged": true
+  },
+  "operator_submit_sha256": "3a23fda0ba088fe585998c1e80ea5542dd8f0a41f51b23e782d1cbe2cb948d25",
+  "phases": {
+    "full": [
+      "predict7_retry2",
+      "predict17_retry2",
+      "predict27_retry2",
+      "analysis_retry2",
+      "backup_retry2"
+    ]
+  },
+  "preflight_bound_receipts": {
+    "ops/baseline_schema_validation.json": "83cf57f070d86c59269f37a15c2b255cf06fa875fe0d41d6faad46d15e496e4b",
+    "ops/stage_receipts/preflight_910039.json": "b3aa9810bf6bdadf694d2193e29e27077abdf75c68930a8c221ae53aa7989a4e",
+    "ops/stage_receipts/validation_v2_910046.json": "c6ead00ffb628dd526ac7b59964e02bb9718d8cc24a1a376f52fa3ac65712d6b",
+    "smoke/preflight_v1/preflight_cls/manifest.json": "cb69bf4b3c22dc54540d9f64b4295eaa7bc5a67491b5bf46b7ed0d9e0f75eb2f",
+    "smoke/preflight_v1/preflight_complete.json": "1f89441efe23d8f6ae053dcc26a4fae2c12e5b2df454f5cea8e43c1615f2a9e1"
+  },
+  "python": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+  "release": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370",
+  "resource_review": {
+    "accounting_basis": "Completed actual GPU allocations plus original prediction up to its unchanged 30-minute cap plus three 45-minute retry reservations. Unused completed-stage caps are not counted as consumption.",
+    "aggregate_ceiling_gpu_seconds": 43200,
+    "completed_gpu_seconds": 12033,
+    "completed_gpu_seconds_by_stage": {
+      "extract": 9242,
+      "fit17": 573,
+      "fit27": 573,
+      "fit7": 1306,
+      "preflight": 339
+    },
+    "maximum_concurrent_gpus": 3,
+    "new_prediction_reservation_seconds": 8100,
+    "original_prediction_actual_gpu_seconds": 1819,
+    "original_prediction_upper_bound_seconds": 1819,
+    "snapshot": "status_20260919T121238Z.json",
+    "worst_case_aggregate_gpu_hms": "6:05:52",
+    "worst_case_aggregate_gpu_seconds": 21952
+  },
+  "root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+  "schema_version": 1,
+  "scientific_compute_policy": "Slurm jobs only; preserve all old artifacts",
+  "scope": "logit_dynamics_20260919",
+  "source_identity_sha256": "400f1fbbc105a370756e5831fe37dda45b7d288cb80f40d848be034d035252da",
+  "source_manifest_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+  "stages": {
+    "analysis_retry2": {
+      "afterok": [
+        "predict7_retry2",
+        "predict17_retry2",
+        "predict27_retry2"
+      ],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.evaluate",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500"
+        ]
+      ],
+      "cpus": 4,
+      "gpu": false,
+      "memory_mb": 16000,
+      "minutes": 120
+    },
+    "backup_retry2": {
+      "afterok": [
+        "analysis_retry2"
+      ],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370/ops/backup.py",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--release",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370"
+        ]
+      ],
+      "cpus": 4,
+      "gpu": false,
+      "memory_mb": 16000,
+      "minutes": 30
+    },
+    "predict17_retry2": {
+      "afterok": [],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.train",
+          "predict",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--seed",
+          "17"
+        ]
+      ],
+      "cpus": 6,
+      "exclude_nodes": [
+        "s-004"
+      ],
+      "gpu": true,
+      "memory_mb": 32000,
+      "minutes": 45
+    },
+    "predict27_retry2": {
+      "afterok": [],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.train",
+          "predict",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--seed",
+          "27"
+        ]
+      ],
+      "cpus": 6,
+      "exclude_nodes": [
+        "s-004"
+      ],
+      "gpu": true,
+      "memory_mb": 32000,
+      "minutes": 45
+    },
+    "predict7_retry2": {
+      "afterok": [],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-m",
+          "pilots.logit_dynamics_20260919.train",
+          "predict",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--seed",
+          "7"
+        ]
+      ],
+      "cpus": 6,
+      "exclude_nodes": [
+        "s-004"
+      ],
+      "gpu": true,
+      "memory_mb": 32000,
+      "minutes": 45
+    }
+  }
+}

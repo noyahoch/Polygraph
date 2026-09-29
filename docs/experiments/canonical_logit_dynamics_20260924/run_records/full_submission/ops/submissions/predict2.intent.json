@@ -1,0 +1,37 @@
+{
+  "account": "gpu-students",
+  "command": [
+    "sbatch",
+    "--parsable",
+    "--account=gpu-students",
+    "--no-requeue",
+    "--partition=studentbatch",
+    "--job-name=canonical0924-085200-predict2",
+    "--time=20",
+    "--nodes=1",
+    "--ntasks=1",
+    "--cpus-per-task=4",
+    "--mem=16000",
+    "--output=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logs/predict2_%j.out",
+    "--error=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logs/predict2_%j.err",
+    "--chdir=/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v2",
+    "--kill-on-invalid-dep=yes",
+    "--gpus=1",
+    "--constraint=geforce_rtx_2080",
+    "--exclude=s-004",
+    "--dependency=afterok:924826",
+    "--wrap",
+    "exec /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python -B /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/releases/science-source-v2/pilots/canonical_logit_dynamics_20260924/ops/stage_runner.py --config /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/ops/config_science_v4.json --config-sha256 38bd1734a7a45e7e0a4c5e5ffadc1b54f0a9c493902678d41a7b10b646c3da4c --stage predict2"
+  ],
+  "configuration_sha256": "38bd1734a7a45e7e0a4c5e5ffadc1b54f0a9c493902678d41a7b10b646c3da4c",
+  "created_utc": "2026-09-24T06:52:21.333182+00:00",
+  "dependencies": [
+    "924826"
+  ],
+  "job_name": "canonical0924-085200-predict2",
+  "reserved_cpu_wall_seconds": 0,
+  "reserved_gpu_seconds": 1200,
+  "sealed_completed_dependencies": [],
+  "stage": "predict2",
+  "user": "omrifahn"
+}

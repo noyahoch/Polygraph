@@ -1,0 +1,41 @@
+{
+  "commands": [
+    {
+      "argv": [
+        "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+        "-B",
+        "-m",
+        "pilots.canonical_logit_dynamics_20260924.data_sources",
+        "--bundle",
+        "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/logit_dynamics_reproduction_20260923",
+        "--data-root",
+        "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/data"
+      ],
+      "elapsed_seconds": 147.36119495518506,
+      "returncode": 1
+    }
+  ],
+  "configuration_sha256": "cc1c503bc3efa4ec0690b44190dba76af072b2a01ffc04de003c4f45f419a03b",
+  "elapsed_seconds": 150.6869217888452,
+  "error": "RuntimeError('Scientific command failed with code 1')",
+  "failed_utc": "2026-09-24T06:03:44.898115+00:00",
+  "hostname": "rack-iscb-31",
+  "imports": {
+    "archive_bytes": 55418880,
+    "archive_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+    "local_package_root": "/tmp/canonical-924773-4b_1kudk/imports/imports",
+    "native_libraries": "Original pinned environment paths; unchanged",
+    "packages": {
+      "torch-geometric": "2.6.1",
+      "transformers": "5.16.1"
+    },
+    "precedence": "Experiment cwd first for -m; staged package trees precede installed copies",
+    "preparation_seconds": 3.1666217520833015
+  },
+  "job_id": "924773",
+  "source_manifest_sha256": "28ca30824598b4dcfd1c669b9d065e3e1fc6cb7894c5acc01f50b84364812b6b",
+  "stage": "fetch",
+  "started_utc": "2026-09-24T06:01:14.173611+00:00",
+  "status": "failed",
+  "user": "omrifahn"
+}

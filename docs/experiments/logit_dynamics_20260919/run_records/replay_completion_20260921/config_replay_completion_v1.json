@@ -1,0 +1,111 @@
+{
+  "aggregate_gpu_hour_ceiling_including_preflight_and_retries": 12,
+  "audit_scope": "Complete all three published-model validation/development replays, separately CPU/CUDA; CPU independently recalculates paired bootstrap. No training, original predictions/settings/tolerance preserved.",
+  "authorization": {
+    "approved_by": "root coordinator after static and independent review",
+    "completed_plus_reserved_gpu_seconds": 15276,
+    "cpu_wall_minutes": 20,
+    "gpu_wall_minutes": 15,
+    "local_source_commit": "42ef421",
+    "original_completed_gpu_seconds": 14376,
+    "published_revision": "86605781c0528e286483e305072f7787393da860",
+    "recorded_utc": "2026-09-21T09:23:35.199174+00:00",
+    "scope": "Exactly CPU20min6CPU16GB plus CUDA15min1RTX2080GPU6CPU16GB, excluding s-004; published all3seed validation/dev replay and independent CPU paired bootstrap; no training, source/settings/tolerance changes or original-output replacement.",
+    "script_sha256": "582a308a4b8b0ba4f1ef0f0114129761989434d2768f5d663e8bc589ab3dde55",
+    "status": "APPROVED"
+  },
+  "environment": {
+    "hf_hub_cache": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/topology_20260910/cache/huggingface/hub",
+    "import_bundle_sha256": "9842ee48453ba44e4f043c7cbad41aecef2230da759de238ec45c35319bc262f",
+    "overlay_manifest_sha256": "66e9b9f841830177525f5baf7c806713fe23a25de704bdce8ac2c2fcd48fab6c",
+    "pilot_root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914"
+  },
+  "job_prefix": "ld0921-replay",
+  "max_concurrent_gpus": 3,
+  "operational_recovery": {
+    "evaluation_gate_sha256": "8918ff80c58a74e53a747fb0c054fe18b93e0f3dd06d64ebb1ff1d42741c4ab0"
+  },
+  "operator_submit_sha256": "3a23fda0ba088fe585998c1e80ea5542dd8f0a41f51b23e782d1cbe2cb948d25",
+  "phases": {
+    "full": [
+      "replay_completion_20260921_cpu_v1",
+      "replay_completion_20260921_cuda_v1"
+    ]
+  },
+  "python": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+  "release": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370",
+  "root": "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+  "schema_version": 1,
+  "scientific_compute_policy": "Slurm jobs only; preserve all old artifacts",
+  "scope": "logit_dynamics_20260919",
+  "source_identity_sha256": "400f1fbbc105a370756e5831fe37dda45b7d288cb80f40d848be034d035252da",
+  "source_manifest_sha256": "d78438ba6a0c512ab66e5b59a16a772b0c4d972e39e9bf57ceb043b8936144b3",
+  "stages": {
+    "replay_completion_20260921_cpu_v1": {
+      "afterok": [],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-c",
+          "from pathlib import Path; import hashlib; assert hashlib.sha256(Path('/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/audit_replay_completion_20260921_v1.py').read_bytes()).hexdigest()=='582a308a4b8b0ba4f1ef0f0114129761989434d2768f5d663e8bc589ab3dde55'"
+        ],
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/audit_replay_completion_20260921_v1.py",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--release",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370",
+          "--published-dir",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/published_86605781",
+          "--backend",
+          "cpu",
+          "--out",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/replay_completion_20260921_cpu_v1.json"
+        ]
+      ],
+      "cpus": 6,
+      "exclude_nodes": [
+        "s-004"
+      ],
+      "gpu": false,
+      "memory_mb": 16000,
+      "minutes": 20
+    },
+    "replay_completion_20260921_cuda_v1": {
+      "afterok": [],
+      "commands": [
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "-c",
+          "from pathlib import Path; import hashlib; assert hashlib.sha256(Path('/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/audit_replay_completion_20260921_v1.py').read_bytes()).hexdigest()=='582a308a4b8b0ba4f1ef0f0114129761989434d2768f5d663e8bc589ab3dde55'"
+        ],
+        [
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/layer_ensemble_20260914/env/bin/python",
+          "-B",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/ops/audit_replay_completion_20260921_v1.py",
+          "--root",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500",
+          "--release",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/releases/release-400f1fbbc105a370",
+          "--published-dir",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/published_86605781",
+          "--backend",
+          "cuda",
+          "--out",
+          "/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/audit/replay_completion_20260921_cuda_v1.json"
+        ]
+      ],
+      "cpus": 6,
+      "exclude_nodes": [
+        "s-004"
+      ],
+      "gpu": true,
+      "memory_mb": 16000,
+      "minutes": 15
+    }
+  }
+}

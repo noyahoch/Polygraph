@@ -1,0 +1,21 @@
+{
+  "checked_utc": "2026-09-19T12:14:21.910556+00:00",
+  "purpose": "Read-only operational metadata only, in existing allocation 910063; no tensor reads",
+  "command": [
+    "srun",
+    "--jobid=910063",
+    "--overlap",
+    "--exact",
+    "--nodes=1",
+    "--ntasks=1",
+    "--cpus-per-task=1",
+    "--gres=none",
+    "--immediate=5",
+    "--time=1",
+    "/usr/bin/python3",
+    "-"
+  ],
+  "returncode": 0,
+  "stdout": "{\"checked_utc\": \"2026-09-19T12:14:22.102808+00:00\", \"processes\": [{\"pid\": 3727340, \"state\": \"D\", \"utime_ticks\": 1571, \"stime_ticks\": 686, \"threads\": 12, \"rss_pages\": 202612, \"wchan\": \"rpc_wait_bit_killable\", \"io\": \"rchar: 80412090\\nwchar: 91765\\nsyscr: 8156\\nsyscw: 30\\nread_bytes: 0\\nwrite_bytes: 8192\\ncancelled_write_bytes: 4096\\n\", \"fds\": [{\"fd\": \"1\", \"target\": \"/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/predictions_910063.out\", \"fdinfo\": \"pos:\\t409\\nflags:\\t0102001\\nmnt_id:\\t66\\nino:\\t2143294827\\n\"}, {\"fd\": \"2\", \"target\": \"/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/predictions_910063.err\", \"fdinfo\": \"pos:\\t234\\nflags:\\t0102001\\nmnt_id:\\t66\\nino:\\t2143294833\\n\"}]}]}\n{\"checked_utc\": \"2026-09-19T12:14:27.109406+00:00\", \"processes\": [{\"pid\": 3727340, \"state\": \"D\", \"utime_ticks\": 1574, \"stime_ticks\": 689, \"threads\": 12, \"rss_pages\": 202652, \"wchan\": \"rpc_wait_bit_killable\", \"io\": \"rchar: 80412090\\nwchar: 91765\\nsyscr: 8156\\nsyscw: 30\\nread_bytes: 0\\nwrite_bytes: 8192\\ncancelled_write_bytes: 4096\\n\", \"fds\": [{\"fd\": \"1\", \"target\": \"/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/predictions_910063.out\", \"fdinfo\": \"pos:\\t409\\nflags:\\t0102001\\nmnt_id:\\t66\\nino:\\t2143294827\\n\"}, {\"fd\": \"2\", \"target\": \"/home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/logit_dynamics_20260919_114500/logs/predictions_910063.err\", \"fdinfo\": \"pos:\\t234\\nflags:\\t0102001\\nmnt_id:\\t66\\nino:\\t2143294833\\n\"}]}]}\n",
+  "stderr": ""
+}

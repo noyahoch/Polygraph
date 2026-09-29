@@ -1,0 +1,15 @@
+{
+  "checked_utc": "2026-09-19T12:46:47.416804+00:00",
+  "purpose": "Verify already-uploaded private repository revision and manifest; no mutation of Hub",
+  "repo_id": "omrifahn/polygraph-experiments",
+  "revision": "86605781c0528e286483e305072f7787393da860",
+  "status": "verified",
+  "private": true,
+  "revision_matches": true,
+  "manifest_sha256": "f2e17250d314568bf7b5815b5eea7d79720e8c9bb24d35289f58530f974ed572",
+  "manifest_matches_local_and_upload_receipt": true,
+  "manifest_file_count": 295,
+  "all_manifest_paths_present_at_revision": true,
+  "snapshot_path_in_repo": "logit_dynamics_20260919_114500/snapshot_910575",
+  "commit_url": "https://huggingface.co/omrifahn/polygraph-experiments/commit/86605781c0528e286483e305072f7787393da860"
+}

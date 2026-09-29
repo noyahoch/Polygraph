@@ -1,0 +1,38 @@
+Collecting pandas==2.3.3
+  Downloading pandas-2.3.3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)
+Collecting pyarrow==21.0.0
+  Downloading pyarrow-21.0.0-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (3.3 kB)
+Collecting python-dateutil==2.9.0.post0
+  Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+Collecting pytz==2025.2
+  Downloading pytz-2025.2-py2.py3-none-any.whl.metadata (22 kB)
+Collecting tzdata==2025.2
+  Downloading tzdata-2025.2-py2.py3-none-any.whl.metadata (1.4 kB)
+Collecting six==1.17.0
+  Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+Downloading pandas-2.3.3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.4 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.4/12.4 MB 24.7 MB/s eta 0:00:00
+Downloading pyarrow-21.0.0-cp312-cp312-manylinux_2_28_x86_64.whl (42.8 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 42.8/42.8 MB 41.3 MB/s eta 0:00:00
+Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+Downloading pytz-2025.2-py2.py3-none-any.whl (509 kB)
+Downloading tzdata-2025.2-py2.py3-none-any.whl (347 kB)
+Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+Saved ./dependencies/parquet_overlay_v1/wheels/pandas-2.3.3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+Saved ./dependencies/parquet_overlay_v1/wheels/pyarrow-21.0.0-cp312-cp312-manylinux_2_28_x86_64.whl
+Saved ./dependencies/parquet_overlay_v1/wheels/python_dateutil-2.9.0.post0-py2.py3-none-any.whl
+Saved ./dependencies/parquet_overlay_v1/wheels/pytz-2025.2-py2.py3-none-any.whl
+Saved ./dependencies/parquet_overlay_v1/wheels/tzdata-2025.2-py2.py3-none-any.whl
+Saved ./dependencies/parquet_overlay_v1/wheels/six-1.17.0-py2.py3-none-any.whl
+Successfully downloaded pandas pyarrow python-dateutil pytz tzdata six
+Looking in links: /home/yandex/MLWG2026/omrifahn/polygraph_september_2026/experiments/canonical_ld_20260924_085200/dependencies/parquet_overlay_v1/wheels
+Processing ./dependencies/parquet_overlay_v1/wheels/pandas-2.3.3-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl
+Processing ./dependencies/parquet_overlay_v1/wheels/pyarrow-21.0.0-cp312-cp312-manylinux_2_28_x86_64.whl
+Processing ./dependencies/parquet_overlay_v1/wheels/python_dateutil-2.9.0.post0-py2.py3-none-any.whl
+Processing ./dependencies/parquet_overlay_v1/wheels/pytz-2025.2-py2.py3-none-any.whl
+Processing ./dependencies/parquet_overlay_v1/wheels/tzdata-2025.2-py2.py3-none-any.whl
+Processing ./dependencies/parquet_overlay_v1/wheels/six-1.17.0-py2.py3-none-any.whl
+Installing collected packages: pytz, tzdata, six, python-dateutil, pyarrow, pandas
+Successfully installed pandas-2.3.3 pyarrow-21.0.0 python-dateutil-2.9.0.post0 pytz-2025.2 six-1.17.0 tzdata-2025.2
+{"dependency_reader_processor_check": "passed"}
+{"complete": true, "elapsed_seconds": 81.03050658013672, "manifest_sha256": "b8e316b7e55718669695297cd1322fefcfcbbbe00697da2e59ed3439bc8e0008"}
