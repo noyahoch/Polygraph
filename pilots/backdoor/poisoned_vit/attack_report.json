@@ -1,0 +1,16 @@
+{
+  "clean_acc": 0.9145,
+  "asr": 0.9995,
+  "target_class": 0,
+  "poison_rate": 0.02,
+  "epochs": 2,
+  "lr": 1e-05,
+  "trigger": {
+    "pattern": "checkerboard",
+    "position": "br",
+    "size": 16
+  },
+  "gate_clean_ok": true,
+  "gate_asr_ok": true,
+  "gate_passed": true
+}
